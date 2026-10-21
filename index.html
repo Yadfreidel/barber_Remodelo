@@ -22,6 +22,7 @@
 
     <!-- Estilos -->
     <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="stylesheet" href="assets/css/responsive.css">
 </head>
 <body>
 
@@ -55,6 +56,12 @@
             </ul>
         </nav>
 
+        <div class="hero-layout">
+            <figure class="hero-portrait">
+                <img src="assets/imagenes/barbero-principal.jpg.jpeg"
+                     alt="Profesional de Barber&iacute;a Master cortando el cabello a un cliente"
+                     width="1086" height="1448" fetchpriority="high" decoding="async">
+            </figure>
         <div class="hero-content">
             <div class="hero-brand-badge">
                 <span class="badge-icon"><i class="fas fa-crown"></i></span>
@@ -76,6 +83,8 @@
             </a>
         </div>
 
+        </div>
+
         <div class="hero-scroll-indicator">
             <a href="#catalogo-seccion" aria-label="Ver Catálogo">
                 <i class="fas fa-chevron-down"></i>
@@ -86,15 +95,22 @@
     <!-- ==========================================
          CATÁLOGO DE SERVICIOS
          ========================================== -->
+    <main class="booking-layout">
+    <div class="booking-main">
     <section id="catalogo-seccion">
         <h2 class="seccion-titulo animate-on-scroll">Nuestros Servicios</h2>
         <p class="seccion-subtitulo animate-on-scroll">Seleccionados minuciosamente para el caballero exigente</p>
 
+        <p class="nota-espera">Precios solo del corte, sin barba, lavado ni extras. Las imagenes son simulaciones con IA.</p>
         <div class="filtros-contenedor">
             <button class="btn-filtro activo" data-categoria="todos">Ver Todo</button>
-            <button class="btn-filtro" data-categoria="cortes"><i class="fas fa-scissors"></i> Cortes</button>
-            <button class="btn-filtro" data-categoria="barba"><i class="fas fa-spa"></i> Barba & SPA</button>
-            <button class="btn-filtro" data-categoria="combos"><i class="fas fa-gem"></i> Combos VIP</button>
+            <button class="btn-filtro" data-categoria="degradados">Degradados</button>
+            <button class="btn-filtro" data-categoria="tapers">Tapers</button>
+            <button class="btn-filtro" data-categoria="cortos">Cortos</button>
+            <button class="btn-filtro" data-categoria="afros">Afros</button>
+            <button class="btn-filtro" data-categoria="creativos">Creativos</button>
+            <button class="btn-filtro" data-categoria="rizos">Rizos</button>
+            <button class="btn-filtro" data-categoria="diseños">Diseños</button>
         </div>
 
         <div id="grid-dinamico-servicios" class="grid-servicios"></div>
@@ -112,6 +128,7 @@
     <!-- ==========================================
          FORMULARIO DE CITAS
          ========================================== -->
+    </div>
     <section id="contacto">
         <div class="contenedor-dinamico-contacto">
             <form class="formulario-citas" id="form-reservas">
@@ -163,6 +180,7 @@
     <!-- ==========================================
          FOOTER
          ========================================== -->
+    </main>
     <footer class="site-footer">
         <div class="footer-contenido">
             <div class="footer-brand">
@@ -210,5 +228,6 @@
     </div>
 
     <script type="module" src="assets/main.js"></script>
+    <script type="module" src="assets/presentation.js"></script>
 </body>
 </html>

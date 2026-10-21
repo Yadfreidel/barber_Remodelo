@@ -1,3 +1,4 @@
+import { CATALOGO_25 } from './catalogo25.js';
 // ==========================================
 // MODELO DE SERVICIOS CON PERSISTENCIA LOCAL
 // ==========================================
@@ -236,21 +237,42 @@ const serviciosPorDefecto = [
     }
 ];
 
+const VERSION_CATALOGO = 'barber_catalogo25_v1';
+const idsCatalogo = new Set(CATALOGO_25.map(s => s.id));
+export function esCorteCatalogo(nombre) {
+    return obtenerServicios().some(s => s.nombre === nombre && idsCatalogo.has(s.id));
+}
+export function formatoPrecioServicio(precio) {
+    return typeof precio === 'number' ? `RD$ ${precio.toLocaleString('es-DO')}` : precio;
+}
 function inicializarServicios() {
     const guardados = localStorage.getItem(STORAGE_KEY);
-    if (!guardados) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(serviciosPorDefecto));
-        return [...serviciosPorDefecto];
+    let servicios = guardados ? JSON.parse(guardados) : [];
+    if (!localStorage.getItem(VERSION_CATALOGO)) {
+        // Los servicios anteriores permanecen guardados, sin cambios ni borrados.
+        const ids = new Set(servicios.map(s => s.id));
+        servicios = [...servicios, ...CATALOGO_25.filter(s => !ids.has(s.id)).map(s => ({ ...s }))];
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(servicios));
+        localStorage.setItem(VERSION_CATALOGO, '1');
     }
-    return JSON.parse(guardados);
+    return servicios;
 }
-
-export function obtenerServicios() {
-    return inicializarServicios();
+export function obtenerServicios({ incluirAnteriores = false } = {}) {
+    const servicios = inicializarServicios();
+    return incluirAnteriores ? servicios : servicios.filter(s => idsCatalogo.has(s.id) || s.catalogo_personalizado);
+}
+export function sincronizarCatalogoServidor(filas) {
+    const servicios = inicializarServicios();
+    for (const fila of filas) {
+        const servicio = servicios.find(s => s.id === fila.catalogo_id);
+        if (servicio) Object.assign(servicio, { servicio_id: String(fila.id), precio: Number(fila.precio), duracion_minutos: Number(fila.duracion_minutos) });
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(servicios));
 }
 
 export function agregarServicio(servicio) {
-    const servicios = obtenerServicios();
+    const servicios = inicializarServicios();
+    servicio.catalogo_personalizado = true;
     servicio.id = 'srv-' + Date.now();
     servicios.push(servicio);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(servicios));
@@ -258,7 +280,7 @@ export function agregarServicio(servicio) {
 }
 
 export function actualizarServicio(id, datosActualizados) {
-    const servicios = obtenerServicios();
+    const servicios = inicializarServicios();
     const index = servicios.findIndex(s => s.id === id);
     if (index !== -1) {
         servicios[index] = { ...servicios[index], ...datosActualizados };
@@ -268,15 +290,17 @@ export function actualizarServicio(id, datosActualizados) {
 }
 
 export function eliminarServicio(id) {
-    let servicios = obtenerServicios();
+    let servicios = inicializarServicios();
     servicios = servicios.filter(s => s.id !== id);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(servicios));
     return servicios;
 }
 
 export function resetearServicios() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(serviciosPorDefecto));
-    return [...serviciosPorDefecto];
+    const anteriores = inicializarServicios().filter(s => !idsCatalogo.has(s.id) && !s.catalogo_personalizado);
+    const nuevos = CATALOGO_25.map(s => ({ ...s }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify([...anteriores, ...nuevos]));
+    return nuevos;
 }
 
 // Compatibilidad con import antiguo

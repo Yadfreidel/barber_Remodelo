@@ -2480,3 +2480,214 @@ section {
     font-size: 2rem;
     margin-bottom: 10px;
 }
+/* ==========================================
+   MÓDULOS (productos, promociones, lista de espera, gestión de cita)
+   ========================================== */
+.modulos-reserva {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.lista-productos-reserva {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.producto-reserva {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--negro-elevado);
+    border: 1px solid var(--gris-borde);
+    border-radius: var(--radius-sm);
+}
+
+.producto-reserva small {
+    display: block;
+    color: var(--dorado);
+}
+
+.producto-reserva select {
+    width: auto;
+    min-width: 64px;
+}
+
+.producto-agotado {
+    color: var(--rojo);
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.check-consentimiento {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    color: var(--gris-texto);
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.check-consentimiento input {
+    width: auto;
+    margin-top: 3px;
+}
+
+.resumen-precio {
+    padding: 14px;
+    background: var(--dorado-suave);
+    border: 1px solid rgba(197, 160, 89, 0.3);
+    border-radius: var(--radius-md);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 10px 0;
+}
+
+.resumen-linea {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 0.9rem;
+}
+
+.resumen-descuento {
+    color: var(--verde);
+}
+
+.resumen-total {
+    border-top: 1px solid rgba(197, 160, 89, 0.3);
+    padding-top: 6px;
+    font-weight: 700;
+    color: var(--dorado-brillante);
+}
+
+.resumen-pendiente,
+.nota-espera {
+    color: var(--gris-texto);
+    font-size: 0.85rem;
+}
+
+.resumen-alerta {
+    color: var(--rojo);
+    font-size: 0.85rem;
+    margin: 6px 0;
+}
+
+.resumen-ok {
+    color: var(--verde);
+    font-size: 0.85rem;
+    margin: 6px 0;
+}
+
+.bloque-lista-espera {
+    margin-top: 6px;
+}
+
+.btn-lista-espera {
+    width: 100%;
+    padding: 10px;
+    background: transparent;
+    color: var(--dorado);
+    border: 1px dashed var(--dorado);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-family: var(--font-body);
+    font-weight: 600;
+}
+
+.form-espera {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.espera-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.espera-grid label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    color: var(--gris-texto);
+    font-size: 0.8rem;
+}
+
+.enlace-gestion {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 12px;
+    text-decoration: none;
+}
+
+.panel-gestion {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.acciones-gestion {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.acciones-gestion .btn-danger {
+    width: auto;
+    padding: 8px 16px;
+}
+
+.acciones-gestion a.btn-admin-accion {
+    text-decoration: none;
+}
+
+.codigo-referido {
+    color: var(--dorado-brillante);
+    font-size: 1.2rem;
+    letter-spacing: 2px;
+}
+
+.input-enlace {
+    width: 100%;
+    font-size: 0.8rem;
+}
+
+@media (max-width: 480px) {
+    .espera-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Acceso de administrador */
+.login-admin-modal {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.88);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    z-index: 6000;
+}
+
+.login-admin-caja {
+    width: 100%;
+    max-width: 380px;
+    background-color: var(--negro-tarjeta);
+    border: 1px solid var(--gris-borde);
+    border-radius: var(--radius-md);
+    padding: 24px;
+}
+
+.login-admin-caja h3 {
+    color: var(--dorado-brillante);
+}

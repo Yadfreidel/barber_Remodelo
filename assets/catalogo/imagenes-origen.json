@@ -1,0 +1,152 @@
+[
+  {
+    "id": "corte-01",
+    "original": "imagenes/corte-01.png",
+    "sha256_original": "61bde60bef1765d512d4838f7be4405a5e965b47860d7a2c5a18acf9c87b09f3",
+    "sha256_webp": "d355022bb440ef4f9c7e7ec88267feb26a2aa312afa5d5e611c03ac373fb73a9"
+  },
+  {
+    "id": "corte-02",
+    "original": "imagenes/corte-02.png",
+    "sha256_original": "3b46236a4a9d2d3ad1417661bb7399c5e36ebaac8e5a5aad9a6bb4e32b0cb80d",
+    "sha256_webp": "fb19321dfa55955f8c5a0ec8c89398c42eca560b608c493b3244f648b029735a"
+  },
+  {
+    "id": "corte-03",
+    "original": "imagenes/corte-03.png",
+    "sha256_original": "432ff2197d2b22f9b8ca762a3ab5ed5c6ebf690fbaf5a0950cdf4f5de32c556e",
+    "sha256_webp": "e88f57c6284e43fa639d29d7eff2101cf011df68c88f256f90718bbe5b93d7f3"
+  },
+  {
+    "id": "corte-04",
+    "original": "imagenes/corte-04.png",
+    "sha256_original": "f4cced0d8b3ea64f090f1fc218ab6b3b8df3f2852b0642c0ab12e569c17607ae",
+    "sha256_webp": "43c5480b21adc68ffb3e7c2e6a4321bcf32e7bb9aedcd72bb4396f46543eef11"
+  },
+  {
+    "id": "corte-05",
+    "original": "imagenes/corte-05.png",
+    "sha256_original": "e3de7f001d691aee4dafd559d46dd9f66cda4bc1caa25b698e691843a9c40d0a",
+    "sha256_webp": "85ac07eb4e2976c8d0080aa617eeeeafa19064ec5d1007ee999803f0adcbd219"
+  },
+  {
+    "id": "corte-06",
+    "original": "imagenes/corte-06.png",
+    "sha256_original": "56084b38a07fa4689eaebac0e1d85a9036ab341a45054408722baf50cce2b8d1",
+    "sha256_webp": "ba212e0e0bd84cf4231bc124f66062ce58d7ca3e027a138333ccdc354936e67f"
+  },
+  {
+    "id": "corte-07",
+    "original": "imagenes/corte-07.png",
+    "sha256_original": "8bf5c3b7d9487228a4fcdd756c6ce88496d899b2c668b086abc8fc0708733436",
+    "sha256_webp": "9291c009fadb627b7ad4e48494b6fc51b39f2adb9726735f718f33498e62d499"
+  },
+  {
+    "id": "corte-08",
+    "original": "imagenes/corte-08.png",
+    "sha256_original": "658619df1705ff10d637b008ffbd554b86d94a96ff64d95a376df8bb5b83ce9b",
+    "sha256_webp": "c4d47fc47b92222ca8032a4a72f456bd2420e4152c57b5cb1de0afed54c66f42"
+  },
+  {
+    "id": "corte-09",
+    "original": "imagenes/corte-09.png",
+    "sha256_original": "b6dd631c8ac1c18c87b893f30e3d252e832bef01a89007c9cfca62d959afa5df",
+    "sha256_webp": "e81a2e012c28e4edaba50838a673ed249889aba46f2d687f6503bd668361fc41"
+  },
+  {
+    "id": "corte-10",
+    "original": "imagenes/corte-10.png",
+    "sha256_original": "6818f3d61e415ea003fbfde0e304b4e784b1f4e76771c449ec6fcc099e8fd448",
+    "sha256_webp": "58a59fbadbde9736b64aaf14b58e29248d714974b04ebadd6ab329830872c561"
+  },
+  {
+    "id": "corte-11",
+    "original": "imagenes/corte-11.png",
+    "sha256_original": "41c964188e6a21f67bf82222bb7a209bfb0ecc392c146484c3a3bbe4482ffe15",
+    "sha256_webp": "daaba020d9f272bae63c5e00830ebd83b6d5765744e7d584e623956a58d8edd4"
+  },
+  {
+    "id": "corte-12",
+    "original": "imagenes/corte-12.png",
+    "sha256_original": "3e6de2814b0be90807da793e1380b7acee36ce5f22c9e7d575d33315c5ef51d3",
+    "sha256_webp": "e8e6a9a0fd63301d111b285996938477d3ca768361f7cf960b2ee935ca54a7f4"
+  },
+  {
+    "id": "corte-13",
+    "original": "imagenes/corte-13.png",
+    "sha256_original": "c1e9ccfb2053ba709da141c14c49fc95ed3d929eace997e57d2c2504011cfb30",
+    "sha256_webp": "3ba307d44983863b554c1303314eeb7ade6d59bf7127be07d0981697bf48b583"
+  },
+  {
+    "id": "corte-14",
+    "original": "imagenes/corte-14.png",
+    "sha256_original": "6d1400fc7a343fff1bcff8e7289fe24058b61dc3523c1a1b9314742d6a620211",
+    "sha256_webp": "e15fcf6734e775402718dfd744d7d52c0eb9057126655a87306876aab13eb341"
+  },
+  {
+    "id": "corte-15",
+    "original": "imagenes/corte-15.png",
+    "sha256_original": "7eea33d787cdc9ac09633eda13907d7339f3eacfaa20f1b07069261b0146bf57",
+    "sha256_webp": "f7e05e8a720d730ccdf4b97e4f3c96c4ad496532fdb36fe5e8c8ba1b7138efe6"
+  },
+  {
+    "id": "corte-16",
+    "original": "imagenes/corte-16.png",
+    "sha256_original": "8c35cb7f1a003fbfcf0b6c045dc83a8d5c0270e77434a990f03ca5125d65b4d8",
+    "sha256_webp": "ee50732b910168f72c5fd1cdd86957622391f754a86f07c3f1cd0ed54658e5a3"
+  },
+  {
+    "id": "corte-17",
+    "original": "imagenes/corte-17.png",
+    "sha256_original": "d2c75d22b4ba782030c70fdc6ff7fd29692adfc8c2c813c250e053b176058b0e",
+    "sha256_webp": "e5ffe2ffcf40dbab86c1817d808ffad541ee8a6de5ac8787edb310e484d34651"
+  },
+  {
+    "id": "corte-18",
+    "original": "imagenes/corte-18.png",
+    "sha256_original": "b572c57167f1f83eef3b9d768be19f8af051b062557bb2514822be9eab2f973e",
+    "sha256_webp": "0ceb593b6d53803460a889ef6c93623879b6f081f950964f29ec593b5e9d855c"
+  },
+  {
+    "id": "corte-19",
+    "original": "imagenes/corte-19.png",
+    "sha256_original": "03e2319448252736cbd95b448688cd2fc0199faf06d6c0b825fbb6b355450d23",
+    "sha256_webp": "f767ccec437baac0666ec157fc6ebf398c5a02ffb2306181aaa17c794d57ef7f"
+  },
+  {
+    "id": "corte-20",
+    "original": "imagenes/corte-20.png",
+    "sha256_original": "00e54b0f3179315a8fe6f08ecf1098f54e5953afba0078cbd5288814038cdaa8",
+    "sha256_webp": "2f87b62857c05763e1a2a85e485c359bef6fe657a46f91c796acf7c82d0be527"
+  },
+  {
+    "id": "corte-21",
+    "original": "imagenes/corte-21.png",
+    "sha256_original": "c3e30ecdb6112527bd6cfaadec27c53c1038472d5dafa35477fcf37f72d52edd",
+    "sha256_webp": "07560a27ea4164810953f9f27671dae80c2059ff09f348ad30492987e18e67de"
+  },
+  {
+    "id": "corte-22",
+    "original": "imagenes/corte-22.png",
+    "sha256_original": "14fd8ac56a4e2e891bb2e42dcd5773205a50ae227b8b0f6756211b1e2bf196dc",
+    "sha256_webp": "ca2a84b5d264116d9e00277df371a9bf77e99f915102df5c2ef9bb09038bb459"
+  },
+  {
+    "id": "corte-23",
+    "original": "imagenes/corte-23.png",
+    "sha256_original": "c84d3eb73bd1eb81c93ec215a464a96f0057500988c8b35fede2a34189729744",
+    "sha256_webp": "e779579b597f37739d1a91e92169a235fcd464d6a7c2e76fa3806167f34d48df"
+  },
+  {
+    "id": "corte-24",
+    "original": "imagenes/corte-24.png",
+    "sha256_original": "2de42ee90030f6282b74beac4b402ddcdd93f0c601e84a24ad9f409dcfac61f2",
+    "sha256_webp": "f48442ce91fc13f8bcb1cff78aa0284c9a6d81dc646780e967808f6b8b66a0a0"
+  },
+  {
+    "id": "corte-25",
+    "original": "imagenes/corte-25.png",
+    "sha256_original": "2b121cead489d3f1a9bfbd659dcf7bae2b542963ca3e5000ecaa21a0d801e897",
+    "sha256_webp": "2b7c450a0f31bb14788b5c1453738d1dafe6d1c7a8e9e6d67ca88bd57fe6342a"
+  }
+]

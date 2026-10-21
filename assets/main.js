@@ -1,8 +1,10 @@
-import { obtenerServicios } from '../models/serviceModel.js';
+import { cargarCatalogoServidor } from '../controllers/catalogoController.js';
+import { obtenerServicios, formatoPrecioServicio } from '../models/serviceModel.js';
 import { obtenerBarberos } from '../models/barberModel.js';
 import { procesarCita } from '../controllers/appointmentController.js';
 import { verificarAccesoAdmin, cerrarDashboard } from '../controllers/adminController.js';
 import { supabase, estaSupabaseListo } from './supabaseClient.js';
+import { inicializarModulosCliente, horasLibresServidor } from '../controllers/modulosController.js';
 
 // ==========================================
 // ELEMENTOS DEL DOM
@@ -30,13 +32,15 @@ const HORARIOS_DISPONIBLES = [
 // ==========================================
 // INICIALIZACIÓN PRINCIPAL
 // ==========================================
-function inicializarPagina() {
+async function inicializarPagina() {
     if (inputFecha) {
         const hoy = new Date().toISOString().split('T')[0];
         inputFecha.min = hoy;
         inputFecha.addEventListener('change', generarPildorasDeTiempo);
     }
 
+    await cargarCatalogoServidor();
+    await inicializarModulosCliente();
     renderizarServicios();
     renderizarStaff();
     configurarFiltros();
@@ -47,7 +51,8 @@ function inicializarPagina() {
 }
 
 // Exponer función global para que el admin panel recargue la página
-window.recargarPaginaPrincipal = function () {
+window.recargarPaginaPrincipal = async function () {
+    await cargarCatalogoServidor();
     renderizarServicios();
     renderizarStaff();
 };
@@ -76,7 +81,8 @@ function renderizarServicios() {
             <div class="card-info">
                 <h3>${servicio.nombre}</h3>
                 <p>${servicio.descripcion}</p>
-                <span class="precio-tag">${servicio.precio}</span>
+                <span class="precio-tag">${formatoPrecioServicio(servicio.precio)}</span>
+                ${servicio.duracion_minutos ? `<span class="duracion-servicio">${servicio.duracion_minutos} min</span>` : ''}
                 <button class="btn-card-reserva" data-nombre="${servicio.nombre}">Elegir Este</button>
             </div>
         `;
@@ -85,7 +91,7 @@ function renderizarServicios() {
         if (selectServicios) {
             const opcion = document.createElement('option');
             opcion.value = servicio.nombre;
-            opcion.textContent = `${servicio.nombre} (${servicio.precio})`;
+            opcion.textContent = `${servicio.nombre} (${formatoPrecioServicio(servicio.precio)}${servicio.duracion_minutos ? ` / ${servicio.duracion_minutos} min` : ''})`;
             selectServicios.appendChild(opcion);
         }
     });
@@ -93,7 +99,10 @@ function renderizarServicios() {
     // Event listeners para botones "Elegir Este"
     document.querySelectorAll('.btn-card-reserva').forEach(boton => {
         boton.addEventListener('click', (e) => {
-            if (selectServicios) selectServicios.value = e.target.getAttribute('data-nombre');
+            if (selectServicios) {
+                selectServicios.value = e.target.getAttribute('data-nombre');
+                selectServicios.dispatchEvent(new Event('change', { bubbles: true }));
+            }
             const staffSection = document.getElementById('staff-seccion');
             if (staffSection) staffSection.scrollIntoView({ behavior: 'smooth' });
         });
@@ -143,8 +152,11 @@ function renderizarStaff() {
 // ==========================================
 // PÍLDORAS DE HORA (SUPABASE REAL-TIME)
 // ==========================================
+let turnoPildoras = 0;
+
 export async function generarPildorasDeTiempo() {
     if (!contenedorHoras) return;
+    const turno = ++turnoPildoras;
     contenedorHoras.innerHTML = '';
     inputHora.value = '';
 
@@ -189,13 +201,23 @@ export async function generarPildorasDeTiempo() {
         }
     }
 
+    // Con módulos activos: disponibilidad real del servidor (considera duración del servicio)
+    const libresServidor = await horasLibresServidor(selectServicios ? selectServicios.value : '', barberoNombre, fechaSeleccionada);
+
+    // Solo pinta la última llamada (evita píldoras duplicadas por llamadas concurrentes)
+    if (turno !== turnoPildoras) return;
+    contenedorHoras.innerHTML = '';
+
     const fechaActualStr = new Date().toISOString().split('T')[0];
     const ahora = new Date();
     const horaActual = ahora.getHours();
     const minutosActuales = ahora.getMinutes();
 
-    HORARIOS_DISPONIBLES.forEach(horaTexto => {
-        const pildora = document.createElement('div');
+    const horarios = libresServidor ? [...libresServidor] : HORARIOS_DISPONIBLES;
+    if (!horarios.length) contenedorHoras.innerHTML = '<p class="placeholder-horas">No hay horarios disponibles. Revisa el servicio, el profesional y la fecha.</p>';
+    horarios.forEach(horaTexto => {
+        const pildora = document.createElement('button');
+        pildora.type = 'button';
         pildora.classList.add('pildora-hora');
         pildora.textContent = horaTexto;
         const [horaBloque] = horaTexto.split(':').map(Number);
@@ -207,10 +229,11 @@ export async function generarPildorasDeTiempo() {
             }
         }
 
-        const estaOcupada = horasOcupadas.has(horaTexto);
+        const estaOcupada = horasOcupadas.has(horaTexto) || Boolean(libresServidor && !libresServidor.has(horaTexto));
 
         if (esPasado || estaOcupada) {
             pildora.classList.add('deshabilitada');
+            pildora.disabled = true;
             if (estaOcupada) {
                 pildora.title = "Horario reservado por otro cliente";
             }

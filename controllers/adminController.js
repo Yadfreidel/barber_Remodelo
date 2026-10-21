@@ -1,23 +1,60 @@
+import { CATALOGO_25, CATEGORIAS_CATALOGO } from '../models/catalogo25.js';
+import { guardarTarifaCorte } from './catalogoController.js';
 // ==========================================
 // CONTROLADOR DE ADMINISTRACIÓN COMPLETO
 // Panel CRUD para Servicios, Barberos y Stats
 // ==========================================
 
-import { obtenerServicios, agregarServicio, actualizarServicio, eliminarServicio, resetearServicios } from '../models/serviceModel.js';
+import { obtenerServicios, agregarServicio, actualizarServicio, eliminarServicio, resetearServicios, formatoPrecioServicio } from '../models/serviceModel.js';
 import { obtenerBarberos, agregarBarbero, actualizarBarbero, eliminarBarbero, resetearBarberos } from '../models/barberModel.js';
 import { supabase, estaSupabaseListo } from '../assets/supabaseClient.js';
+import { cargarConfigModulos } from './modulosController.js';
+import { renderTabModulos, columnasExtraCitas, accionesCitaAdmin, configurarAccionesCitaAdmin, iniciarSesionModulos } from './modulosAdminController.js';
 
-const CONTRASENA_MAESTRA = "yafre15";
+// Credenciales locales del panel (visibles en el código fuente del navegador).
+// La seguridad real de los módulos la da Supabase Auth en el servidor.
+const ADMIN_EMAIL = "yafre2310@gmail.com";
+const ADMIN_CLAVE = "123456";
 let tabActiva = 'citas';
 
 export function verificarAccesoAdmin() {
-    const passwordInput = prompt("🔑 Ingrese la clave de administrador:");
-    if (passwordInput === null) return;
-    if (passwordInput === CONTRASENA_MAESTRA) {
-        abrirDashboard();
-    } else {
-        mostrarNotificacion('Clave incorrecta. Acceso denegado.', 'error');
-    }
+    if (document.getElementById('login-admin-modal')) return;
+
+    const modal = document.createElement('div');
+    modal.id = 'login-admin-modal';
+    modal.className = 'login-admin-modal';
+    modal.innerHTML = `
+        <form class="admin-form login-admin-caja">
+            <h3><i class="fas fa-key"></i> Acceso de administrador</h3>
+            <input type="email" id="login-admin-email" placeholder="Correo" required autocomplete="username">
+            <input type="password" id="login-admin-clave" placeholder="Contraseña" required autocomplete="current-password">
+            <div class="acciones-gestion">
+                <button type="submit" class="btn-admin-accion"><i class="fas fa-sign-in-alt"></i> Entrar</button>
+                <button type="button" class="btn-danger" id="login-admin-cancelar">Cancelar</button>
+            </div>
+        </form>
+    `;
+    document.body.appendChild(modal);
+
+    const cerrar = () => modal.remove();
+    modal.querySelector('#login-admin-cancelar').addEventListener('click', cerrar);
+    modal.addEventListener('click', (e) => { if (e.target === modal) cerrar(); });
+
+    modal.querySelector('form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const email = modal.querySelector('#login-admin-email').value.trim().toLowerCase();
+        const clave = modal.querySelector('#login-admin-clave').value;
+        if (email === ADMIN_EMAIL && clave === ADMIN_CLAVE) {
+            cerrar();
+            abrirDashboard();
+            // Si Supabase está conectado y existe el mismo usuario, abre también la sesión de módulos
+            iniciarSesionModulos(email, clave);
+        } else {
+            mostrarNotificacion('Correo o contraseña incorrectos.', 'error');
+        }
+    });
+
+    modal.querySelector('#login-admin-email').focus();
 }
 
 function mostrarNotificacion(mensaje, tipo = 'success') {
@@ -78,6 +115,9 @@ function renderizarDashboardCompleto() {
             <button class="admin-tab ${tabActiva === 'barberos' ? 'tab-activa' : ''}" data-tab="barberos">
                 <i class="fas fa-users"></i> <span>Barberos</span>
             </button>
+            <button class="admin-tab ${tabActiva === 'modulos' ? 'tab-activa' : ''}" data-tab="modulos">
+                <i class="fas fa-puzzle-piece"></i> <span>Módulos</span>
+            </button>
         </div>
 
         <div class="admin-tab-contenido" id="admin-tab-body"></div>
@@ -99,6 +139,7 @@ function renderizarDashboardCompleto() {
     else if (tabActiva === 'stats') renderTabStats(body);
     else if (tabActiva === 'servicios') renderTabServicios(body);
     else if (tabActiva === 'barberos') renderTabBarberos(body);
+    else if (tabActiva === 'modulos') renderTabModulos(body, mostrarNotificacion);
 }
 
 // ==========================================
@@ -182,6 +223,7 @@ function renderTabServicios(container) {
 
         <div class="admin-filtros-mini">
             <button class="admin-filtro-mini activo" data-cat="todos">Todos</button>
+${Object.entries(CATEGORIAS_CATALOGO).map(([valor,texto]) => `<button class="admin-filtro-mini" data-cat="${valor}">${texto}</button>`).join('')}
             <button class="admin-filtro-mini" data-cat="cortes">Cortes</button>
             <button class="admin-filtro-mini" data-cat="barba">Barba</button>
             <button class="admin-filtro-mini" data-cat="combos">Combos</button>
@@ -239,7 +281,7 @@ function renderListaServicios(container, filtro) {
             <div class="admin-item-info">
                 <h4>${s.nombre}</h4>
                 <p class="admin-item-cat">${s.categoria}</p>
-                <p class="admin-item-precio">${s.precio}</p>
+                <p class="admin-item-precio">${formatoPrecioServicio(s.precio)}${s.duracion_minutos ? ` / ${s.duracion_minutos} min` : ''}</p>
             </div>
             <div class="admin-item-acciones">
                 <button class="btn-editar-item" data-id="${s.id}" title="Editar">
@@ -275,6 +317,7 @@ function renderListaServicios(container, filtro) {
 
 function mostrarFormularioServicio(container, servicioExistente = null) {
     const esEdicion = !!servicioExistente;
+    const esImportado = esEdicion && CATALOGO_25.some(s => s.id === servicioExistente.id);
     const body = container.querySelector('#admin-tab-body') || container;
 
     body.innerHTML = `
@@ -297,11 +340,12 @@ function mostrarFormularioServicio(container, servicioExistente = null) {
             <div class="admin-form-row">
                 <div class="admin-form-group">
                     <label>Precio</label>
-                    <input type="text" id="admin-srv-precio" required value="${esEdicion ? servicioExistente.precio : ''}" placeholder="RD$ 700">
+                    <input type="${esImportado ? 'number' : 'text'}" ${esImportado ? 'min="0" step="0.01"' : ''} id="admin-srv-precio" required value="${esEdicion ? servicioExistente.precio : ''}" placeholder="RD$ 700">
                 </div>
                 <div class="admin-form-group">
                     <label>Categoría</label>
                     <select id="admin-srv-cat" required>
+                        ${Object.entries(CATEGORIAS_CATALOGO).map(([valor, texto]) => `<option value="${valor}" ${esEdicion && servicioExistente.categoria === valor ? 'selected' : ''}>${texto}</option>`).join('')}
                         <option value="cortes" ${esEdicion && servicioExistente.categoria === 'cortes' ? 'selected' : ''}>Cortes</option>
                         <option value="barba" ${esEdicion && servicioExistente.categoria === 'barba' ? 'selected' : ''}>Barba & SPA</option>
                         <option value="combos" ${esEdicion && servicioExistente.categoria === 'combos' ? 'selected' : ''}>Combos VIP</option>
@@ -310,7 +354,7 @@ function mostrarFormularioServicio(container, servicioExistente = null) {
             </div>
             <div class="admin-form-group">
                 <label>URL de Imagen</label>
-                <input type="url" id="admin-srv-img" value="${esEdicion ? servicioExistente.imagen : ''}" placeholder="https://ejemplo.com/imagen.jpg">
+                <input type="text" id="admin-srv-img" value="${esEdicion ? servicioExistente.imagen : ''}" placeholder="https://ejemplo.com/imagen.jpg">
                 <small class="admin-hint">Deja vacío para usar imagen por defecto</small>
             </div>
             ${esEdicion && servicioExistente.imagen ? `
@@ -318,6 +362,7 @@ function mostrarFormularioServicio(container, servicioExistente = null) {
                     <img src="${servicioExistente.imagen}" alt="Vista previa" onerror="this.style.display='none'">
                 </div>
             ` : ''}
+            ${esImportado ? `<div class="admin-form-group"><label for="admin-srv-duracion">Duracion del corte (minutos)</label><input type="number" id="admin-srv-duracion" min="1" max="480" step="1" required value="${servicioExistente.duracion_minutos}"><small class="admin-hint">Solo corte, sin barba, lavado ni extras. Las citas anteriores conservan su duracion reservada.</small></div>` : ''}
             <button type="submit" class="btn-admin-guardar">
                 <i class="fas fa-save"></i> ${esEdicion ? 'Guardar Cambios' : 'Agregar Servicio'}
             </button>
@@ -328,7 +373,7 @@ function mostrarFormularioServicio(container, servicioExistente = null) {
         renderTabServicios(container);
     });
 
-    body.querySelector('#form-servicio-admin').addEventListener('submit', (e) => {
+    body.querySelector('#form-servicio-admin').addEventListener('submit', async (e) => {
         e.preventDefault();
         const datos = {
             nombre: document.getElementById('admin-srv-nombre').value.trim(),
@@ -338,6 +383,19 @@ function mostrarFormularioServicio(container, servicioExistente = null) {
             imagen: document.getElementById('admin-srv-img').value.trim() || 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=600&auto=format&fit=crop'
         };
 
+        if (esImportado) {
+            datos.precio = Number(datos.precio);
+            datos.duracion_minutos = Number(body.querySelector('#admin-srv-duracion').value);
+            const botonGuardar = body.querySelector('button[type="submit"]');
+            botonGuardar.disabled = true;
+            try {
+                await guardarTarifaCorte(servicioExistente.id, datos.precio, datos.duracion_minutos);
+            } catch (error) {
+                mostrarNotificacion(error.message, 'error');
+                botonGuardar.disabled = false;
+                return;
+            }
+        }
         if (esEdicion) {
             actualizarServicio(servicioExistente.id, datos);
             mostrarNotificacion('Servicio actualizado', 'success');
@@ -538,6 +596,8 @@ async function renderTabCitas(container) {
         return;
     }
 
+    await cargarConfigModulos();
+
     let barberosOpciones = [];
     try {
         const { data: barberosData } = await supabase.from('barberos').select('id, nombre');
@@ -618,6 +678,7 @@ async function renderTabCitas(container) {
                     hora,
                     estado,
                     creado_en,
+                    ${columnasExtraCitas()}
                     barberos ( id, nombre ),
                     servicios ( id, nombre, precio )
                 `)
@@ -667,19 +728,22 @@ async function renderTabCitas(container) {
                                 <button class="btn-accion-cita btn-cancelar" data-id="${c.id}" title="Cancelar Cita" ${c.estado === 'cancelada' ? 'disabled' : ''}>
                                     <i class="fas fa-times"></i>
                                 </button>
+                                ${accionesCitaAdmin(c)}
                             </div>
                         </td>
                     </tr>
                 `;
             }).join('');
 
-            tbody.querySelectorAll('.btn-confirmar').forEach(btn => {
+            tbody.querySelectorAll('.btn-confirmar:not([data-modulo-accion])').forEach(btn => {
                 btn.addEventListener('click', () => cambiarEstadoCita(btn.dataset.id, 'confirmada', cargarCitas));
             });
 
-            tbody.querySelectorAll('.btn-cancelar').forEach(btn => {
+            tbody.querySelectorAll('.btn-cancelar:not([data-modulo-accion])').forEach(btn => {
                 btn.addEventListener('click', () => cambiarEstadoCita(btn.dataset.id, 'cancelada', cargarCitas));
             });
+
+            configurarAccionesCitaAdmin(tbody, cargarCitas, mostrarNotificacion);
 
         } catch (err) {
             console.error("Error al consultar citas:", err);

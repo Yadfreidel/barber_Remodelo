@@ -1,0 +1,6 @@
+﻿[functions.whatsapp-enviar]
+verify_jwt = false
+static_files = ["./functions/whatsapp-enviar/card-assets/*"]
+
+[functions.whatsapp-webhook]
+verify_jwt = false

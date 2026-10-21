@@ -5,3 +5,7 @@
 node_modules/
 *.log
 .DS_Store
+
+# Entorno local (base de datos y binarios)
+local/.datos-pg/
+local/.bin/

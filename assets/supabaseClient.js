@@ -26,3 +26,16 @@ export const supabase = supabaseClient;
 export function estaSupabaseListo() {
     return Boolean(supabaseClient);
 }
+
+// Cliente separado para la sesión de administrador (Supabase Auth).
+// Usa otra storageKey para que el cliente público siga actuando como anon.
+let adminClient = null;
+
+export function obtenerClienteAdmin() {
+    if (!adminClient && estaConfigurado && typeof window !== 'undefined' && window.supabase) {
+        adminClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            auth: { storageKey: 'barber-admin-auth', persistSession: true }
+        });
+    }
+    return adminClient;
+}

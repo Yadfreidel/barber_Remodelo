@@ -1,5 +1,7 @@
-import { obtenerServicios } from '../models/serviceModel.js';
+import { catalogoServidorListo } from './catalogoController.js';
+import { obtenerServicios, esCorteCatalogo, formatoPrecioServicio } from '../models/serviceModel.js';
 import { supabase, estaSupabaseListo } from '../assets/supabaseClient.js';
+import { usarReservaServidor, reservarEnServidor, formatoPrecio, esc } from './modulosController.js';
 
 export async function procesarCita(evento) {
     evento.preventDefault();
@@ -19,8 +21,31 @@ export async function procesarCita(evento) {
     if (!fecha) { mostrarAlerta("Por favor, selecciona una fecha para tu cita."); return; }
     if (!hora) { mostrarAlerta("Por favor, toca una de las horas disponibles."); return; }
 
-    // Persistencia en Supabase
-    if (estaSupabaseListo()) {
+    let reservaServidor = null;
+
+    // Los cortes importados siempre usan la validacion de duracion y precio del servidor.
+    if (esCorteCatalogo(servicio)) {
+        if (!estaSupabaseListo() || !catalogoServidorListo() || !usarReservaServidor()) {
+            mostrarAlerta('No se pudo validar el catalogo. Recarga la pagina o contacta con la barberia.');
+            return;
+        }
+        // Conserva el alta del profesional local que ya realizaba el flujo anterior.
+        try {
+            const { data: profesionales, error } = await supabase.from('barberos').select('id').eq('nombre', barbero).limit(1);
+            if (error) throw error;
+            if (!profesionales?.length) {
+                const { error: altaError } = await supabase.from('barberos').insert([{ nombre: barbero, activo: true }]);
+                if (altaError) throw altaError;
+            }
+        } catch {
+            mostrarAlerta('No se pudo validar el profesional. Intenta nuevamente.');
+            return;
+        }
+        reservaServidor = await reservarEnServidor({ nombre, email, telefono: telefonoCliente, servicio, barbero, fecha, hora }, mostrarAlerta);
+        if (!reservaServidor) return;
+    }
+    // Flujo anterior conservado para los servicios no importados.
+    if (estaSupabaseListo() && !reservaServidor) {
         try {
             // Buscar ID de barbero
             let barberoId = null;
@@ -66,7 +91,11 @@ export async function procesarCita(evento) {
                 if (nuevoServicio) servicioId = nuevoServicio.id;
             }
 
-            if (barberoId && servicioId) {
+            if (barberoId && servicioId && usarReservaServidor()) {
+                // Módulos activos: precio, promoción, stock y referido se validan en el servidor
+                reservaServidor = await reservarEnServidor({ nombre, email, telefono: telefonoCliente, servicio, barbero, fecha, hora }, mostrarAlerta);
+                if (!reservaServidor) return;
+            } else if (barberoId && servicioId) {
                 const { error: insertError } = await supabase
                     .from('citas')
                     .insert([{
@@ -112,6 +141,10 @@ export async function procesarCita(evento) {
 
     const serviciosActuales = obtenerServicios();
     const objetoServicio = serviciosActuales.find(s => s.nombre === servicio) || { precio: "$0.00" };
+    const totalProductos = reservaServidor ? Number(reservaServidor.total_productos || 0) : 0;
+    const precioMostrado = reservaServidor
+        ? formatoPrecio(Number(reservaServidor.precio_final) + totalProductos)
+        : formatoPrecioServicio(objetoServicio.precio);
 
     // Guardar en analytics
     guardarMetricasAnaliticas({
@@ -128,12 +161,18 @@ export async function procesarCita(evento) {
         `💈 *Servicio:* ${servicio}%0A` +
         `💈 *Barbero:* _${barbero}_%0A` +
         `📅 *Fecha:* ${fechaFormateada}%0A` +
-        `⏰ *Hora:* *${hora} hrs*%0A%0A` +
+        `⏰ *Hora:* *${hora} hrs*%0A` +
+        (totalProductos > 0 ? `🛍️ *Productos para retiro:* ${formatoPrecio(totalProductos)}%0A` : '') +
+        (reservaServidor ? `💵 *Total:* ${precioMostrado}%0A` : '') + `%0A` +
         `⚡ _Turno enviado desde la web._`;
 
     const urlWhatsApp = `https://wa.me/${TU_TELEFONO}?text=${mensajeWhatsApp}`;
 
-    activarPantallaSeguimiento({ nombre, servicio, barbero, hora, fecha: fechaFormateada, precio: objetoServicio.precio });
+    activarPantallaSeguimiento({
+        nombre, servicio, barbero, hora, fecha: fechaFormateada, precio: precioMostrado,
+        token: reservaServidor ? reservaServidor.token : null,
+        avisos: reservaServidor ? reservaServidor.avisos : []
+    });
 
     setTimeout(() => {
         window.open(urlWhatsApp, '_blank');
@@ -213,6 +252,9 @@ function activarPantallaSeguimiento(datos) {
             </div>
 
             <div id="contenedor-ticket-wallet" style="display: none;"></div>
+
+            ${(datos.avisos || []).map(a => `<p class="resumen-alerta">${esc(a)}</p>`).join('')}
+            ${datos.token ? `<a class="btn-regresar-form enlace-gestion" href="?cita=${datos.token}"><i class="fas fa-link"></i> Gestionar mi cita (confirmar, cancelar o reprogramar)</a>` : ''}
 
             <button id="btn-regresar-formulario" class="btn-regresar-form">
                 <i class="fas fa-arrow-left"></i> Volver / Nueva Cita

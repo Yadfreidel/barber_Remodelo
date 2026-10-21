@@ -1,3 +1,4 @@
+import { conectarDetalles, coincideCorte, fotoCorte, escapar } from './catalogue-ui.js';
 import { cargarCatalogoServidor } from '../controllers/catalogoController.js';
 import { obtenerServicios, formatoPrecioServicio } from '../models/serviceModel.js';
 import { obtenerBarberos } from '../models/barberModel.js';
@@ -39,15 +40,18 @@ async function inicializarPagina() {
         inputFecha.addEventListener('change', generarPildorasDeTiempo);
     }
 
-    await cargarCatalogoServidor();
-    await inicializarModulosCliente();
+    const catalogoActualizado = await cargarCatalogoServidor();
+    document.getElementById('catalogo-aviso').hidden = catalogoActualizado;
+    try { await inicializarModulosCliente(); }
+    catch { document.getElementById('catalogo-aviso').hidden = false; }
     renderizarServicios();
     renderizarStaff();
     configurarFiltros();
+    conectarDetalles(obtenerServicios);
     configurarAccesoAdmin();
     configurarMenuMobile();
-    configurarScrollAnimations();
-    configurarEfectos3D();
+
+
 }
 
 // Exponer función global para que el admin panel recargue la página
@@ -64,6 +68,7 @@ function renderizarServicios() {
     if (!gridServicios) return;
 
     const servicios = obtenerServicios();
+    const seleccionAnterior = selectServicios?.value;
     gridServicios.innerHTML = '';
     if (selectServicios) {
         selectServicios.innerHTML = '<option value="" disabled selected>-- Elige un corte del catálogo --</option>';
@@ -73,19 +78,20 @@ function renderizarServicios() {
         const card = document.createElement('div');
         card.classList.add('card-servicio', 'animate-on-scroll');
         card.setAttribute('data-cat', servicio.categoria);
+        card.dataset.servicioId = servicio.id;
         card.innerHTML = `
-            <div class="card-imagen-contenedor">
-                <img src="${servicio.imagen}" alt="${servicio.nombre}" class="card-img" loading="lazy"
-                     onerror="this.src='https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=600&auto=format&fit=crop'">
-            </div>
+            ${fotoCorte(servicio)}
             <div class="card-info">
-                <h3>${servicio.nombre}</h3>
-                <p>${servicio.descripcion}</p>
-                <span class="precio-tag">${formatoPrecioServicio(servicio.precio)}</span>
-                ${servicio.duracion_minutos ? `<span class="duracion-servicio">${servicio.duracion_minutos} min</span>` : ''}
-                <button class="btn-card-reserva" data-nombre="${servicio.nombre}">Elegir Este</button>
-            </div>
-        `;
+                <p class="editorial-eyebrow">${escapar(servicio.categoria)}</p>
+                <h3>${escapar(servicio.nombre)}</h3>
+                <p class="corte-descripcion">${escapar(servicio.descripcion)}</p>
+                <div class="corte-tarifa"><span class="precio-tag">${escapar(formatoPrecioServicio(servicio.precio))}</span>
+                ${servicio.duracion_minutos ? `<span class="duracion-servicio">${servicio.duracion_minutos} min</span>` : ''}</div>
+                <div class="corte-acciones">
+                    <button type="button" class="btn-ver-detalle" data-detalle="${escapar(servicio.id)}" aria-label="Ver detalles de ${escapar(servicio.nombre)}">Ver detalles <span aria-hidden="true">&#8599;</span></button>
+                    <button type="button" class="btn-card-reserva" data-nombre="${escapar(servicio.nombre)}" aria-pressed="${seleccionAnterior === servicio.nombre}">${seleccionAnterior === servicio.nombre ? '&#10003; Seleccionado' : 'Elegir este corte'}</button>
+                </div>
+            </div>`;
         gridServicios.appendChild(card);
 
         if (selectServicios) {
@@ -95,6 +101,9 @@ function renderizarServicios() {
             selectServicios.appendChild(opcion);
         }
     });
+
+    if (seleccionAnterior && servicios.some(s => s.nombre === seleccionAnterior)) selectServicios.value = seleccionAnterior;
+    gridServicios.setAttribute('aria-busy', 'false');
 
     // Event listeners para botones "Elegir Este"
     document.querySelectorAll('.btn-card-reserva').forEach(boton => {
@@ -115,8 +124,7 @@ function renderizarServicios() {
         aplicarFiltro(cat);
     }
 
-    // Re-observar elementos para animaciones
-    configurarScrollAnimations();
+
 }
 
 // ==========================================
@@ -159,6 +167,7 @@ export async function generarPildorasDeTiempo() {
     const turno = ++turnoPildoras;
     contenedorHoras.innerHTML = '';
     inputHora.value = '';
+    contenedorHoras.setAttribute('aria-busy', 'false');
 
     if (!inputFecha || !inputFecha.value) {
         contenedorHoras.innerHTML = `<p class="placeholder-horas">Por favor, selecciona una fecha primero...</p>`;
@@ -168,6 +177,8 @@ export async function generarPildorasDeTiempo() {
     const fechaSeleccionada = inputFecha.value;
     const barberoNombre = inputBarbero ? inputBarbero.value : '';
 
+    contenedorHoras.setAttribute('aria-busy', 'true');
+    contenedorHoras.innerHTML = '<span class="motion-skeleton skeleton-hora" aria-hidden="true"></span>'.repeat(6);
     const horasOcupadas = new Set();
 
     if (estaSupabaseListo() && barberoNombre) {
@@ -206,6 +217,7 @@ export async function generarPildorasDeTiempo() {
 
     // Solo pinta la última llamada (evita píldoras duplicadas por llamadas concurrentes)
     if (turno !== turnoPildoras) return;
+    contenedorHoras.setAttribute('aria-busy', 'false');
     contenedorHoras.innerHTML = '';
 
     const fechaActualStr = new Date().toISOString().split('T')[0];
@@ -296,6 +308,7 @@ function configurarTouchBarberos() {
 // FILTROS DE CATEGORÍA
 // ==========================================
 function configurarFiltros() {
+    document.getElementById('buscar-corte').addEventListener('input', () => aplicarFiltro(document.querySelector('.btn-filtro.activo')?.dataset.categoria || 'todos'));
     botonesFiltro.forEach(boton => {
         boton.addEventListener('click', (e) => {
             botonesFiltro.forEach(b => {
@@ -309,14 +322,18 @@ function configurarFiltros() {
 }
 
 function aplicarFiltro(cat) {
+    const consulta = document.getElementById('buscar-corte').value;
+    const servicios = obtenerServicios();
+    let visibles = 0;
     document.querySelectorAll('.card-servicio').forEach(tarjeta => {
-        const catTarjeta = tarjeta.getAttribute('data-cat');
-        if (cat === 'todos' || cat === catTarjeta) {
-            tarjeta.classList.remove('ocultar-card');
-        } else {
-            tarjeta.classList.add('ocultar-card');
-        }
+        const servicio = servicios.find(s => s.id === tarjeta.dataset.servicioId);
+        const mostrar = servicio && coincideCorte(servicio, cat, consulta);
+        tarjeta.classList.toggle('ocultar-card', !mostrar);
+        if (mostrar) visibles++;
     });
+    document.getElementById('catalogo-vacio').hidden = visibles > 0;
+    document.getElementById('catalogo-resultados').textContent = `${visibles} ${visibles === 1 ? 'corte disponible' : 'cortes disponibles'}`;
+    botonesFiltro.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.categoria === cat)));
 }
 
 // ==========================================
@@ -327,6 +344,16 @@ function configurarMenuMobile() {
         menuToggle.addEventListener('click', () => {
             navLinks.classList.toggle('nav-abierto');
             menuToggle.classList.toggle('menu-activo');
+            menuToggle.setAttribute('aria-expanded', String(navLinks.classList.contains('nav-abierto')));
+        });
+
+        navLinks.addEventListener('keydown', e => {
+            if (e.key === 'Escape' && navLinks.classList.contains('nav-abierto')) {
+                navLinks.classList.remove('nav-abierto');
+                menuToggle.classList.remove('menu-activo');
+                menuToggle.setAttribute('aria-expanded', 'false');
+                menuToggle.focus();
+            }
         });
 
         // Cerrar menú al hacer clic en un enlace
@@ -334,6 +361,7 @@ function configurarMenuMobile() {
             link.addEventListener('click', () => {
                 navLinks.classList.remove('nav-abierto');
                 menuToggle.classList.remove('menu-activo');
+                menuToggle.setAttribute('aria-expanded', 'false');
             });
         });
     }
@@ -355,57 +383,6 @@ function configurarAccesoAdmin() {
     }
 
     if (btnCerrarDash) btnCerrarDash.addEventListener('click', cerrarDashboard);
-}
-
-// ==========================================
-// SCROLL ANIMATIONS (Intersection Observer)
-// ==========================================
-function configurarScrollAnimations() {
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('visible');
-                observer.unobserve(entry.target);
-            }
-        });
-    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
-
-    document.querySelectorAll('.animate-on-scroll').forEach(el => {
-        if (!el.classList.contains('visible')) {
-            observer.observe(el);
-        }
-    });
-}
-
-// ==========================================
-// EFECTOS 3D (solo escritorio)
-// ==========================================
-function configurarEfectos3D() {
-    if (window.matchMedia("(max-width: 768px)").matches) return;
-
-    document.addEventListener('mousemove', (e) => {
-        const tarjetas = document.querySelectorAll('.card-servicio');
-        tarjetas.forEach(card => {
-            const rect = card.getBoundingClientRect();
-            if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom) {
-                const x = e.clientX - rect.left - (rect.width / 2);
-                const y = e.clientY - rect.top - (rect.height / 2);
-                card.style.transform = `translateY(-8px) rotateX(${-y / 20}deg) rotateY(${x / 20}deg)`;
-
-                const tagPrecio = card.querySelector('.precio-tag');
-                if (tagPrecio) tagPrecio.style.transform = 'translateZ(20px)';
-            }
-        });
-    });
-
-    // Reset al salir
-    gridServicios.addEventListener('mouseleave', () => {
-        document.querySelectorAll('.card-servicio').forEach(card => {
-            card.style.transform = '';
-            const tagPrecio = card.querySelector('.precio-tag');
-            if (tagPrecio) tagPrecio.style.transform = '';
-        });
-    });
 }
 
 // ==========================================

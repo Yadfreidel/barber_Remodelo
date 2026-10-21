@@ -212,15 +212,18 @@ export async function actualizarResumen() {
     const totalProductos = productosSeleccionados().reduce((s, p) => s + p.cantidad * p.precio, 0);
 
     if (!servicio || !barbero || !fecha || !hora) {
+        caja.setAttribute?.('aria-busy', 'false');
         ultimaCotizacion = null;
         const elegido = obtenerServicios().find(s => s.nombre === servicio);
         caja.innerHTML = elegido && typeof elegido.precio === 'number' ? `<div class="resumen-linea"><span>${esc(elegido.nombre)}</span><span>${formatoPrecio(elegido.precio)}</span></div><div class="resumen-linea"><span>Duracion</span><span>${Number(elegido.duracion_minutos)} min</span></div><p class="resumen-pendiente">Selecciona profesional, fecha y hora para confirmar el total.</p>` : '<p class="resumen-pendiente">Selecciona un corte.</p>';
         return;
     }
 
+    caja.setAttribute?.('aria-busy', 'true');
     const { data, error } = await supabase.rpc('cotizar_cita', { p_servicio: referenciaServicio(servicio), p_barbero: barbero, p_fecha: fecha, p_hora: hora });
     if (clave !== claveSeleccion()) return; // la selección cambió mientras se cotizaba
 
+    caja.setAttribute?.('aria-busy', 'false');
     if (error) {
         ultimaCotizacion = null;
         caja.innerHTML = `<p class="resumen-pendiente">El total se confirmará al reservar.</p>`;

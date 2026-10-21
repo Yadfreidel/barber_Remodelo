@@ -23,6 +23,8 @@
     <!-- Estilos -->
     <link rel="stylesheet" href="assets/css/styles.css">
     <link rel="stylesheet" href="assets/css/responsive.css">
+    <link rel="stylesheet" href="assets/css/premium.css">
+    <link rel="stylesheet" href="assets/css/motion.css">
 </head>
 <body>
 
@@ -42,7 +44,7 @@
                 <div class="logo-text">BARBER<span>SHOP</span></div>
             </div>
 
-            <button class="menu-toggle" id="menu-toggle" aria-label="Menú">
+            <button class="menu-toggle" id="menu-toggle" aria-controls="nav-links" aria-expanded="false" aria-label="Menú">
                 <span></span>
                 <span></span>
                 <span></span>
@@ -68,8 +70,8 @@
                 <span class="badge-text">BARBERÍA MASTER &bull; EXPERIENCIA VIP</span>
             </div>
 
-            <h1 class="hero-title">ESTILO <span>SUPERIOR</span></h1>
-            <p class="hero-description">Cortes de autor, mantenimientos de barba y combos VIP con la mejor experiencia en RD$.</p>
+            <h1 class="hero-title">Tu estilo.<span>Nuestra firma.</span></h1>
+            <p class="hero-description">Cortes personalizados, detalle a detalle. Encuentra el tuyo y reserva con tu profesional.</p>
 
             <div class="hero-highlights">
                 <span class="highlight-chip"><i class="fas fa-scissors"></i> Cortes de Autor</span>
@@ -77,10 +79,13 @@
                 <span class="highlight-chip"><i class="fas fa-clock"></i> Reserva Online</span>
             </div>
 
+            <div class="hero-acciones">
             <a href="#contacto" class="btn-primary btn-hero-cta">
-                <span>Confirmar Mi Turno</span>
-                <i class="fas fa-arrow-right"></i>
+                <span>Reservar mi cita</span>
+                <i class="fas fa-arrow-right" aria-hidden="true"></i>
             </a>
+            <a href="#catalogo-seccion" class="hero-secundaria">Explorar cortes <span aria-hidden="true">&#8595;</span></a>
+            </div>
         </div>
 
         </div>
@@ -98,11 +103,16 @@
     <main class="booking-layout">
     <div class="booking-main">
     <section id="catalogo-seccion">
-        <h2 class="seccion-titulo animate-on-scroll">Nuestros Servicios</h2>
-        <p class="seccion-subtitulo animate-on-scroll">Seleccionados minuciosamente para el caballero exigente</p>
+        <h2 class="seccion-titulo animate-on-scroll">El corte lleva tu firma.</h2>
+        <p class="seccion-subtitulo animate-on-scroll">Explora los estilos y encuentra tu siguiente corte.</p>
 
         <p class="nota-espera">Precios solo del corte, sin barba, lavado ni extras. Las imagenes son simulaciones con IA.</p>
-        <div class="filtros-contenedor">
+        <p id="catalogo-aviso" class="catalogo-estado" role="alert" hidden>No pudimos actualizar el catalogo. Recarga la pagina para comprobar las tarifas y la disponibilidad.</p>
+        <div class="catalogo-herramientas">
+            <label for="buscar-corte" class="buscador-cortes"><span aria-hidden="true">&#9906;</span><input type="search" id="buscar-corte" placeholder="Busca tu corte" autocomplete="off"><span class="sr-only">Buscar por nombre, descripcion o categoria</span></label>
+            <p id="catalogo-resultados" class="catalogo-resultados" role="status" aria-live="polite">Cargando cortes...</p>
+        </div>
+        <div class="filtros-contenedor" aria-label="Filtrar cortes por categoria">
             <button class="btn-filtro activo" data-categoria="todos">Ver Todo</button>
             <button class="btn-filtro" data-categoria="degradados">Degradados</button>
             <button class="btn-filtro" data-categoria="tapers">Tapers</button>
@@ -113,7 +123,8 @@
             <button class="btn-filtro" data-categoria="diseños">Diseños</button>
         </div>
 
-        <div id="grid-dinamico-servicios" class="grid-servicios"></div>
+        <div id="grid-dinamico-servicios" class="grid-servicios" aria-busy="true"><p class="sr-only" role="status">Cargando el catalogo de cortes...</p><div class="motion-skeleton skeleton-corte" aria-hidden="true"></div><div class="motion-skeleton skeleton-corte" aria-hidden="true"></div><div class="motion-skeleton skeleton-corte" aria-hidden="true"></div></div>
+        <p id="catalogo-vacio" class="catalogo-estado" hidden>No encontramos cortes con esa busqueda. Prueba otro nombre o categoria.</p>
     </section>
 
     <!-- ==========================================
@@ -132,9 +143,11 @@
     <section id="contacto">
         <div class="contenedor-dinamico-contacto">
             <form class="formulario-citas" id="form-reservas">
-                <h2 class="form-titulo">Agenda tu Cita Elite</h2>
+                <h2 class="form-titulo" tabindex="-1">Agenda tu Cita Elite</h2>
                 <p class="form-subtitulo">Completa tus datos para procesar el turno</p>
 
+                <div class="progreso-reserva" id="progreso-reserva" role="progressbar" aria-label="Preparacion de la reserva" aria-valuemin="0" aria-valuemax="4" aria-valuenow="0"><span></span></div>
+                <ol class="pasos-reserva" aria-label="Pasos de la reserva"><li>Corte</li><li>Profesional</li><li>Horario</li><li>Tus datos</li></ol>
                 <input type="hidden" id="barbero-seleccionado" value="">
                 <input type="hidden" id="hora-seleccionada" value="">
 
@@ -227,7 +240,12 @@
         </div>
     </div>
 
+    <dialog id="detalle-corte" class="detalle-corte" aria-labelledby="detalle-titulo">
+        <div class="detalle-barra"><span>EL CORTE, AL DETALLE</span><button type="button" id="detalle-cerrar" aria-label="Cerrar detalles">Cerrar <span aria-hidden="true">&times;</span></button></div>
+        <div id="detalle-contenido" class="detalle-contenido"></div>
+    </dialog>
     <script type="module" src="assets/main.js"></script>
     <script type="module" src="assets/presentation.js"></script>
+    <script type="module" src="assets/motion.js"></script>
 </body>
 </html>

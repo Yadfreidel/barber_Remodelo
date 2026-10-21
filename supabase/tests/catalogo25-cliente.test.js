@@ -1,4 +1,4 @@
-﻿import { test } from 'node:test';
+import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import crypto from 'node:crypto';
@@ -21,7 +21,7 @@ test('cliente: 25 tarifas exactas, persistencia sin duplicados y resumen que ree
         if(fn==='cotizar_cita')return{data:{precio_base:Number(servicio.precio),precio_final:Number(servicio.precio),descuento:0,duracion_minutos:servicio.duracion_minutos,disponible:true},error:null};
         return{data:[],error:null};
     }};
-    globalThis.window = {supabase:{createClient:()=>cliente}};
+    globalThis.window = {location:{hostname:'localhost',origin:'http://localhost:8080'},supabase:{createClient:()=>cliente}};
     const modelo = await import('../../models/serviceModel.js');
     const modulo = await import('../../controllers/modulosController.js');
     for(let vuelta=0;vuelta<2;vuelta++) {

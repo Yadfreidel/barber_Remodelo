@@ -1,3 +1,5 @@
+import { inicializarInicioInmersivo } from './home-view.js';
+import { crearVistaMas } from './more-view.js';
 import { inicializarPasosReserva } from './booking-wizard.js';
 import { obtenerServicios } from '../models/serviceModel.js';
 import { escapar } from './catalogue-ui.js';
@@ -10,19 +12,13 @@ const header = document.createElement('header');
 header.className = 'app-header';
 header.append(hero.querySelector('.navbar'));
 document.body.prepend(header);
-const more = document.createElement('section');
-more.id = 'mas';
-more.innerHTML = `<p class="editorial-eyebrow">BARBERÍA MASTER</p><h1>Un poco más cerca</h1><p class="more-intro">Todo lo que necesitas para tu próxima visita.</p><a class="more-link" href="#contacto"><i class="fas fa-calendar-check"></i><span>Mi cita<small>Consulta tu reserva y su seguimiento</small></span><span>↗</span></a><div id="more-location"></div><div id="more-hours" class="more-panel"></div><div class="more-panel"><h2>Hablemos</h2><a class="more-link" href="https://wa.me/18292466177" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> WhatsApp · (829) 246-6177</a><a class="more-link" href="tel:+18292466177"><i class="fas fa-phone"></i> Llamar a la barbería</a></div><div class="more-panel"><h2>Preguntas frecuentes</h2><details><summary>¿Cómo reservo?</summary><p>Elige tu servicio, profesional y una hora disponible. Completa tus datos y confirma para guardar tu cita.</p></details><details><summary>¿Cómo gestiono mi cita?</summary><p>Conserva el enlace seguro de tu reserva. Desde allí puedes consultar el estado y las opciones disponibles para modificarla.</p></details></div>`;
+const more = crearVistaMas();
 document.querySelector('main').append(more);
-more.querySelector('#more-location').append($('ubicacion-seccion'));
-const admin = $('btn-flotante-admin');
-admin.classList.add('more-link');
-admin.innerHTML = '<i class="fas fa-user-shield"></i> Acceso administrativo';
-more.append(admin);
 const nav = document.createElement('nav');
 nav.className = 'bottom-nav'; nav.setAttribute('aria-label', 'Navegación principal');
 nav.innerHTML = [['inicio','house','Inicio'],['catalogo-seccion','scissors','Catálogo'],['contacto','calendar-days','Reservar'],['mas','ellipsis','Más']].map(([id,icon,label]) => `<a href="#${id}" data-view="${id}"><i class="fas fa-${icon}" aria-hidden="true"></i><span>${label}</span></a>`).join('');
 document.body.append(nav);
+inicializarInicioInmersivo(hero, header);
 const views = [hero, $('catalogo-seccion'), $('contacto'), more];
 const wizard = inicializarPasosReserva(form);
 function activeRoute() {
@@ -65,8 +61,15 @@ function updateHours() {
         text=`${open?'Abierto ahora':'Cerrado ahora'} · ${general.hora_apertura.slice(0,5)} – ${general.hora_cierre.slice(0,5)}`;
         $('business-status').dataset.open=String(open);
     }
-    $('business-status').textContent=text;
-    $('more-hours').innerHTML=`<h2>Horario del negocio</h2><p>${escapar(text)}</p>`;
+    const horarioInicio = $('home-hours');
+    if (horarioInicio) {
+        horarioInicio.textContent = general?.hora_apertura && general?.hora_cierre
+            ? `Hoy: ${general.hora_apertura.slice(0,5)} – ${general.hora_cierre.slice(0,5)}`
+            : 'Horario no disponible';
+        $('home-open-state').textContent = $('business-status').dataset.open === 'true'
+            ? 'Estamos abiertos' : general?.hora_apertura ? 'Estamos cerrados' : 'Consulta con la barbería';
+    } else $('business-status').textContent = text;
+    $('more-hours').innerHTML=`<h2 id="more-hours-title"><i class="fas fa-clock" aria-hidden="true"></i> Horarios</h2><p>${escapar(text)}</p><small>Hora local de la barbería</small>`;
 }
 window.addEventListener('catalogo-listo',categories);
 setInterval(updateHours,60000);

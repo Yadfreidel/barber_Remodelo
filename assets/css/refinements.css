@@ -1,0 +1,163 @@
+﻿/* Principal, reserva y Más comparten superficies y acentos champán. */
+:root {
+    --gold: #d9c39a;
+    --dorado: #d9c39a;
+    --dorado-brillante: #f0dfbc;
+    --dorado-suave: #d9c39a14;
+    --gris-borde: #ffffff16;
+    --negro-tarjeta: #19191b;
+}
+body { background: #0a0a0b; }
+.hero-layout { min-height: 0 !important; grid-template-columns: 1fr 1.08fr !important; }
+.hero-portrait { min-height: 480px !important; overflow: hidden; }
+.hero-portrait img { position: absolute; inset: 0; height: 100%; max-height: none; object-fit: cover; object-position: 50% 30%; }
+.hero-portrait::after { background: linear-gradient(90deg,#0b0b0c 0%,transparent 55%),linear-gradient(0deg,#0b0b0c55,transparent 80%) !important; }
+.hero-content { padding: 46px 34px !important; }
+.hero-content .hero-title { font-size: clamp(40px,4.5vw,60px) !important; margin: 20px 0 !important; }
+.hero-brand-badge .badge-text { font-size: 9px; letter-spacing: 1.6px; color: #ded0b6; }
+.hero-acciones { max-width: 350px; margin-top: 24px; }
+.btn-primary,.btn-submit,.btn-card-reserva { background: linear-gradient(110deg,#ebd9b8,#c6aa7a) !important; border-color: #d9c39a !important; }
+.business-status { margin-block: 16px 24px; padding: 18px 22px; background: #19191b; border-color: #ffffff12; }
+.app-header .navbar { padding-block: 14px; }
+#contacto { max-width: 900px !important; }
+.formulario-citas { background: #141416 !important; padding: 28px !important; gap: 18px !important; }
+.formulario-citas .form-titulo { margin: 0; }
+.formulario-citas .form-subtitulo { margin: -8px 0 0; }
+.formulario-citas .pasos-reserva { margin: 0; font-size: 12px !important; }
+.pasos-reserva li { text-align: center; border-bottom-color: #ffffff16; }
+.formulario-citas .reserva-servicio { background: transparent; border: 0; padding: 0; gap: 12px; }
+.formulario-citas .reserva-servicio .reserva-seleccion { display: none; }
+.formulario-citas .reserva-cambiar { align-self: flex-start; font-size: 12px; padding: 0; border: 0; margin: 0; color: #cbb992; min-height: 44px; }
+.wizard-section-title { font: 600 19px/1.4 Inter,sans-serif; margin: 0; }
+.booking-service-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+.booking-service-card { position: relative; min-width: 0; display: flex; align-items: center; gap: 14px; text-align: left; padding: 10px; border: 1px solid #ffffff16; border-radius: 12px; background: #1d1d20; color: #f2eee5; transition: border-color 160ms, background 160ms; }
+.booking-service-card img,.service-photo-empty { width: 76px; height: 86px; object-fit: cover; border-radius: 7px; flex: 0 0 76px; }
+.service-photo-empty { display: grid; place-items: center; background: #292829; color: var(--gold); }
+.service-choice-info { display: flex; flex-direction: column; gap: 10px; flex: 1; min-width: 0; padding-right: 15px; }
+.service-choice-info strong { font-size: 13px; line-height: 1.45; font-weight: 600; }
+.service-choice-info>span { color: var(--gold); font-size: 13px; font-weight: 600; }
+.service-choice-info small { display: block; color: #ada89f; font-size: 11px; font-weight: 400; margin-top: 6px; }
+.service-choice-check { position: absolute; top: 10px; right: 10px; border-radius: 50%; border: 1px solid #ffffff30; color: transparent; width: 18px; height: 18px; display: grid; place-items: center; font-size: 11px; }
+.booking-service-card[aria-pressed=true] { border-color: var(--gold); background: #27241f; box-shadow: 0 0 0 1px #d9c39a20; }
+.booking-service-card[aria-pressed=true] .service-choice-check { background: var(--gold); color: #15130f; border-color: var(--gold); }
+.formulario-citas .grid-staff { grid-template-columns: repeat(3,minmax(0,1fr)) !important; }
+.formulario-citas .barbero-img-contenedor { height: 175px !important; aspect-ratio: auto; }
+.formulario-citas .card-barbero { padding: 0; }
+.formulario-citas .barbero-info { text-align: left; padding: 16px !important; }
+.formulario-citas .barbero-info p { line-height: 1.6; }
+.formulario-citas .btn-seleccionar-barbero { border-color: #d9c39a66; border-radius: 7px; color: var(--gold); }
+.formulario-citas .barbero-activo .btn-seleccionar-barbero { background: var(--gold); color: #17130e; }
+.formulario-citas .grid-horas { grid-template-columns: repeat(5,minmax(0,1fr)) !important; margin-top: 12px; }
+.formulario-citas .pildora-hora { border-radius: 9px; background: #242427; color: #e6e0d5; border: 1px solid #ffffff1a; }
+.formulario-citas .label-horas { margin-top: 24px; }
+.booking-summary { background: #201f1e; border-color: #d9c39a26; }
+.formulario-citas .reserva-datos { max-width: 640px; width: 100%; align-self: center; }
+.formulario-citas .resumen-precio { border-color: #d9c39a40; border-radius: 10px; }
+.formulario-citas .wizard-actions { margin-top: 4px; }
+.formulario-citas .wizard-actions button { flex: 0 1 50%; }
+.formulario-citas .wizard-actions #step-next:only-child { flex: 1; }
+body[data-view=mas] #mas { display: grid; gap: 14px; }
+#mas .view-heading { margin-bottom: 4px; }
+.view-heading h1 { font: 700 34px/1.2 'Playfair Display',Georgia,serif; margin: 12px 0; letter-spacing: -.6px; }
+.view-heading>p:last-child { font-size: 13px; line-height: 1.6; margin: 0; }
+#mas .more-card { background: #19191b; border: 1px solid #ffffff14; border-radius: 14px; padding: 20px; width: 100%; min-width: 0; margin: 0 !important; box-shadow: none; text-align: left; }
+#mas .more-card h2 { display: flex; align-items: center; gap: 12px; font: 600 16px/1.4 Inter,sans-serif !important; margin: 0 0 16px !important; text-align: left !important; letter-spacing: 0; }
+#mas .more-card h2::after { display: none; }
+#mas .more-card i { color: var(--gold); width: 22px; text-align: center; font-size: 17px; flex: 0 0 22px; }
+#mas .more-row { display: flex; align-items: center; gap: 14px; min-height: 82px; color: #eee8dc; text-decoration: none; font-size: 15px; }
+#mas .more-row>span { flex: 1; }
+#mas .more-row strong { font-size: 14px; font-weight: 600; }
+#mas .more-row small,#mas .contact-card small { display: block; margin-top: 6px; color: #aaa69e; font-size: 11px; line-height: 1.5; }
+#mas .more-row>i:last-child { font-size: 12px; color: #a2957b; }
+#mas #ubicacion-seccion { padding: 20px !important; max-width: none; }
+#mas .ubicacion-tarjeta { background: transparent; border: 0; box-shadow: none; padding: 0; margin: 0; gap: 14px; grid-template-columns: minmax(0,1fr); }
+#mas .ubicacion-mapa { height: 180px; min-height: 180px; grid-row: 1; border-radius: 10px; overflow: hidden; }
+#mas .ubicacion-nombre { font-size: 15px; color: #eee8dc; }
+#mas .ubicacion-direccion,#mas .ubicacion-referencia { font-size: 13px; line-height: 1.65; }
+#mas .ubicacion-pendiente { padding: 12px 0; align-items: flex-start; text-align: left; gap: 0; font-size: 13px; }
+#mas .ubicacion-pendiente>i { display: none; }
+#mas .ubicacion-acciones { margin: 0; gap: 8px; }
+#mas .btn-ubicacion { font-size: 12px; padding: 10px 14px; }
+#mas .ubicacion-aviso:empty { display: none; }
+#more-hours>p { margin: 0 0 8px; font-size: 14px; color: #e2dacb; }
+#more-hours>small { font-size: 11px; color: #aaa69e; }
+#mas .contact-card>a { display: flex; gap: 14px; align-items: center; padding: 14px 0; color: #e8e1d5; text-decoration: none; min-height: 52px; border-top: 1px solid #ffffff12; font-size: 13px; }
+#mas .contact-card>a>span { flex: 1; }
+#mas .contact-card>a>i:last-child { font-size: 12px; color: #a2957b; }
+#mas .faq-card details { border-top: 1px solid #ffffff12; font-size: 13px; }
+#mas .faq-card summary { min-height: 52px; padding: 15px 24px 15px 0; cursor: pointer; color: #ddd7cd; list-style: none; position: relative; line-height: 1.5; }
+#mas .faq-card summary::after { content: '+'; position: absolute; right: 0; color: var(--gold); font-size: 20px; top: 12px; }
+#mas .faq-card details[open]>summary::after { content: '−'; }
+#mas .faq-card details p { font-size: 13px; line-height: 1.8; margin: 0 0 16px; }
+#mas #btn-flotante-admin { position: static !important; width: 100%; height: auto !important; z-index: auto; color: #eee8dc; justify-content: flex-start; border-color: #d9c39a40; min-height: 82px; backdrop-filter: none; }
+#login-admin-modal .login-admin-caja { width: min(100%,440px); border: 1px solid #d9c39a40; border-radius: 16px; padding: 24px; background: #19191b; }
+#login-admin-modal input { min-height: 52px; border: 1px solid #ffffff24; border-radius: 9px; padding: 14px; background: #242427; color: #f6f0e4; }
+#login-admin-error { color: #edb9a9; font-size: 13px; line-height: 1.6; }
+#login-admin-modal .acciones-gestion { display: flex; gap: 12px; }
+#login-admin-modal button { min-height: 46px; }
+.dashboard-header { flex-wrap: wrap; gap: 12px; }
+#btn-admin-salir { margin-left: auto; }
+.dashboard-contenido { min-width: 0; }
+.dashboard-contenido input,.dashboard-contenido select,.dashboard-contenido textarea { min-height: 44px; }
+.dashboard-contenido .admin-tabs { display: flex; overflow-x: auto; }
+.dashboard-contenido .admin-tab { flex-shrink: 0; min-height: 48px; }
+.bottom-nav { border-top-color: #d9c39a26; }
+@media(min-width:701px) { #mas { max-width: 820px; } }
+@media(max-width:700px) {
+    .hero-layout { margin-top: 0 !important; }
+    .hero-portrait { min-height: 0 !important; }
+    .hero-portrait img { object-position: 53% 22%; }
+    .hero-portrait::after { background: linear-gradient(0deg,#0b0b0c 0%,#0b0b0ce8 29%,#0b0b0c44 65%,#0b0b0c11 100%) !important; }
+    .hero-content { padding: 210px 22px 18px !important; }
+    .hero-content .hero-title { font-size: clamp(36px,10.5vw,46px) !important; margin: 15px 0 !important; }
+    .hero-content .hero-description { max-width: none; font-size: 14px !important; }
+    .hero-acciones { max-width: none; margin-top: 22px; }
+    .hero-brand-badge { margin-bottom: 0; }
+    .hero-brand-badge .badge-text { font-size: 8px; letter-spacing: 1px; }
+    .business-status { margin: 0 20px 16px; padding: 16px; }
+    .formulario-citas { padding: 22px 16px !important; gap: 18px !important; }
+    .formulario-citas .form-titulo { font-size: 28px !important; }
+    .booking-service-grid { grid-template-columns: minmax(0,1fr); gap: 10px; }
+    .booking-service-card img,.service-photo-empty { width: 78px; height: 82px; flex-basis: 78px; }
+    .service-choice-info strong { font-size: 14px; }
+    .service-choice-info small { display: inline; margin-left: 12px; font-size: 12px; }
+    .service-choice-info { gap: 9px; }
+    .formulario-citas .grid-staff { grid-template-columns: minmax(0,1fr) !important; }
+    .formulario-citas .card-barbero { display: grid; grid-template-columns: 100px 1fr; }
+    .formulario-citas .barbero-img-contenedor { height: 100% !important; min-height: 160px; border-radius: 0; margin: 0; }
+    .formulario-citas .barbero-img-contenedor img { height: 100%; border-radius: 0; }
+    .formulario-citas .barbero-info { padding: 14px !important; }
+    .formulario-citas .barbero-info p { margin: 6px 0 12px; }
+    .formulario-citas .grid-horas { grid-template-columns: repeat(3,minmax(0,1fr)) !important; }
+    #mas .more-card { padding: 18px; }
+    #mas #ubicacion-seccion { padding: 18px !important; }
+    .view-heading h1 { font-size: 31px; }
+    #mas .more-row { gap: 12px; }
+    .app-header .navbar { padding-block: 10px; min-height: 66px; }
+    .dashboard-header h2 { font-size: 20px; }
+    .modal-dashboard { padding: 10px; }
+}
+@media(prefers-reduced-motion:reduce) { .booking-service-card { transition: none; } }
+.formulario-citas .service-picker-change { color: var(--gold); background: transparent; border: 1px solid #d9c39a44; border-radius: 9px; min-height: 44px; padding: 10px 16px; align-self: flex-start; text-align: left; }
+body .booking-service-card[hidden] { display: none !important; }
+.formulario-citas .reserva-servicio>.reserva-cambiar { display: none !important; }
+#mas .more-card h2 { justify-content: flex-start; width: 100%; }
+.wizard-actions:has(#step-back[hidden]) #step-next { flex-basis: 100%; }
+.service-picker-empty { color: #bbb5a9; font-size: 13px; line-height: 1.6; }
+body .service-picker-empty[hidden] { display: none !important; }
+#mas section.more-card { display: block; }
+.formulario-citas #staff-seccion { background: transparent; align-items: stretch; }
+.formulario-citas #staff-seccion .seccion-titulo { font: 600 20px/1.4 Inter,sans-serif !important; margin: 0 0 8px !important; }
+.formulario-citas #staff-seccion .seccion-subtitulo { margin: 0 0 16px !important; font-size: 13px !important; }
+.formulario-citas .barbero-info { transform: none; }
+.formulario-citas .barbero-info { min-width: 0; }
+.formulario-citas .btn-seleccionar-barbero { padding: 10px 8px; letter-spacing: .4px; font-size: 12px; }
+@media(max-width:700px) {
+    .dashboard-contenido .admin-tabs { display: grid !important; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 6px; }
+    .dashboard-contenido .admin-tab { min-width: 0; padding: 12px 4px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .dashboard-contenido .admin-tab span { display: inline !important; font-size: 11px; }
+    .dashboard-contenido .dashboard-header { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 12px; }
+    .dashboard-contenido .dashboard-header h2 { grid-column: 1; grid-row: 1; font-size: 20px; }
+    #btn-cerrar-dashboard-inner { grid-column: 2; grid-row: 1; }
+    #btn-admin-salir { grid-column: 1/-1; grid-row: 2; margin: 0; justify-self: start; }
+}

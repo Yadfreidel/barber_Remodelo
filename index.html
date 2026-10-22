@@ -27,7 +27,10 @@
     <link rel="stylesheet" href="assets/css/motion.css">
     <link rel="stylesheet" href="assets/css/golden.css">
     <link rel="stylesheet" href="assets/css/ubicacion.css">
+    <link rel="stylesheet" href="assets/css/panel.css">
 <link rel="stylesheet" href="assets/css/app-shell.css">
+<link rel="stylesheet" href="assets/css/refinements.css">
+<link rel="stylesheet" href="assets/css/home-immersive.css">
 </head>
 <body>
 
@@ -68,32 +71,30 @@
                      width="1086" height="1448" fetchpriority="high" decoding="async">
             </figure>
         <div class="hero-content">
-            <div class="hero-brand-badge">
-                <span class="badge-icon"><i class="fas fa-crown"></i></span>
-                <span class="badge-text">BARBERÍA MASTER &bull; EXPERIENCIA VIP</span>
-            </div>
-
-            <h1 class="hero-title">Tu estilo <span>empieza aquí</span></h1>
-            <p class="hero-description">Elige tu corte. Reserva tu momento.</p>
-
-            <div class="hero-highlights">
-                <span class="highlight-chip"><i class="fas fa-scissors"></i> Cortes de Autor</span>
-                <span class="highlight-chip"><i class="fas fa-star"></i> Servicio VIP</span>
-                <span class="highlight-chip"><i class="fas fa-clock"></i> Reserva Online</span>
-            </div>
-
+            <p class="home-eyebrow">PRECISIÓN EN CADA DETALLE</p>
+            <h1 class="hero-title">Más que un corte. <span>Tu estilo.</span></h1>
+            <p class="hero-description" hidden>Elige tu corte. Reserva tu momento.</p>
             <div class="hero-acciones">
             <a href="#contacto" class="btn-primary btn-hero-cta">
-                <span>Reservar cita</span>
+                <span>Reservar ahora</span>
                 <i class="fas fa-arrow-right" aria-hidden="true"></i>
             </a>
-            <a href="#catalogo-seccion" class="hero-secundaria">Explorar catálogo <span aria-hidden="true">&#8595;</span></a>
+            <a href="#catalogo-seccion" class="hero-secundaria">Explorar catálogo <span aria-hidden="true">&#8594;</span></a>
             </div>
         </div>
 
         </div>
 
-        <div id="business-status" class="business-status" role="status">Consultando horario del negocio…</div>
+        <div class="home-info-strip">
+            <div id="business-status" class="business-status" role="status">
+                <i class="far fa-clock" aria-hidden="true"></i>
+                <div><span id="home-hours">Consultando horario…</span><small id="home-open-state">Horario del negocio</small></div>
+            </div>
+            <a class="home-directions" id="home-directions" href="#mas">
+                <i class="fas fa-location-dot" aria-hidden="true"></i>
+                <span>Cómo llegar<small>Ver ubicación</small></span>
+            </a>
+        </div>
         <div class="hero-scroll-indicator">
             <a href="#catalogo-seccion" aria-label="Ver Catálogo">
                 <i class="fas fa-chevron-down"></i>
@@ -162,8 +163,8 @@
 
                 <div class="reserva-principal">
     <section id="staff-seccion">
-        <h2 class="seccion-titulo animate-on-scroll">Elige a tu Profesional</h2>
-        <p class="seccion-subtitulo animate-on-scroll">Cada uno cuenta con un estilo único respaldado por años de experiencia</p>
+        <h2 class="seccion-titulo animate-on-scroll">Elige tu barbero</h2>
+        <p class="seccion-subtitulo animate-on-scroll">Tu estilo, en buenas manos.</p>
         <div id="grid-dinamico-staff" class="grid-staff"></div>
     </section>
                 <div class="calendario-contenedor">

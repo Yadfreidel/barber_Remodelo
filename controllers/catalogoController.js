@@ -1,11 +1,20 @@
 import { CATALOGO_25 } from '../models/catalogo25.js';
 import { supabase, estaSupabaseListo, obtenerClienteAdmin } from '../assets/supabaseClient.js';
-import { obtenerServicios, sincronizarCatalogoServidor } from '../models/serviceModel.js';
+import { obtenerServicios, sincronizarCatalogoServidor, sincronizarCatalogoPublico } from '../models/serviceModel.js';
 
 let sincronizado = false;
 export async function cargarCatalogoServidor() {
     sincronizado = false;
     if (!estaSupabaseListo()) return false;
+    try {
+        // Catálogo administrado desde el panel (servicios activos, orden, fotos y destacados)
+        const publico = await supabase.rpc('catalogo_publico');
+        if (!publico.error && Array.isArray(publico.data) && publico.data.length) {
+            sincronizarCatalogoPublico(publico.data);
+            sincronizado = true;
+            return sincronizado;
+        }
+    } catch { /* migración del panel no aplicada: se usa la lectura anterior */ }
     try {
         const { data, error } = await supabase.from('servicios')
             .select('id,catalogo_id,nombre,precio,duracion_minutos').in('catalogo_id', CATALOGO_25.map(s => s.id));

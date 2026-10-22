@@ -44,9 +44,6 @@ function iniciar(){
     if('IntersectionObserver' in window){
         observador=new IntersectionObserver(entradas=>{for(const e of entradas){if(e.isIntersecting){const hermanos=[...e.target.parentElement.children];entrada(e.target,e.target.matches('.card-servicio,.card-barbero')?(hermanos.indexOf(e.target)%4)*35:0);observador.unobserve(e.target);}}},{threshold:.1});
     }
-    document.querySelectorAll('.hero-brand-badge,.hero-title,.hero-description,.hero-acciones').forEach((e,i)=>entrada(e,i*55));
-    const foto=document.querySelector('.hero-portrait img');
-    if(foto&&!preferencia.matches&&foto.animate)foto.animate([{scale:'1.018'},{scale:'1'}],{duration:tiempo('--motion-photo',450),easing:'ease-out'});
     observar();actualizarProgreso();indicadores();
     window.addEventListener('resize',indicadores,{passive:true});
     document.fonts?.ready.then(indicadores);

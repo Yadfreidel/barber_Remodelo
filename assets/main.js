@@ -6,7 +6,8 @@ import { procesarCita } from '../controllers/appointmentController.js';
 import { verificarAccesoAdmin, cerrarDashboard } from '../controllers/adminController.js';
 import { supabase, estaSupabaseListo } from './supabaseClient.js';
 import { inicializarUbicacionCliente } from '../controllers/ubicacionController.js';
-import { inicializarModulosCliente, horasLibresServidor } from '../controllers/modulosController.js';
+import { cargarBarberosServidor, aplicarNegocioPublico } from '../controllers/publicoController.js';
+import { inicializarModulosCliente, horasLibresServidor, usarReservaServidor } from '../controllers/modulosController.js';
 
 // ==========================================
 // ELEMENTOS DEL DOM
@@ -35,6 +36,8 @@ const HORARIOS_DISPONIBLES = [
 // INICIALIZACIÓN PRINCIPAL
 // ==========================================
 async function inicializarPagina() {
+    configurarAccesoAdmin();
+    configurarMenuMobile();
     if (inputFecha) {
         const hoy = new Date().toISOString().split('T')[0];
         inputFecha.min = hoy;
@@ -47,11 +50,11 @@ async function inicializarPagina() {
     catch { document.getElementById('catalogo-aviso').hidden = false; }
     renderizarServicios();
     window.dispatchEvent(new Event('catalogo-listo'));
+    await cargarBarberosServidor();
     renderizarStaff();
+    aplicarNegocioPublico();
     configurarFiltros();
     conectarDetalles(obtenerServicios);
-    configurarAccesoAdmin();
-    configurarMenuMobile();
     inicializarUbicacionCliente();
 
 
@@ -62,6 +65,7 @@ window.recargarPaginaPrincipal = async function () {
     await cargarCatalogoServidor();
     renderizarServicios();
     window.dispatchEvent(new Event('catalogo-listo'));
+    await cargarBarberosServidor();
     renderizarStaff();
 };
 
@@ -147,13 +151,13 @@ function renderizarStaff() {
         cardBarbero.classList.add('card-barbero', 'animate-on-scroll');
         cardBarbero.innerHTML = `
             <div class="barbero-img-contenedor">
-                <img src="${barbero.imagen}" alt="${barbero.nombre}" loading="lazy"
+                <img src="${escapar(barbero.imagen)}" alt="${escapar(barbero.nombre)}" loading="lazy"
                      onerror="this.src='https://images.unsplash.com/photo-1621605815971-fbc98d665033?q=80&w=600&auto=format&fit=crop'">
             </div>
             <div class="barbero-info">
-                <h4>${barbero.nombre}</h4>
-                <p>${barbero.especialidad}</p>
-                <button type="button" class="btn-seleccionar-barbero" data-nombre="${barbero.nombre}">Seleccionar</button>
+                <h4>${escapar(barbero.nombre)}</h4>
+                <p>${escapar(barbero.especialidad)}</p>
+                <button type="button" class="btn-seleccionar-barbero" data-nombre="${escapar(barbero.nombre)}">Seleccionar</button>
             </div>
         `;
         gridStaff.appendChild(cardBarbero);
@@ -187,7 +191,7 @@ export async function generarPildorasDeTiempo() {
     contenedorHoras.innerHTML = '<span class="motion-skeleton skeleton-hora" aria-hidden="true"></span>'.repeat(6);
     const horasOcupadas = new Set();
 
-    if (estaSupabaseListo() && barberoNombre) {
+    if (estaSupabaseListo() && barberoNombre && !usarReservaServidor()) {
         try {
             // Buscar barbero en Supabase por nombre
             const { data: barberosData } = await supabase

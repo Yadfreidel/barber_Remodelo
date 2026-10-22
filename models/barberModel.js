@@ -34,7 +34,26 @@ function inicializarStaff() {
     return JSON.parse(guardados);
 }
 
+// Barberos activos administrados en el servidor (panel). Si un barbero no tiene foto
+// o especialidad en el servidor, se usan las de este navegador o las predeterminadas.
+let barberosServidor = null;
+export function sincronizarBarberosServidor(filas) {
+    const locales = inicializarStaff();
+    barberosServidor = filas.map(f => {
+        const local = locales.find(l => l.nombre.toLowerCase() === f.nombre.toLowerCase())
+            || staffPorDefecto.find(l => l.nombre.toLowerCase() === f.nombre.toLowerCase());
+        return {
+            id: `srv-${f.id}`,
+            barbero_id: f.id,
+            nombre: f.nombre,
+            especialidad: f.especialidad || local?.especialidad || '',
+            imagen: f.foto_url || local?.imagen || staffPorDefecto[0].imagen
+        };
+    });
+}
+
 export function obtenerBarberos() {
+    if (barberosServidor) return barberosServidor;
     return inicializarStaff();
 }
 
@@ -70,3 +89,7 @@ export function resetearBarberos() {
 
 // Compatibilidad con import antiguo
 export const staffBarberia = obtenerBarberos();
+// Datos guardados solo en este navegador (para importarlos al servidor desde el panel)
+export function obtenerBarberosLocales() {
+    return inicializarStaff();
+}

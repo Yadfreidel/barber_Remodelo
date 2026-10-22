@@ -38,10 +38,10 @@ const activar = (modulo, ajustes = {}) =>
 const reservar = (cli, { nombre = 'Cliente', tel, servicio: serv = 'Corte', barbero, fecha, hora, productos = [], codigo = null, consentimiento = false, precio = null }) =>
     rpc(cli, 'reservar_cita', nombre, 'c@x.com', tel, serv, barbero, fecha, hora, JSON.stringify(productos), codigo, consentimiento, precio);
 
-// Cancelación como la hace hoy el panel admin (update directo con anon key)
+// Cancelación desde el panel con sesión administrativa.
 const cancelarDirecto = async token => {
     const { rows: [t] } = await A.query(`select cita_id from cita_tokens where token = $1`, [token]);
-    await anon.query(`update citas set estado = 'cancelada' where id::text = $1`, [t.cita_id]);
+    await adminCli.query(`update citas set estado = 'cancelada' where id::text = $1`, [t.cita_id]);
 };
 
 const citasVivas = async (barbero, fecha, hora) => {
@@ -66,13 +66,13 @@ test('flujo existente: insert directo con anon key sigue funcionando y conserva 
                                        values ('Ana', '8091234567', 'a@x.com', $1, $2, $3, '10:00', 'pendiente')`, [ids.b, ids.s, fecha]);
     await insertar();
     await assert.rejects(insertar(), e => e.code === '23505');
-    const { rows } = await anon.query(`select id, estado from citas where fecha = $1 and hora = '10:00'`, [fecha]);
+    const { rows } = await adminCli.query(`select id, estado from citas where fecha = $1 and hora = '10:00'`, [fecha]);
     assert.equal(rows.length, 1);
-    await anon.query(`update citas set estado = 'confirmada' where id = $1`, [rows[0].id]);
+    await adminCli.query(`update citas set estado = 'confirmada' where id = $1`, [rows[0].id]);
     const tokens = await A.query(`select count(*)::int n from cita_tokens where cita_id = $1`, [String(rows[0].id)]);
     assert.equal(tokens.rows[0].n, 1);
     // Un horario cancelado vuelve a quedar reservable (unicidad solo entre citas activas)
-    await anon.query(`update citas set estado = 'cancelada' where id = $1`, [rows[0].id]);
+    await adminCli.query(`update citas set estado = 'cancelada' where id = $1`, [rows[0].id]);
     await insertar();
     await assert.rejects(insertar(), e => e.code === '23505' && e.message.includes('citas_barbero_id_fecha_hora'));
 });

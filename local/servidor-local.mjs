@@ -264,6 +264,12 @@ async function manejarAuth(req, res, url, db) {
         return u ? responderJSON(res, req, 200, usuarioPublico(u)) : responderJSON(res, req, 404, { code: 404, msg: 'User not found' });
     }
 
+    // Sin servidor de correo en local: se informa en vez de simular el envío
+    if (url.pathname === '/auth/v1/recover') {
+        return responderJSON(res, req, 501, { code: 501, error_code: 'not_implemented',
+            msg: 'La recuperación por correo no está disponible en el entorno local. Usa: npm run local:usuario -- correo nuevaClave' });
+    }
+
     if (url.pathname === '/auth/v1/logout') {
         res.writeHead(204, cabecerasCors(req));
         return res.end();

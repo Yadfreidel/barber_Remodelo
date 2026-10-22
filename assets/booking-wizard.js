@@ -1,11 +1,13 @@
+import { iniciarSelectorServicios } from './booking-service-picker.js';
 import { obtenerServicios, formatoPrecioServicio } from '../models/serviceModel.js';
 import { escapar } from './catalogue-ui.js';
 
-// Los campos son la fuente de selecci?n compartida con los controladores existentes.
+// Los campos son la fuente de selección compartida con los controladores existentes.
 export function inicializarPasosReserva(form) {
     const $ = id => document.getElementById(id);
     const fieldGroups = [form.querySelector('.reserva-servicio'), $('staff-seccion'), form.querySelector('.calendario-contenedor'), form.querySelector('.reserva-datos')];
     fieldGroups[3].append($('booking-notes'));
+    iniciarSelectorServicios(fieldGroups[0], $('servicio-select'));
     const submit = form.querySelector('[type=submit]');
     const labels = ['Servicio', 'Barbero', 'Horario', 'Tus datos'];
     form.querySelectorAll('.pasos-reserva li').forEach((li,i)=>li.textContent=labels[i]);

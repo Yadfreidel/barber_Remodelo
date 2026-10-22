@@ -38,7 +38,7 @@ test('proyecto nuevo: base inicial + módulos, reserva web y anti double-booking
                                            values ('Ana', '8091234567', 'a@x.com', $1, $2, $3, '10:00', 'pendiente')`, [ids.b, ids.s, fecha]);
         await insertar();
         await assert.rejects(insertar(), e => e.code === '23505' && e.message.includes('citas_barbero_id_fecha_hora'));
-        await anon.query(`update citas set estado = 'cancelada' where fecha = $1`, [fecha]);
+        await admin.query(`update citas set estado = 'cancelada' where fecha = $1`, [fecha]);
         await insertar();
 
         // Reserva por el servidor (módulos)
@@ -46,8 +46,7 @@ test('proyecto nuevo: base inicial + módulos, reserva web y anti double-booking
         assert.equal(Number(r.precio_final), 700);
         assert.ok(r.token);
         // Sin política de borrado, RLS no deja eliminar citas con la anon key
-        const { rowCount } = await anon.query('delete from citas');
-        assert.equal(rowCount, 0, 'anon no puede borrar citas');
+        await assert.rejects(anon.query('delete from citas'), e => e.code === '42501');
     } finally {
         await admin.end().catch(() => {});
         await anon.end().catch(() => {});

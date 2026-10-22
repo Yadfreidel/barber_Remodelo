@@ -75,7 +75,33 @@ Garantías del sistema:
 
 Si el cliente no puede usar los botones, el enlace del mensaje (`?cita=<token>`) permite confirmar, cancelar o reprogramar desde la web. Son tokens aleatorios por cita y nunca se exponen en las lecturas públicas de `citas`.
 
-## 5. Pruebas
+## 5. Panel de gestión
+
+Migración: `migrations/20261023000000_panel_administracion.sql` (aplicar después de las anteriores; en local la aplica `npm run local`).
+
+**Acceso:** desde **Más → Acceso administrativo**, con correo y contraseña de Supabase Auth.
+
+| Rol | Cómo se asigna | Qué puede hacer |
+|---|---|---|
+| Administrador | Fila en `admin_usuarios` (sección 2) | Todo el panel |
+| Barbero | Panel → Barberos → Acceso al panel (la cuenta debe existir en Authentication) | Solo su agenda: confirmar, completar, marcar "no asistió" y anotar |
+
+Los permisos se comprueban en el servidor (funciones `panel_*` y RLS), no solo ocultando botones.
+
+**Recuperación de contraseña:** "¿Olvidaste tu contraseña?" envía el enlace de Supabase Auth. Configura la URL de la web en *Authentication → URL Configuration*. El entorno local no envía correos; ahí usa:
+
+```bash
+npm run local:usuario -- correo@ejemplo.com nuevaClave            # crea la cuenta o cambia la contraseña
+npm run local:usuario -- correo@ejemplo.com nuevaClave --admin    # además la hace administradora
+```
+
+**Qué necesita servidor o integración externa:**
+- Todo el panel guarda en la base (Supabase o el entorno local). Sin base de datos la web pública funciona en modo local, pero el panel no puede abrirse.
+- Fotos de servicios, barberos, logo y portada: se reducen en el navegador y se guardan en la base como imagen comprimida. Para mucho volumen conviene Supabase Storage.
+- WhatsApp: "Abrir WhatsApp con texto" funciona siempre (lo envía la persona). El envío automático requiere el módulo WhatsApp, las credenciales de Meta (sección 4) y el nombre de cada plantilla aprobada. El panel muestra el estado real de cada envío.
+- Pagos: el panel registra cobros hechos fuera de la app (efectivo, tarjeta, transferencia); no cobra en línea.
+
+## 6. Pruebas
 
 ```bash
 npm install

@@ -257,7 +257,34 @@ function inicializarServicios() {
     }
     return servicios;
 }
+// Catálogo administrado en el servidor (panel): cuando está disponible es la fuente de verdad.
+// Los 25 cortes originales conservan foto y textos estáticos mientras no se editen.
+let catalogoPublico = null;
+export function sincronizarCatalogoPublico(filas) {
+    catalogoPublico = filas.map((fila, i) => {
+        const base = fila.catalogo_id ? CATALOGO_25.find(s => s.id === fila.catalogo_id) : null;
+        return {
+            ...(base || {}),
+            id: base?.id || `srv-${fila.id}`,
+            servicio_id: String(fila.id),
+            nombre: fila.nombre,
+            descripcion: fila.descripcion ?? base?.descripcion ?? '',
+            categoria: fila.categoria ?? base?.categoria ?? 'otros',
+            imagen: fila.imagen_url || base?.imagen || '',
+            alt: base?.alt || fila.nombre,
+            precio: Number(fila.precio),
+            duracion_minutos: Number(fila.duracion_minutos),
+            destacado: Boolean(fila.destacado),
+            activo: true,
+            orden: fila.orden ?? base?.orden ?? i + 1,
+            barberos: fila.barberos || null,
+            catalogo_personalizado: !base
+        };
+    });
+}
+
 export function obtenerServicios({ incluirAnteriores = false } = {}) {
+    if (catalogoPublico && !incluirAnteriores) return catalogoPublico;
     const servicios = inicializarServicios();
     return incluirAnteriores ? servicios : servicios.filter(s => idsCatalogo.has(s.id) || s.catalogo_personalizado);
 }

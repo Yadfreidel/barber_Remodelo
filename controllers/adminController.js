@@ -9,6 +9,7 @@ import { obtenerServicios, agregarServicio, actualizarServicio, eliminarServicio
 import { obtenerBarberos, agregarBarbero, actualizarBarbero, eliminarBarbero, resetearBarberos } from '../models/barberModel.js';
 import { supabase, estaSupabaseListo } from '../assets/supabaseClient.js';
 import { cargarConfigModulos } from './modulosController.js';
+import { renderTabUbicacion } from './ubicacionAdminController.js';
 import { renderTabModulos, columnasExtraCitas, accionesCitaAdmin, configurarAccionesCitaAdmin, iniciarSesionModulos } from './modulosAdminController.js';
 
 // Credenciales locales del panel (visibles en el código fuente del navegador).
@@ -115,6 +116,9 @@ function renderizarDashboardCompleto() {
             <button class="admin-tab ${tabActiva === 'barberos' ? 'tab-activa' : ''}" data-tab="barberos">
                 <i class="fas fa-users"></i> <span>Barberos</span>
             </button>
+            <button class="admin-tab ${tabActiva === 'ubicacion' ? 'tab-activa' : ''}" data-tab="ubicacion">
+                <i class="fas fa-map-marked-alt"></i> <span>Ubicación</span>
+            </button>
             <button class="admin-tab ${tabActiva === 'modulos' ? 'tab-activa' : ''}" data-tab="modulos">
                 <i class="fas fa-puzzle-piece"></i> <span>Módulos</span>
             </button>
@@ -140,6 +144,7 @@ function renderizarDashboardCompleto() {
     else if (tabActiva === 'servicios') renderTabServicios(body);
     else if (tabActiva === 'barberos') renderTabBarberos(body);
     else if (tabActiva === 'modulos') renderTabModulos(body, mostrarNotificacion);
+    else if (tabActiva === 'ubicacion') renderTabUbicacion(body, mostrarNotificacion);
 }
 
 // ==========================================

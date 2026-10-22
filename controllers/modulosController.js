@@ -254,7 +254,7 @@ export async function reservarEnServidor(datos, mostrarAlerta) {
     const consentimiento = document.getElementById('consentimiento-marketing');
     const { data, error } = await supabase.rpc('reservar_cita', {
         p_nombre: datos.nombre,
-        p_email: datos.email,
+        p_email: null,
         p_telefono: datos.telefono,
         p_servicio: referenciaServicio(datos.servicio),
         p_barbero: datos.barbero,

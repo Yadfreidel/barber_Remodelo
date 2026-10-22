@@ -15,7 +15,9 @@ async function procesarCitaInterna(evento) {
     const TU_TELEFONO = "8292466177";
 
     const nombre = document.getElementById('nombre').value.trim();
-    const email = document.getElementById('email').value.trim();
+    const email = null; // El contrato RPC admite null; el correo administrativo no cambia.
+    const notas = document.getElementById('notas')?.value.trim() || '';
+    if (!nombre || telefonoClienteInvalido()) { mostrarAlerta('Revisa tu nombre y número de WhatsApp.'); return; }
     const telefonoCliente = document.getElementById('telefono').value.trim();
     const servicio = document.getElementById('servicio-select').value;
     const barbero = document.getElementById('barbero-seleccionado').value;
@@ -147,6 +149,8 @@ async function procesarCitaInterna(evento) {
         }
     }
 
+    if (!citaGuardada) { mostrarAlerta('No se pudo guardar la cita. Comprueba la conexión con el servidor e intenta nuevamente.'); return; }
+
     const fechaFormateada = fecha.split('-').reverse().join('/');
 
     const serviciosActuales = obtenerServicios();
@@ -176,7 +180,8 @@ async function procesarCitaInterna(evento) {
         (reservaServidor ? `💵 *Total:* ${precioMostrado}%0A` : '') + `%0A` +
         `⚡ _Turno enviado desde la web._`;
 
-    const urlWhatsApp = `https://wa.me/${TU_TELEFONO}?text=${mensajeWhatsApp}`;
+    const notasWhatsApp = notas ? `%0A*Notas:* ${encodeURIComponent(notas)}` : '';
+    const urlWhatsApp = `https://wa.me/${TU_TELEFONO}?text=${mensajeWhatsApp}${notasWhatsApp}`;
 
     activarPantallaSeguimiento({
         nombre, servicio, barbero, hora, fecha: fechaFormateada, precio: precioMostrado,
@@ -257,3 +262,4 @@ function restaurarFormulario() {
     formulario.classList.add('reserva-retomada');
     formulario.querySelector('.form-titulo').focus({ preventScroll: true });
 }
+function telefonoClienteInvalido() { return !document.getElementById('telefono').checkValidity(); }

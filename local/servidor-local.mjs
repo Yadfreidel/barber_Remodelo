@@ -168,7 +168,7 @@ async function iniciarPostgrest() {
         env: {
             ...process.env,
             PATH: `${dirLibpq}${path.delimiter}${process.env.PATH}`,
-            PGRST_DB_URI: `postgres://authenticator:${CLAVE_AUTHENTICATOR}@localhost:${PUERTOS.postgres}/postgres`,
+            PGRST_DB_URI: `postgres://authenticator:${CLAVE_AUTHENTICATOR}@127.0.0.1:${PUERTOS.postgres}/postgres`,
             PGRST_DB_SCHEMAS: 'public',
             PGRST_DB_ANON_ROLE: 'anon',
             PGRST_JWT_SECRET: JWT_SECRETO,
@@ -179,7 +179,7 @@ async function iniciarPostgrest() {
     });
     proceso.stderr.on('data', d => console.error('[postgrest]', String(d).trim()));
 
-    for (let i = 0; i < 60; i++) {
+    for (let i = 0; i < 120; i++) {
         try {
             if ((await fetch(`http://127.0.0.1:${PUERTOS.postgrest}/`)).ok) return proceso;
         } catch (e) {
@@ -355,13 +355,22 @@ async function principal() {
 
     const { servidor: servidorPg, db, primeraVez } = await iniciarPostgres();
     console.log(`  PostgreSQL en el puerto ${PUERTOS.postgres}${primeraVez ? ' (base nueva)' : ''}`);
-    await prepararEsquemaSupabase(db);
-    await aplicarMigraciones(db);
-    await asegurarAdmin(db);
-
-    const postgrest = await iniciarPostgrest();
-    const api = await iniciarApi(db);
-    const web = await iniciarWeb();
+    let postgrest, api, web;
+    try {
+        await prepararEsquemaSupabase(db);
+        await aplicarMigraciones(db);
+        await asegurarAdmin(db);
+        postgrest = await iniciarPostgrest();
+        api = await iniciarApi(db);
+        web = await iniciarWeb();
+    } catch (e) {
+        // Cierre ordenado: evita dejar PostgreSQL abierto o la base sin cerrar correctamente
+        if (postgrest) postgrest.kill();
+        if (api) api.close();
+        await db.end().catch(() => {});
+        await servidorPg.stop().catch(() => {});
+        throw e;
+    }
 
     const tareas = setInterval(() => {
         db.query('select public.procesar_tareas_programadas()').catch(e => console.error('[tareas]', e.message));

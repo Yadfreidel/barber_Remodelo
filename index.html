@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover, interactive-widget=resizes-content">
     <meta name="description" content="Barbería Master - Reserva tu cita para cortes premium, barba y SPA facial. Estilo superior en cada visita.">
     <title>Barbería Master | Estilo Superior</title>
 
@@ -25,6 +25,9 @@
     <link rel="stylesheet" href="assets/css/responsive.css">
     <link rel="stylesheet" href="assets/css/premium.css">
     <link rel="stylesheet" href="assets/css/motion.css">
+    <link rel="stylesheet" href="assets/css/golden.css">
+    <link rel="stylesheet" href="assets/css/ubicacion.css">
+<link rel="stylesheet" href="assets/css/app-shell.css">
 </head>
 <body>
 
@@ -53,8 +56,8 @@
             <ul class="nav-links" id="nav-links">
                 <li><a href="#inicio">Inicio</a></li>
                 <li><a href="#catalogo-seccion">Catálogo</a></li>
-                <li><a href="#staff-seccion">Equipo</a></li>
-                <li><a href="#contacto">Citas</a></li>
+                <li><a href="#contacto">Reservar</a></li>
+                <li><a href="#mas">Más</a></li>
             </ul>
         </nav>
 
@@ -70,8 +73,8 @@
                 <span class="badge-text">BARBERÍA MASTER &bull; EXPERIENCIA VIP</span>
             </div>
 
-            <h1 class="hero-title">Tu estilo.<span>Nuestra firma.</span></h1>
-            <p class="hero-description">Cortes personalizados, detalle a detalle. Encuentra el tuyo y reserva con tu profesional.</p>
+            <h1 class="hero-title">Tu estilo <span>empieza aquí</span></h1>
+            <p class="hero-description">Elige tu corte. Reserva tu momento.</p>
 
             <div class="hero-highlights">
                 <span class="highlight-chip"><i class="fas fa-scissors"></i> Cortes de Autor</span>
@@ -81,15 +84,16 @@
 
             <div class="hero-acciones">
             <a href="#contacto" class="btn-primary btn-hero-cta">
-                <span>Reservar mi cita</span>
+                <span>Reservar cita</span>
                 <i class="fas fa-arrow-right" aria-hidden="true"></i>
             </a>
-            <a href="#catalogo-seccion" class="hero-secundaria">Explorar cortes <span aria-hidden="true">&#8595;</span></a>
+            <a href="#catalogo-seccion" class="hero-secundaria">Explorar catálogo <span aria-hidden="true">&#8595;</span></a>
             </div>
         </div>
 
         </div>
 
+        <div id="business-status" class="business-status" role="status">Consultando horario del negocio…</div>
         <div class="hero-scroll-indicator">
             <a href="#catalogo-seccion" aria-label="Ver Catálogo">
                 <i class="fas fa-chevron-down"></i>
@@ -103,7 +107,7 @@
     <main class="booking-layout">
     <div class="booking-main">
     <section id="catalogo-seccion">
-        <h2 class="seccion-titulo animate-on-scroll">El corte lleva tu firma.</h2>
+        <h2 class="seccion-titulo animate-on-scroll">Encuentra tu estilo</h2>
         <p class="seccion-subtitulo animate-on-scroll">Explora los estilos y encuentra tu siguiente corte.</p>
 
         <p class="nota-espera">Precios solo del corte, sin barba, lavado ni extras. Las imagenes son simulaciones con IA.</p>
@@ -130,11 +134,7 @@
     <!-- ==========================================
          STAFF / EQUIPO
          ========================================== -->
-    <section id="staff-seccion">
-        <h2 class="seccion-titulo animate-on-scroll">Elige a tu Profesional</h2>
-        <p class="seccion-subtitulo animate-on-scroll">Cada uno cuenta con un estilo único respaldado por años de experiencia</p>
-        <div id="grid-dinamico-staff" class="grid-staff"></div>
-    </section>
+
 
     <!-- ==========================================
          FORMULARIO DE CITAS
@@ -143,7 +143,7 @@
     <section id="contacto">
         <div class="contenedor-dinamico-contacto">
             <form class="formulario-citas" id="form-reservas">
-                <h2 class="form-titulo" tabindex="-1">Agenda tu Cita Elite</h2>
+                <h2 class="form-titulo" tabindex="-1">Reservar tu cita</h2>
                 <p class="form-subtitulo">Completa tus datos para procesar el turno</p>
 
                 <div class="progreso-reserva" id="progreso-reserva" role="progressbar" aria-label="Preparacion de la reserva" aria-valuemin="0" aria-valuemax="4" aria-valuenow="0"><span></span></div>
@@ -151,26 +151,21 @@
                 <input type="hidden" id="barbero-seleccionado" value="">
                 <input type="hidden" id="hora-seleccionada" value="">
 
-                <div class="form-group">
-                    <input type="text" id="nombre" placeholder=" " required>
-                    <label for="nombre">Nombre Completo</label>
-                </div>
-                <div class="form-group">
-                    <input type="email" id="email" placeholder=" " required>
-                    <label for="email">Correo Electrónico</label>
-                </div>
-                <div class="form-group">
-                    <input type="tel" id="telefono" placeholder=" " required>
-                    <label for="telefono">Teléfono de Contacto</label>
-                </div>
-
-                <div class="form-group form-select-group">
+                <div class="form-group form-select-group reserva-servicio">
+                    <div class="reserva-seleccion" id="reserva-seleccion"><p>Selecciona tu corte del catálogo para ver sus datos aquí.</p></div>
+                    <a class="reserva-cambiar" href="#catalogo-seccion">Cambiar corte <span aria-hidden="true">&#8599;</span></a>
                     <label for="servicio-select" class="label-fijo">Servicio Solicitado:</label>
                     <select id="servicio-select" required>
                         <option value="" disabled selected>-- Elige un corte del catálogo --</option>
                     </select>
                 </div>
 
+                <div class="reserva-principal">
+    <section id="staff-seccion">
+        <h2 class="seccion-titulo animate-on-scroll">Elige a tu Profesional</h2>
+        <p class="seccion-subtitulo animate-on-scroll">Cada uno cuenta con un estilo único respaldado por años de experiencia</p>
+        <div id="grid-dinamico-staff" class="grid-staff"></div>
+    </section>
                 <div class="calendario-contenedor">
                     <label for="fecha" class="label-fijo">1. Selecciona el Día:</label>
                     <input type="date" id="fecha" required>
@@ -181,13 +176,36 @@
                     </div>
                 </div>
 
+                <div class="reserva-datos">
+                    <h3>Tus datos</h3><div id="booking-summary" class="booking-summary"></div>
+                <div class="form-group">
+                    <input type="text" id="nombre" autocomplete="name" minlength="3" placeholder=" " required>
+                    <label for="nombre">Nombre Completo</label>
+                </div>
+                <div class="form-group">
+                    <input type="tel" id="telefono" autocomplete="tel" inputmode="tel" pattern="[+0-9 ()-]{7,20}" placeholder=" " required>
+                    <label for="telefono">Número de WhatsApp</label>
+                </div>
+
+                </div>
+                </div>
+
+                <p id="wizard-error" role="alert"></p>
+                <div class="wizard-actions"><button type="button" id="step-back">Anterior</button><button type="button" id="step-next" class="btn-primary">Continuar <span aria-hidden="true">→</span></button></div>
                 <button type="submit" class="btn-submit">
-                    <i class="fas fa-calendar-check"></i> Confirmar Mi Turno
+                    <i class="fas fa-calendar-check"></i> Confirmar cita
                 </button>
+                <div id="booking-notes" class="form-group"><label for="notas" class="label-fijo">Notas (opcional, se enviarán por WhatsApp)</label><textarea id="notas" rows="3" maxlength="1000" placeholder="¿Algo que debamos saber?"></textarea></div>
             </form>
 
             <div id="pantalla-seguimiento" class="tracking-contenedor ocultar-tracking"></div>
         </div>
+    </section>
+
+    <!-- Ubicación: el mapa (Leaflet + OpenStreetMap) se carga al acercarse a esta sección -->
+    <section id="ubicacion-seccion" data-intervalo-sync="60" aria-labelledby="ubicacion-titulo">
+        <h2 id="ubicacion-titulo" class="seccion-titulo">Encuéntranos</h2>
+        <div class="ubicacion-tarjeta"></div>
     </section>
 
     <!-- ==========================================
@@ -244,6 +262,7 @@
         <div class="detalle-barra"><span>EL CORTE, AL DETALLE</span><button type="button" id="detalle-cerrar" aria-label="Cerrar detalles">Cerrar <span aria-hidden="true">&times;</span></button></div>
         <div id="detalle-contenido" class="detalle-contenido"></div>
     </dialog>
+    <script type="module" src="assets/app-shell.js"></script>
     <script type="module" src="assets/main.js"></script>
     <script type="module" src="assets/presentation.js"></script>
     <script type="module" src="assets/motion.js"></script>

@@ -5,6 +5,7 @@ import { obtenerBarberos } from '../models/barberModel.js';
 import { procesarCita } from '../controllers/appointmentController.js';
 import { verificarAccesoAdmin, cerrarDashboard } from '../controllers/adminController.js';
 import { supabase, estaSupabaseListo } from './supabaseClient.js';
+import { inicializarUbicacionCliente } from '../controllers/ubicacionController.js';
 import { inicializarModulosCliente, horasLibresServidor } from '../controllers/modulosController.js';
 
 // ==========================================
@@ -45,11 +46,13 @@ async function inicializarPagina() {
     try { await inicializarModulosCliente(); }
     catch { document.getElementById('catalogo-aviso').hidden = false; }
     renderizarServicios();
+    window.dispatchEvent(new Event('catalogo-listo'));
     renderizarStaff();
     configurarFiltros();
     conectarDetalles(obtenerServicios);
     configurarAccesoAdmin();
     configurarMenuMobile();
+    inicializarUbicacionCliente();
 
 
 }
@@ -58,6 +61,7 @@ async function inicializarPagina() {
 window.recargarPaginaPrincipal = async function () {
     await cargarCatalogoServidor();
     renderizarServicios();
+    window.dispatchEvent(new Event('catalogo-listo'));
     renderizarStaff();
 };
 
@@ -89,7 +93,7 @@ function renderizarServicios() {
                 ${servicio.duracion_minutos ? `<span class="duracion-servicio">${servicio.duracion_minutos} min</span>` : ''}</div>
                 <div class="corte-acciones">
                     <button type="button" class="btn-ver-detalle" data-detalle="${escapar(servicio.id)}" aria-label="Ver detalles de ${escapar(servicio.nombre)}">Ver detalles <span aria-hidden="true">&#8599;</span></button>
-                    <button type="button" class="btn-card-reserva" data-nombre="${escapar(servicio.nombre)}" aria-pressed="${seleccionAnterior === servicio.nombre}">${seleccionAnterior === servicio.nombre ? '&#10003; Seleccionado' : 'Elegir este corte'}</button>
+                    <button type="button" class="btn-card-reserva" data-nombre="${escapar(servicio.nombre)}" aria-pressed="${seleccionAnterior === servicio.nombre}">${seleccionAnterior === servicio.nombre ? '&#10003; Seleccionado' : 'Elegir y reservar'}</button>
                 </div>
             </div>`;
         gridServicios.appendChild(card);
@@ -113,12 +117,14 @@ function renderizarServicios() {
                 selectServicios.dispatchEvent(new Event('change', { bubbles: true }));
             }
             const staffSection = document.getElementById('staff-seccion');
-            if (staffSection) staffSection.scrollIntoView({ behavior: 'smooth' });
+            window.dispatchEvent(new CustomEvent('reservar-servicio'));
         });
     });
 
     // Reaplicar filtro activo
-    const filtroActivo = document.querySelector('.btn-filtro.activo');
+    const categoriaActual = document.getElementById('category-select')?.value;
+    if (categoriaActual) aplicarFiltro(categoriaActual);
+    const filtroActivo = categoriaActual ? null : document.querySelector('.btn-filtro.activo');
     if (filtroActivo) {
         const cat = filtroActivo.getAttribute('data-categoria');
         aplicarFiltro(cat);
@@ -147,7 +153,7 @@ function renderizarStaff() {
             <div class="barbero-info">
                 <h4>${barbero.nombre}</h4>
                 <p>${barbero.especialidad}</p>
-                <button class="btn-seleccionar-barbero" data-nombre="${barbero.nombre}">Seleccionar</button>
+                <button type="button" class="btn-seleccionar-barbero" data-nombre="${barbero.nombre}">Seleccionar</button>
             </div>
         `;
         gridStaff.appendChild(cardBarbero);
@@ -308,7 +314,8 @@ function configurarTouchBarberos() {
 // FILTROS DE CATEGORÍA
 // ==========================================
 function configurarFiltros() {
-    document.getElementById('buscar-corte').addEventListener('input', () => aplicarFiltro(document.querySelector('.btn-filtro.activo')?.dataset.categoria || 'todos'));
+    document.getElementById('buscar-corte').addEventListener('input', () => aplicarFiltro(document.getElementById('category-select')?.value || 'todos'));
+    document.getElementById('category-select')?.addEventListener('change', event => aplicarFiltro(event.target.value));
     botonesFiltro.forEach(boton => {
         boton.addEventListener('click', (e) => {
             botonesFiltro.forEach(b => {

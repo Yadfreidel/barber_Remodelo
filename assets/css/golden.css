@@ -1,0 +1,118 @@
+﻿/* Presentación negro cálido y champán; mantiene el flujo y los controles existentes. */
+:root {
+    --negro-fondo:#0B0B09; --negro-tarjeta:#171711; --negro-elevado:#202019;
+    --dorado:#DDB96D; --dorado-brillante:#EBD19A; --dorado-suave:rgb(221 185 109 / 12%);
+    --blanco:#F5F1E7; --gris-texto:#BCBBAF; --gris-borde:#36362A;
+    --motion-fast:180ms; --motion-medium:220ms; --motion-enter:240ms; --motion-photo:240ms;
+}
+body,.hero-section { background:var(--negro-fondo); }
+.navbar { background:rgb(11 11 9 / 96%); border-color:var(--gris-borde); padding-inline:max(18px,calc((100% - 1380px)/2)); }
+:where(a,button,input,select,textarea,[tabindex]):focus-visible { outline:2px solid var(--dorado); outline-offset:4px; }
+.booking-layout { display:block; width:min(1440px,100%); margin-inline:auto; padding:16px clamp(16px,3vw,40px) 48px; }
+.booking-main { width:100%; }
+.hero-layout { max-width:1440px; min-height:360px; padding:90px 22px 32px; }
+.hero-portrait::after { background:linear-gradient(0deg,#0B0B09,transparent 75%),linear-gradient(90deg,rgb(11 11 9 / 70%),transparent 85%); }
+.hero-content .hero-title { font-size:clamp(2.3rem,9vw,3.6rem); }
+.hero-acciones { gap:16px; }
+.btn-primary.btn-hero-cta { border-radius:9px; background:var(--dorado); }
+.hero-secundaria { border-color:var(--dorado); }
+#catalogo-seccion,#contacto { padding-block:28px; }
+.seccion-titulo { font-size:clamp(1.45rem,3vw,2.1rem); }
+.catalogo-herramientas { margin-top:22px; gap:12px; }
+.buscador-cortes { background:var(--negro-tarjeta); border-radius:10px; }
+.filtros-contenedor { gap:8px; }
+.btn-filtro { border-radius:24px; min-height:44px; }
+.btn-filtro.activo { background:var(--dorado); color:#17140C; }
+.grid-servicios { grid-template-columns:minmax(0,1fr); gap:16px; padding:3px; }
+.card-servicio,.card-servicio:has(.duracion-servicio) { border-radius:12px; background:var(--negro-tarjeta); border-color:var(--gris-borde); }
+.card-servicio:has(.btn-card-reserva[aria-pressed='true']) { border-color:var(--dorado); box-shadow:0 0 0 2px var(--dorado-suave); }
+.foto-corte { background:#20201B; }
+.foto-corte img { object-fit:contain; }
+.card-info { padding:16px; gap:8px; }
+.card-info h3 { font:650 1.05rem/1.3 var(--font-body); overflow-wrap:anywhere; }
+.card-info .corte-descripcion { font-size:.84rem; line-height:1.5; margin:0; }
+.card-info .editorial-eyebrow { font-size:.6rem; letter-spacing:1px; }
+.corte-tarifa { gap:8px; padding-top:8px; }
+.precio-tag { color:var(--dorado); font-size:1rem; }
+.duracion-servicio { color:var(--gris-texto); }
+.corte-acciones { gap:6px; }
+.btn-card-reserva { min-height:44px; border-radius:8px; color:var(--dorado); border-color:#75633E; padding:10px 8px; line-height:1.4; }
+.btn-card-reserva:hover,.btn-card-reserva[aria-pressed='true'] { background:var(--dorado); color:#17140C; }
+.btn-ver-detalle { color:var(--blanco); }
+.formulario-citas { display:flex; flex-flow:row wrap; align-items:flex-start; gap:22px; padding:20px; border-radius:16px; background:var(--negro-tarjeta); border-color:var(--gris-borde); }
+.formulario-citas > :is(.form-titulo,.form-subtitulo,.progreso-reserva,.pasos-reserva,.reserva-servicio) { flex:0 0 100%; width:100%; min-width:0; margin:0; }
+.form-titulo { font-size:1.65rem; }
+.form-subtitulo { color:var(--gris-texto); }
+.reserva-servicio { display:flex; flex-direction:column; gap:12px; padding:16px; background:#11110D; border:1px solid var(--gris-borde); border-radius:10px; }
+.reserva-seleccion { display:flex; align-items:center; gap:14px; min-width:0; }
+.reserva-seleccion > .foto-corte { flex:0 0 82px; width:82px; border-radius:8px; overflow:hidden; }
+.reserva-seleccion > div { min-width:0; }
+.reserva-seleccion h3 { font-size:1rem; line-height:1.4; margin:0 0 5px; overflow-wrap:anywhere; }
+.reserva-seleccion p { font-size:.8rem; line-height:1.5; color:var(--gris-texto); margin:0; overflow-wrap:anywhere; }
+.reserva-seleccion .reserva-seleccion-tarifa { color:var(--dorado); margin-bottom:4px; }
+.reserva-seleccion-tarifa span { color:var(--gris-texto); }
+.reserva-cambiar { display:inline-flex; align-items:center; justify-content:center; gap:12px; align-self:flex-end; min-height:44px; padding:8px 14px; border:1px solid #75633E; color:var(--dorado); border-radius:8px; text-decoration:none; font-size:.85rem; }
+.reserva-principal { flex:1 1 100%; min-width:0; display:flex; flex-direction:column; gap:24px; }
+#form-reservas #staff-seccion { padding:0; }
+#staff-seccion .seccion-titulo { font:650 1.1rem/1.4 var(--font-body); }
+#staff-seccion .seccion-subtitulo { font-size:.8rem; }
+.grid-staff { grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.card-barbero { border:1px solid var(--gris-borde); border-radius:10px; background:#11110D; overflow:hidden; padding:8px; }
+.barbero-img-contenedor { width:100%; height:auto; aspect-ratio:1; border-radius:7px; border:0; }
+.barbero-img-contenedor img { object-position:50% 20%; }
+.barbero-info { padding:10px 0 0; }
+.barbero-info h4 { color:var(--blanco); font-size:.88rem; }
+.barbero-info p { color:var(--gris-texto); font-size:.75rem; }
+.btn-seleccionar-barbero { min-height:44px; border-color:var(--gris-borde); color:var(--blanco); font-size:.75rem; }
+.card-barbero.barbero-activo { border:1px solid var(--dorado); box-shadow:0 0 0 1px var(--dorado-suave); }
+.barbero-activo .barbero-img-contenedor { border:0; box-shadow:none; }
+.card-barbero.barbero-activo .btn-seleccionar-barbero { background:var(--dorado); color:#17140C; }
+.reserva-datos { display:grid; gap:20px; min-width:0; }
+.reserva-datos h3 { font-size:1.1rem; margin:0; }
+.reserva-datos .form-group { margin:0; width:100%; }
+.form-group input,.form-group select,.form-group textarea,.calendario-contenedor input[type='date'] { background:#11110D; border-color:#4B4B3B; border-radius:8px; color:var(--blanco); width:100%; }
+.form-group label,.label-fijo { color:var(--gris-texto); }
+.grid-horas { grid-template-columns:repeat(auto-fit,minmax(min(100%,85px),1fr)); gap:8px; }
+.placeholder-horas { grid-column:1/-1; line-height:1.5; }
+.pildora-hora { border-radius:8px; background:#11110D; border-color:#4B4B3B; }
+.pildora-hora.pildora-activa { background:var(--dorado); color:#17140C; border-color:var(--dorado); }
+#modulos-reserva { flex:1 1 100%; min-width:0; width:100%; margin:0; }
+.resumen-precio { border:1px solid #75633E; background:#11110D; border-radius:10px; }
+.btn-submit { flex:0 0 100%; width:100%; min-height:48px; margin:0; border-radius:9px; background:var(--dorado); color:#17140C; white-space:normal; }
+.btn-submit:hover { background:var(--dorado-brillante); }
+.detalle-corte,.detalle-barra { background:var(--negro-tarjeta); }
+.detalle-corte { border-radius:14px; border-color:#75633E; }
+.btn-detalle-elegir { border-radius:8px; background:var(--dorado); }
+.tracking-contenedor,.login-admin-caja,.dashboard-contenido { background:var(--negro-tarjeta); border-color:var(--gris-borde); }
+.site-footer { background:#10100C; border-color:var(--gris-borde); }
+.footer-contenido { max-width:1360px; }
+@media(min-width:380px) {
+    .grid-servicios { grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+    .card-info { padding:12px; }
+    .card-info h3 { font-size:.95rem; }
+    .card-info .corte-descripcion { font-size:.78rem; }
+}
+@media(min-width:480px) { .grid-staff { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+@media(min-width:768px) {
+    .grid-servicios { grid-template-columns:repeat(3,minmax(0,1fr)); gap:20px; }
+    .card-info { padding:18px; }
+    .card-info h3 { font-size:1.08rem; }
+    .card-info .corte-descripcion { font-size:.84rem; }
+    .hero-layout { min-height:460px; padding:64px 40px; }
+    .hero-content .hero-title { font-size:clamp(3rem,5vw,4.6rem); }
+    .formulario-citas { padding:30px; gap:26px; }
+    .reserva-seleccion > .foto-corte { flex-basis:96px; width:96px; }
+    .reserva-datos { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .reserva-datos h3,.reserva-datos .form-group:last-child { grid-column:1/-1; }
+}
+@media(min-width:1024px) {
+    .reserva-principal { flex:1 1 52%; }
+    #modulos-reserva { flex:0 1 340px; width:340px; }
+    .btn-submit { flex:0 1 340px; width:340px; margin-left:auto; }
+}
+@media(min-width:1150px) { .grid-servicios { grid-template-columns:repeat(4,minmax(0,1fr)); } }
+@media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; } }
+.formulario-citas > :is(.alerta-cita,.bloque-lista-espera) { flex:0 0 100%; width:100%; min-width:0; }
+.reserva-cambiar { transition:background-color var(--motion-fast),border-color var(--motion-fast),color var(--motion-fast); }
+.reserva-cambiar:hover { background:var(--dorado-suave); border-color:var(--dorado); }
+@media(prefers-reduced-motion:reduce) { .reserva-cambiar { transition:none; } }

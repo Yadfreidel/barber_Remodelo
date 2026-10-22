@@ -1,0 +1,300 @@
+/* ==========================================
+   UBICACIÓN: tarjeta "Encuéntranos" y editor del panel admin
+   ========================================== */
+#ubicacion-seccion {
+    padding: 40px clamp(16px, 4vw, 40px) 56px;
+    max-width: 1180px;
+    margin: 0 auto;
+}
+
+.ubicacion-tarjeta {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+    margin-top: 22px;
+    padding: 18px;
+    background: var(--negro-tarjeta);
+    border: 1px solid var(--gris-borde);
+    border-radius: 14px;
+    box-shadow: 0 0 0 1px var(--dorado-suave) inset;
+}
+
+.ubicacion-tarjeta--pendiente {
+    place-items: center;
+}
+
+.ubicacion-pendiente,
+.ubicacion-cargando {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 28px 12px;
+    color: var(--gris-texto);
+    text-align: center;
+}
+
+.ubicacion-pendiente i {
+    font-size: 1.8rem;
+    color: var(--dorado);
+}
+
+.ubicacion-info {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+}
+
+.ubicacion-nombre {
+    margin: 0;
+    color: var(--dorado-brillante);
+    font-size: 1.3rem;
+}
+
+.ubicacion-direccion,
+.ubicacion-referencia {
+    margin: 0;
+    color: var(--blanco);
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.ubicacion-referencia {
+    color: var(--gris-texto);
+    font-size: 0.92rem;
+}
+
+.ubicacion-direccion i,
+.ubicacion-referencia i {
+    color: var(--dorado);
+    margin-right: 6px;
+}
+
+.ubicacion-acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 6px;
+}
+
+.btn-ubicacion {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 10px 16px;
+    border: 1px solid var(--dorado);
+    border-radius: 10px;
+    background: transparent;
+    color: var(--dorado-brillante);
+    font: 600 0.92rem var(--font-body, inherit);
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.btn-ubicacion:hover {
+    background: var(--dorado-suave);
+}
+
+.btn-ubicacion-principal {
+    background: var(--dorado);
+    color: #17140c;
+}
+
+.btn-ubicacion-principal:hover {
+    background: var(--dorado-brillante);
+}
+
+.btn-ubicacion:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.ubicacion-aviso {
+    min-height: 1.2em;
+    margin: 0;
+    color: var(--dorado-brillante);
+    font-size: 0.85rem;
+}
+
+/* Mapa: aísla las capas de Leaflet para que no pasen sobre la barra de navegación */
+.ubicacion-mapa {
+    position: relative;
+    z-index: 0;
+    isolation: isolate;
+    min-height: 240px;
+    height: 260px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--gris-borde);
+    background: var(--negro-elevado);
+}
+
+.ubicacion-mapa.leaflet-container .leaflet-control-attribution {
+    background: rgb(11 11 9 / 82%);
+    color: var(--gris-texto);
+    font-size: 11px;
+}
+
+.ubicacion-mapa.leaflet-container .leaflet-control-attribution a {
+    color: var(--dorado-brillante);
+}
+
+.ubicacion-mapa .leaflet-bar a {
+    background: var(--negro-tarjeta);
+    color: var(--dorado-brillante);
+    border-color: var(--gris-borde);
+}
+
+.ubicacion-mapa-estado,
+.ubicacion-mapa-error {
+    margin: 0;
+    padding: 16px;
+    color: var(--gris-texto);
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.ubicacion-mapa-error {
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    top: 8px;
+    z-index: 1000;
+    padding: 8px;
+    border-radius: 8px;
+    background: rgb(11 11 9 / 88%);
+}
+
+/* Marcador dorado */
+.pin-barberia {
+    background: none;
+    border: none;
+}
+
+.pin-barberia-cabeza {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    background: var(--dorado);
+    border: 2px solid #17140c;
+    box-shadow: 0 6px 14px rgb(0 0 0 / 45%);
+}
+
+.pin-barberia-cabeza i {
+    transform: rotate(45deg);
+    color: #17140c;
+    font-size: 15px;
+}
+
+/* Panel admin */
+.ubicacion-modo-demo {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    margin-bottom: 14px;
+    padding: 12px 14px;
+    border: 1px solid var(--dorado);
+    border-radius: 10px;
+    background: var(--dorado-suave);
+    color: var(--blanco);
+    font-size: 0.88rem;
+}
+
+.ubicacion-modo-demo i {
+    color: var(--dorado);
+    margin-top: 3px;
+}
+
+.ubicacion-modo-demo p {
+    margin: 0;
+}
+
+.ubicacion-admin {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+}
+
+.ubicacion-admin-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    color: var(--gris-texto);
+    font-size: 0.85rem;
+}
+
+.ubicacion-admin-form textarea {
+    resize: vertical;
+}
+
+.ubicacion-coordenadas {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.ubicacion-error {
+    min-height: 1em;
+    color: var(--rojo, #e74c3c);
+    font-size: 0.78rem;
+}
+
+.ubicacion-estado-gps {
+    margin: 0;
+    color: var(--dorado-brillante);
+    font-size: 0.85rem;
+}
+
+.ubicacion-mapa-admin {
+    height: 320px;
+}
+
+.ubicacion-admin-mapa-zona {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+}
+
+.ubicacion-preview-titulo {
+    margin: 8px 0 0;
+    color: var(--dorado-brillante);
+}
+
+.ubicacion-preview {
+    margin-top: 0;
+}
+
+@media (min-width: 860px) {
+    .ubicacion-tarjeta:not(.ubicacion-tarjeta--pendiente):not(.ubicacion-preview) {
+        grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+        align-items: stretch;
+        padding: 24px;
+    }
+
+    #ubicacion-seccion .ubicacion-mapa {
+        height: 340px;
+    }
+
+    .ubicacion-admin {
+        grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    }
+}
+
+@media (max-width: 420px) {
+    .ubicacion-acciones .btn-ubicacion {
+        flex: 1 1 100%;
+    }
+
+    .ubicacion-coordenadas {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}

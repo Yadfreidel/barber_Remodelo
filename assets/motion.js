@@ -18,11 +18,12 @@ function actualizarProgreso(){
     const barra=document.getElementById('progreso-reserva');
     if(!barra)return;
     const valor=id=>document.getElementById(id)?.value.trim()||'';
-    const datosValidos=['nombre','email','telefono'].every(id=>{const campo=document.getElementById(id);return campo?.value.trim()&&campo.validity.valid;});
+    const datosValidos=['nombre','telefono'].every(id=>{const campo=document.getElementById(id);return campo?.value.trim()&&campo.validity.valid;});
     const progreso=progresoReserva({servicio:valor('servicio-select'),profesional:valor('barbero-seleccionado'),fecha:valor('fecha'),hora:valor('hora-seleccionada'),datosValidos});
     barra.setAttribute('aria-valuenow',String(progreso.completos));
     barra.setAttribute('aria-valuetext',`${progreso.completos} de 4 pasos preparados`);
     barra.style.setProperty('--progreso',progreso.fraccion);
+    if (document.getElementById('form-reservas')?.dataset.step !== undefined) return;
     document.querySelectorAll('.pasos-reserva li').forEach((paso,i)=>{
         paso.dataset.completo=String(progreso.pasos[i]);
         if(i===progreso.completos)paso.setAttribute('aria-current','step');else paso.removeAttribute('aria-current');

@@ -31,9 +31,11 @@ async function procesarCitaInterna(evento) {
 
     let reservaServidor = null;
     let citaGuardada = false;
+    // Sin base de datos (web publicada sin servidor): la cita se envía como solicitud por WhatsApp
+    const modoSolicitud = !estaSupabaseListo();
 
     // Los cortes importados siempre usan la validacion de duracion y precio del servidor.
-    if (esCorteCatalogo(servicio)) {
+    if (esCorteCatalogo(servicio) && !modoSolicitud) {
         if (!estaSupabaseListo() || !catalogoServidorListo() || !usarReservaServidor()) {
             mostrarAlerta('No se pudo validar el catalogo. Recarga la pagina o contacta con la barberia.');
             return;
@@ -149,7 +151,7 @@ async function procesarCitaInterna(evento) {
         }
     }
 
-    if (!citaGuardada) { mostrarAlerta('No se pudo guardar la cita. Comprueba la conexión con el servidor e intenta nuevamente.'); return; }
+    if (!citaGuardada && !modoSolicitud) { mostrarAlerta('No se pudo guardar la cita. Comprueba la conexión con el servidor e intenta nuevamente.'); return; }
 
     const fechaFormateada = fecha.split('-').reverse().join('/');
 
@@ -169,7 +171,7 @@ async function procesarCitaInterna(evento) {
     });
 
     const mensajeWhatsApp =
-        `🔥 *NUEVA RESERVA PREMIUM* 🔥%0A%0A` +
+        (modoSolicitud ? `📝 *SOLICITUD DE CITA* (pendiente de confirmar)%0A%0A` : `🔥 *NUEVA RESERVA PREMIUM* 🔥%0A%0A`) +
         `👤 *Cliente:* ${nombre}%0A` +
         `📞 *Teléfono:* ${telefonoCliente}%0A%0A` +
         `💈 *Servicio:* ${servicio}%0A` +
@@ -177,17 +179,22 @@ async function procesarCitaInterna(evento) {
         `📅 *Fecha:* ${fechaFormateada}%0A` +
         `⏰ *Hora:* *${hora} hrs*%0A` +
         (totalProductos > 0 ? `🛍️ *Productos para retiro:* ${formatoPrecio(totalProductos)}%0A` : '') +
-        (reservaServidor ? `💵 *Total:* ${precioMostrado}%0A` : '') + `%0A` +
+        (reservaServidor ? `💵 *Total:* ${precioMostrado}%0A` : '') +
+        (modoSolicitud ? `💵 *Precio estimado:* ${precioMostrado}%0A` : '') + `%0A` +
         `⚡ _Turno enviado desde la web._`;
 
-    const notasWhatsApp = notas ? `%0A*Notas:* ${encodeURIComponent(notas)}` : '';
-    const urlWhatsApp = `https://wa.me/${TU_TELEFONO}?text=${mensajeWhatsApp}${notasWhatsApp}`;
+    // Texto completo codificado (conserva emojis y acentos) y número con código de país (+1 para RD)
+    const textoWhatsApp = mensajeWhatsApp.replace(/%0A/g, '\n') + (notas ? `\n*Notas:* ${notas}` : '');
+    const numeroWhatsApp = TU_TELEFONO.length === 10 ? `1${TU_TELEFONO}` : TU_TELEFONO;
+    // api.whatsapp.com conserva los emojis (la redirección de wa.me los reemplaza por "�")
+    const urlWhatsApp = `https://api.whatsapp.com/send?phone=${numeroWhatsApp}&text=${encodeURIComponent(textoWhatsApp)}`;
 
     activarPantallaSeguimiento({
         nombre, servicio, barbero, hora, fecha: fechaFormateada, precio: precioMostrado,
         guardada: citaGuardada, estado: reservaServidor?.estado || 'pendiente',
         token: reservaServidor ? reservaServidor.token : null,
-        avisos: reservaServidor ? reservaServidor.avisos : []
+        avisos: reservaServidor ? reservaServidor.avisos : [],
+        enlaceWhatsApp: modoSolicitud ? urlWhatsApp : null
     });
 
     setTimeout(() => {

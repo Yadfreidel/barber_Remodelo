@@ -26,6 +26,7 @@ export function progresoReserva(campos) {
     return {pasos,completos,fraccion:completos/4};
 }
 export function estadoSeguimiento(datos) {
+    if(!datos.guardada&&datos.enlaceWhatsApp)return {titulo:'Envía tu solicitud',etiqueta:'Pendiente de confirmar por WhatsApp',paso:0,confirmada:false};
     if(!datos.guardada)return {titulo:'Solicitud preparada',etiqueta:'Sin confirmación de guardado',paso:0,confirmada:false};
     if(datos.estado==='cancelada')return {titulo:'Cita cancelada',etiqueta:'Cancelada',paso:0,confirmada:false};
     if(datos.completada)return {titulo:'Visita completada',etiqueta:'Completada',paso:3,confirmada:true};

@@ -7,6 +7,7 @@ export function htmlSeguimiento(datos) {
         ${estado.confirmada ? '<div class="check-confirmacion" aria-hidden="true"><svg viewBox="0 0 48 48"><path d="M12 25l8 8 17-20"/></svg></div>' : '<div class="estado-solicitud" aria-hidden="true">&#9671;</div>'}
         <h3 tabindex="-1">${estado.titulo}</h3><p>${esc(datos.nombre)}, ${estado.etiqueta.toLocaleLowerCase('es')}.</p>
         </div>
+        ${datos.enlaceWhatsApp?`<div class="solicitud-whatsapp"><p>Tu cita aún no está reservada: envía la solicitud por WhatsApp y la barbería te confirmará el horario.</p><a class="enlace-whatsapp" href="${esc(datos.enlaceWhatsApp)}" target="_blank" rel="noopener"><i class="fab fa-whatsapp" aria-hidden="true"></i> Enviar solicitud por WhatsApp</a></div>`:''}
         <div class="resumen-ticket"><div>${esc(datos.servicio)}</div><div>Profesional: ${esc(datos.barbero)}</div><div>${esc(datos.fecha)} · ${esc(datos.hora)}</div></div>
         <ol class="seguimiento-real" aria-label="Estado de la cita">${pasos.map((paso,i)=>`<li data-completo="${i<estado.paso}" ${i===Math.max(0,estado.paso-1)?'aria-current="step"':''}>${paso}</li>`).join('')}</ol>
         <div class="seguimiento-progreso" style="--progreso:${estado.paso/3}" aria-hidden="true"><span></span></div>

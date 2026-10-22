@@ -344,3 +344,8 @@ body:has(.modal-dashboard:not(.ocultar-dashboard)) .admin-notificacion {
     z-index: 8000;
     pointer-events: none; /* solo informa: no debe tapar botones */
 }
+
+/* Web sin base de datos: la cita se envía como solicitud por WhatsApp */
+.solicitud-whatsapp { margin: 14px 0; padding: 14px; border: 1px solid #25d366; border-radius: 12px; background: rgb(37 211 102 / 10%); }
+.solicitud-whatsapp p { margin: 0 0 10px; color: var(--blanco); font-size: 0.92rem; line-height: 1.45; }
+.enlace-whatsapp { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; border-radius: 10px; background: #25d366; color: #062b15; font-weight: 800; text-decoration: none; }

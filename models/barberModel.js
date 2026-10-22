@@ -9,21 +9,24 @@ const staffPorDefecto = [
         id: "barbero-1",
         nombre: "Isaac Garcia",
         especialidad: "Especialista en degradados y cortes modernos",
-        imagen: "https://images.unsplash.com/photo-1621605815971-fbc98d665033?q=80&w=600&auto=format&fit=crop"
+        imagen: "assets/imagenes/barberos/isaac-garcia.webp"
     },
     {
         id: "barbero-2",
         nombre: "Yadfreidel Victoria",
         especialidad: "Experto en cortes clásicos, tijera y arreglo de barba tradicional",
-        imagen: "https://images.unsplash.com/photo-1517832606589-7a598b389279?q=80&w=600&auto=format&fit=crop"
+        imagen: "assets/imagenes/barberos/yadfreidel-victoria.webp"
     },
     {
         id: "barbero-3",
         nombre: "Acxel Rosario",
         especialidad: "Especialista en afeitado tradicional con navaja libre y SPA facial",
-        imagen: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=600&auto=format&fit=crop"
+        imagen: "assets/imagenes/barberos/acxel-rosario.webp"
     }
 ];
+
+// Fotos de stock anteriores: se reemplazan por las fotos propias de cada barbero
+const FOTOS_ANTERIORES = /^https:\/\/images\.unsplash\.com\//;
 
 function inicializarStaff() {
     const guardados = localStorage.getItem(STORAGE_KEY);
@@ -31,7 +34,12 @@ function inicializarStaff() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(staffPorDefecto));
         return [...staffPorDefecto];
     }
-    return JSON.parse(guardados);
+    const staff = JSON.parse(guardados).map(b => {
+        const original = staffPorDefecto.find(d => d.nombre === b.nombre);
+        return original && FOTOS_ANTERIORES.test(b.imagen || '') ? { ...b, imagen: original.imagen } : b;
+    });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(staff));
+    return staff;
 }
 
 // Barberos activos administrados en el servidor (panel). Si un barbero no tiene foto

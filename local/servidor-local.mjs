@@ -20,7 +20,8 @@ import { fileURLToPath } from 'node:url';
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DIR_DATOS = path.join(RAIZ, 'local', '.datos-pg');
 const DIR_BIN = path.join(RAIZ, 'local', '.bin');
-const DIR_MIGRACIONES = path.join(RAIZ, 'supabase', 'migrations');
+const BASE_BARBERIA = path.join(RAIZ, 'supabase', 'base_completa.sql');
+const MIGRAR_DESDE_PUBLIC = path.join(RAIZ, 'supabase', 'barberia_migrar_desde_public.sql');
 
 const PUERTOS = { web: 8080, api: 54321, postgres: 54322, postgrest: 54323 };
 const VERSION_POSTGREST = 'v16.4';
@@ -114,22 +115,30 @@ async function prepararEsquemaSupabase(db) {
     `);
 }
 
-async function aplicarMigraciones(db) {
-    const { rows } = await db.query('select archivo from public.migraciones_locales');
-    const aplicadas = new Set(rows.map(r => r.archivo));
-    for (const archivo of fs.readdirSync(DIR_MIGRACIONES).filter(f => f.endsWith('.sql')).sort()) {
-        if (aplicadas.has(archivo)) continue;
-        await db.query('begin');
-        try {
-            await db.query(fs.readFileSync(path.join(DIR_MIGRACIONES, archivo), 'utf8'));
-            await db.query('insert into public.migraciones_locales (archivo) values ($1)', [archivo]);
-            await db.query('commit');
-            console.log(`  migración aplicada: ${archivo}`);
-        } catch (e) {
-            await db.query('rollback');
-            throw new Error(`Falló la migración ${archivo}: ${e.message}`);
-        }
+// Misma instalación que en Supabase: esquema barberia (supabase/base_completa.sql, idempotente).
+// Una sola vez: si esta base tenía barbería en public (versión anterior), se copian sus datos.
+async function instalarBarberia(db) {
+    try {
+        await db.query(fs.readFileSync(BASE_BARBERIA, 'utf8'));
+    } catch (e) {
+        await db.query('rollback').catch(() => {});
+        throw new Error(`Falló la instalación de barberia: ${e.message}`);
     }
+    const marca = 'barberia_desde_public';
+    const { rowCount: hecha } = await db.query('select 1 from public.migraciones_locales where archivo = $1', [marca]);
+    if (hecha) return;
+    const { rows: [estado] } = await db.query(`select to_regclass('public.citas') is not null as anterior,
+        (select count(*) from barberia.citas)::int as citas`);
+    if (estado.anterior && estado.citas === 0) {
+        try {
+            await db.query(fs.readFileSync(MIGRAR_DESDE_PUBLIC, 'utf8'));
+        } catch (e) {
+            await db.query('rollback').catch(() => {});
+            throw new Error(`Falló la migración de public a barberia: ${e.message}`);
+        }
+        console.log('  datos de la instalación anterior (public) copiados a barberia');
+    }
+    await db.query('insert into public.migraciones_locales (archivo) values ($1) on conflict do nothing', [marca]);
 }
 
 async function asegurarAdmin(db) {
@@ -137,7 +146,7 @@ async function asegurarAdmin(db) {
     const id = existente
         ? existente.id
         : (await db.query('insert into auth.users (email, password_hash) values ($1, $2) returning id', [ADMIN.email, hashClave(ADMIN.clave)])).rows[0].id;
-    await db.query('insert into public.admin_usuarios (user_id) values ($1) on conflict (user_id) do nothing', [id]);
+    await db.query('insert into barberia.admin_usuarios (user_id) values ($1) on conflict (user_id) do nothing', [id]);
 }
 
 // ==========================================
@@ -169,7 +178,7 @@ async function iniciarPostgrest() {
             ...process.env,
             PATH: `${dirLibpq}${path.delimiter}${process.env.PATH}`,
             PGRST_DB_URI: `postgres://authenticator:${CLAVE_AUTHENTICATOR}@127.0.0.1:${PUERTOS.postgres}/postgres`,
-            PGRST_DB_SCHEMAS: 'public',
+            PGRST_DB_SCHEMAS: 'barberia',
             PGRST_DB_ANON_ROLE: 'anon',
             PGRST_JWT_SECRET: JWT_SECRETO,
             PGRST_SERVER_HOST: '127.0.0.1',
@@ -364,7 +373,7 @@ async function principal() {
     let postgrest, api, web;
     try {
         await prepararEsquemaSupabase(db);
-        await aplicarMigraciones(db);
+        await instalarBarberia(db);
         await asegurarAdmin(db);
         postgrest = await iniciarPostgrest();
         api = await iniciarApi(db);
@@ -379,7 +388,7 @@ async function principal() {
     }
 
     const tareas = setInterval(() => {
-        db.query('select public.procesar_tareas_programadas()').catch(e => console.error('[tareas]', e.message));
+        db.query('select barberia.procesar_tareas_programadas()').catch(e => console.error('[tareas]', e.message));
     }, 60 * 1000);
 
     console.log(`

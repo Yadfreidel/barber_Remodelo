@@ -50,7 +50,8 @@ Deno.serve(async (req) => {
         return new Response('json invalido', { status: 400 });
     }
 
-    const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+    // Barbería vive en el esquema "barberia" del proyecto compartido
+    const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { db: { schema: 'barberia' } });
     for (const evento of extraerEventos(cuerpo)) {
         const { data, error } = await supabase.rpc('whatsapp_procesar_evento', {
             p_evento_id: evento.id, p_telefono: evento.telefono, p_payload: evento.payload

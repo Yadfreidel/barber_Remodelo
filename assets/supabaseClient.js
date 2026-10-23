@@ -1,4 +1,4 @@
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
+import { SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SCHEMA } from './config.js';
 
 let supabaseClient = null;
 
@@ -13,8 +13,12 @@ const estaConfigurado =
 
 if (typeof window !== 'undefined' && window.supabase && typeof window.supabase.createClient === 'function') {
     if (estaConfigurado) {
-        // El cliente público nunca toma sesiones de la URL (los enlaces de recuperación son del panel)
-        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { detectSessionInUrl: false } });
+        // Cliente público: siempre anónimo. No guarda ni reutiliza sesiones: otra app del mismo dominio
+        // (p. ej. dominó en yadfreidel.github.io) comparte localStorage y Supabase Auth.
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            db: { schema: SUPABASE_SCHEMA },
+            auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: 'barberia-publico' }
+        });
     } else {
         console.warn("⚠️ Supabase aún no está configurado en assets/config.js. Por favor, coloca tu URL y ANON KEY.");
     }
@@ -35,6 +39,7 @@ let adminClient = null;
 export function obtenerClienteAdmin() {
     if (!adminClient && estaConfigurado && typeof window !== 'undefined' && window.supabase) {
         adminClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            db: { schema: SUPABASE_SCHEMA },
             auth: { storageKey: 'barber-admin-auth', persistSession: true, detectSessionInUrl: true }
         });
     }

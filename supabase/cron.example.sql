@@ -3,7 +3,7 @@
 -- 2. Reemplaza <PROYECTO> y <CRON_SECRET> y ejecuta en el SQL Editor.
 
 -- Vence ofertas de lista de espera, programa recordatorios y recuperación (solo SQL)
-select cron.schedule('barberia-tareas', '* * * * *', $$ select public.procesar_tareas_programadas() $$);
+select cron.schedule('barberia-tareas', '* * * * *', $$ select barberia.procesar_tareas_programadas() $$);
 
 -- Envía la cola de WhatsApp (la función no envía nada si WHATSAPP_ENVIO_HABILITADO no es 'true')
 select cron.schedule('barberia-whatsapp-envio', '* * * * *', $$

@@ -22,7 +22,7 @@ try {
          on conflict (email) do update set password_hash = excluded.password_hash
          returning id, (xmax = 0) as creado`, [email.trim(), hash]);
     if (resto.includes('--admin')) {
-        await db.query('insert into public.admin_usuarios (user_id) values ($1) on conflict do nothing', [usuario.id]);
+        await db.query('insert into barberia.admin_usuarios (user_id) values ($1) on conflict do nothing', [usuario.id]);
     }
     console.log(`${usuario.creado ? 'Cuenta creada' : 'Contraseña actualizada'}: ${email}${resto.includes('--admin') ? ' (administrador)' : ''}`);
 } catch (e) {

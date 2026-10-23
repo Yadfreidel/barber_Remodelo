@@ -26,7 +26,8 @@ Deno.serve(async (req) => {
         return json({ enviados: 0, motivo: 'envio_deshabilitado_o_sin_credenciales' });
     }
 
-    const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+    // Barbería vive en el esquema "barberia" del proyecto compartido
+    const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { db: { schema: 'barberia' } });
     const { data: config } = await supabase.from('modulos_config').select('ajustes').eq('modulo', 'whatsapp').single();
     const { data: general } = await supabase.from('modulos_config').select('ajustes').eq('modulo', 'general').single();
     const opciones = {

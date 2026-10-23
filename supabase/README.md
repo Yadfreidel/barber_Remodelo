@@ -1,26 +1,38 @@
 # Módulos de crecimiento — instalación y configuración
 
-Todos los módulos quedan **desactivados** tras instalar. Sin la migración, la web funciona exactamente igual que antes.
+Todos los módulos quedan **desactivados** tras instalar.
 
-## 1. Base de datos
+## 1. Base de datos (proyecto compartido con dominó)
 
-Ejecuta en orden en el SQL Editor de Supabase (o `supabase db push`):
+La barbería vive en su propio esquema **`barberia`**; sus funciones internas están en **`barberia_private`**, que no se expone. La instalación no crea, cambia ni borra nada en `public`, `private` ni `auth`, y tampoco toca la configuración de Auth. Las tablas de dominó (`public.players`, `public.matches`) siguen igual.
 
-1. `migrations/20261021000000_modulos_crecimiento.sql` — tablas nuevas, columnas opcionales en `citas`, funciones y RLS. Es aditiva e idempotente.
-2. `migrations/20261021000001_citas_unicidad_activas.sql` — **revísala antes de aplicarla.** Si `citas` tiene un `UNIQUE (barbero_id, fecha, hora)` simple, las citas canceladas bloquean ese horario para siempre. Este archivo lo cambia por un índice único con el mismo nombre que ignora las canceladas. Sigue impidiendo el double-booking entre citas activas. La lista de espera y la reprogramación lo necesitan.
+1. **SQL Editor → New query**: pega y ejecuta `supabase/base_completa.sql` completo. Es una sola transacción: si algo falla, no queda nada a medias. Se puede volver a ejecutar sin duplicar datos. La última fila indica el estado (`Instalado en barberia…`).
+2. **Exponer el esquema a la API** (sin esto la web recibe el error `PGRST106` / *Invalid schema*):
+   - Abre *Project Settings → Data API* (en algunas versiones: *API → Data API settings*).
+   - En **Exposed schemas** deja los que ya están (`public`, `graphql_public` y cualquier otro que use dominó) y **añade** `barberia`.
+   - **No** añadas `barberia_private`. No cambies *Extra search path*.
+   - Pulsa **Save**. Si la web sigue diciendo que el esquema no existe, ejecuta `notify pgrst, 'reload schema';`.
+3. **Comprueba** la instalación con `supabase/barberia_verificacion.sql`. Es de solo lectura y cada bloque indica el resultado esperado.
+4. **Web**: en `assets/config.js` pon la URL del proyecto compartido y su clave **pública** (anon / publishable). Nunca pongas la `service_role` ni una clave secreta. El cliente ya usa `db: { schema: 'barberia' }`.
 
-Requisitos que valida la migración: `citas.fecha` de tipo `date` y `citas.hora` de tipo `time`.
+Las migraciones de `supabase/migrations/` son el historial y están escritas para `public`. **No las ejecutes en el proyecto compartido.** `base_completa.sql` se genera a partir de ellas con `npm run base:completa`, que las traslada a `barberia` y falla si queda alguna referencia a `public.`.
+
+### Si ya tenías la barbería instalada en public (versión anterior)
+
+Tras los pasos 1 y 2, ejecuta `supabase/barberia_migrar_desde_public.sql`. Copia a `barberia` las citas, los clientes, la configuración y el resto de datos, conservando los ids, así que los enlaces `?cita=` siguen sirviendo. Solo funciona una vez, con `barberia` recién instalado, y no toca `public`. El bloque 8 de la verificación lista las tablas antiguas que quedan en `public`: bórralas a mano solo después de confirmar que dominó no las usa.
 
 ## 2. Administrador
 
-1. Crea el usuario en *Authentication → Users*.
-2. Autorízalo:
-   ```sql
-   insert into public.admin_usuarios (user_id) values ('<uuid-del-usuario>');
-   ```
-3. En la web, abre el panel con la clave actual, ve a la pestaña **Módulos** e inicia sesión con ese usuario.
+Los permisos del panel dependen **solo** de `barberia.admin_usuarios` y `barberia.barbero_usuarios`. Un administrador de dominó no tiene acceso a la barbería, y viceversa.
 
-La clave local del panel sigue abriendo las pestañas existentes. Las acciones de los módulos exigen la sesión de Supabase y se validan en el servidor.
+1. Crea el usuario en *Authentication → Users*. El Auth es compartido: si el correo ya existe, se reutiliza.
+2. Vuelve a ejecutar `base_completa.sql`, que autoriza el correo configurado (`yafre2310@gmail.com`), o ejecuta directamente:
+   ```sql
+   insert into barberia.admin_usuarios (user_id)
+   select id from auth.users where email = 'correo@ejemplo.com'
+   on conflict do nothing;
+   ```
+3. Los barberos se vinculan desde *Panel → Barberos → Acceso al panel*.
 
 ## 3. Ajustes de los módulos (pestaña Módulos)
 
@@ -60,6 +72,7 @@ El envío está desactivado hasta completar **todo** lo siguiente:
    supabase functions deploy whatsapp-webhook --no-verify-jwt
    supabase functions deploy whatsapp-enviar --no-verify-jwt
    ```
+   Las funciones usan la `SUPABASE_SERVICE_ROLE_KEY` del servidor (nunca en el navegador) y trabajan sobre `db: { schema: 'barberia' }`.
 4. En Meta, configura el webhook con la URL `https://<PROYECTO>.supabase.co/functions/v1/whatsapp-webhook`, el `WHATSAPP_VERIFY_TOKEN` y la suscripción a `messages`.
 5. Programa las tareas con `cron.example.sql` (requiere las extensiones `pg_cron` y `pg_net`).
 6. Activa el módulo `whatsapp` y define `general.url_publica`.

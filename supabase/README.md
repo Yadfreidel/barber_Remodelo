@@ -17,6 +17,14 @@ La barbería vive en su propio esquema **`barberia`**; sus funciones internas es
 
 Las migraciones de `supabase/migrations/` son el historial y están escritas para `public`. **No las ejecutes en el proyecto compartido.** `base_completa.sql` se genera a partir de ellas con `npm run base:completa`, que las traslada a `barberia` y falla si queda alguna referencia a `public.`.
 
+### Actualizar un proyecto donde ya ejecutaste base_completa.sql
+
+Ejecuta `supabase/barberia_actualizacion.sql` en el SQL Editor. Solo aplica las migraciones nuevas: «Mis citas», los horarios de 08:00 a 22:00 cada 30 minutos y las reservas sin duplicados. Conserva todas las citas, se ejecuta en una sola transacción y se puede repetir sin problema. Después comprueba la instalación con `barberia_verificacion.sql`.
+
+Cómo se tratan las citas antiguas: las que no tenían duración guardada reciben la duración actual de su servicio (30 minutos si el servicio no tiene). Desde ese momento su hora de fin no cambia aunque luego se edite el catálogo. El horario semanal general solo pasa a 08:00–22:00 si conservaba los valores de fábrica (09:00–20:00). Los días cerrados, los horarios por barbero, los descansos y los bloqueos no se tocan.
+
+**Cuentas de clientes (opcional).** En «Mis citas» los clientes pueden crear una cuenta para ver sus citas en otro dispositivo. Como el Auth es compartido con dominó, el enlace de confirmación del correo lleva a la *Site URL* del proyecto. Para que lleve a la barbería, añade `https://yadfreidel.github.io/barber_Remodelo/` en *Authentication → URL Configuration → Redirect URLs*. Es un cambio de la configuración compartida y conviene revisarlo antes. Sin este paso, el cliente confirma su correo y luego inicia sesión en «Mis citas» de forma normal.
+
 ### Si ya tenías la barbería instalada en public (versión anterior)
 
 Tras los pasos 1 y 2, ejecuta `supabase/barberia_migrar_desde_public.sql`. Copia a `barberia` las citas, los clientes, la configuración y el resto de datos, conservando los ids, así que los enlaces `?cita=` siguen sirviendo. Solo funciona una vez, con `barberia` recién instalado, y no toca `public`. El bloque 8 de la verificación lista las tablas antiguas que quedan en `public`: bórralas a mano solo después de confirmar que dominó no las usa.

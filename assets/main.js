@@ -4,10 +4,12 @@ import { obtenerServicios, formatoPrecioServicio } from '../models/serviceModel.
 import { obtenerBarberos } from '../models/barberModel.js';
 import { procesarCita } from '../controllers/appointmentController.js';
 import { verificarAccesoAdmin, cerrarDashboard } from '../controllers/adminController.js';
-import { supabase, estaSupabaseListo } from './supabaseClient.js';
+import { estaSupabaseListo } from './supabaseClient.js';
 import { inicializarUbicacionCliente } from '../controllers/ubicacionController.js';
 import { cargarBarberosServidor, aplicarNegocioPublico } from '../controllers/publicoController.js';
-import { inicializarModulosCliente, horasLibresServidor, usarReservaServidor } from '../controllers/modulosController.js';
+import { inicializarModulosCliente, horariosDiaServidor, obtenerConfigModulos, mensajeError } from '../controllers/modulosController.js';
+import { hoyRD, formato12h, rango12h, franja, FRANJAS, cuadricula } from './horario-utils.js';
+import { leerBorrador, guardarBorrador } from './mis-citas-store.js';
 
 // ==========================================
 // ELEMENTOS DEL DOM
@@ -27,11 +29,6 @@ const btnCerrarDash = document.getElementById('btn-cerrar-dashboard');
 const menuToggle = document.getElementById('menu-toggle');
 const navLinks = document.getElementById('nav-links');
 
-const HORARIOS_DISPONIBLES = [
-    "09:00", "10:00", "11:00", "12:00", "13:00",
-    "14:00", "15:00", "16:00", "17:00", "18:00", "19:00"
-];
-
 // ==========================================
 // INICIALIZACIÓN PRINCIPAL
 // ==========================================
@@ -39,10 +36,11 @@ async function inicializarPagina() {
     configurarAccesoAdmin();
     configurarMenuMobile();
     if (inputFecha) {
-        const hoy = new Date().toISOString().split('T')[0];
-        inputFecha.min = hoy;
-        inputFecha.addEventListener('change', generarPildorasDeTiempo);
+        // Fecha de República Dominicana, no la UTC del dispositivo
+        inputFecha.min = hoyRD();
+        inputFecha.addEventListener('change', () => { generarPildorasDeTiempo(); guardarSeleccion(); });
     }
+    selectServicios?.addEventListener('change', () => { if (inputFecha?.value) generarPildorasDeTiempo(); guardarSeleccion(); });
 
     const catalogoActualizado = await cargarCatalogoServidor();
     document.getElementById('catalogo-aviso').hidden = catalogoActualizado;
@@ -56,9 +54,49 @@ async function inicializarPagina() {
     configurarFiltros();
     conectarDetalles(obtenerServicios);
     inicializarUbicacionCliente();
-
-
+    restaurarBorrador();
 }
+
+// ==========================================
+// BORRADOR (selección sin reservar: no aparta el horario)
+// ==========================================
+let horaDelBorrador = null;
+let restaurando = false;
+
+function guardarSeleccion() {
+    if (restaurando) return;
+    guardarBorrador({ servicio: selectServicios?.value || '', barbero: inputBarbero.value, fecha: inputFecha?.value || '', hora: inputHora.value });
+}
+
+function restaurarBorrador() {
+    const borrador = leerBorrador();
+    if (!borrador || !selectServicios || selectServicios.value
+        || ![...selectServicios.options].some(o => o.value === borrador.servicio)) return;
+    selectServicios.value = borrador.servicio;
+    restaurando = true;
+    try { selectServicios.dispatchEvent(new Event('change', { bubbles: true })); } finally { restaurando = false; }
+    const tarjeta = [...document.querySelectorAll('.card-barbero')]
+        .find(t => t.querySelector('.btn-seleccionar-barbero')?.dataset.nombre === borrador.barbero);
+    if (tarjeta) {
+        tarjeta.classList.add('barbero-activo');
+        inputBarbero.value = borrador.barbero;
+    }
+    if (borrador.fecha && borrador.fecha >= hoyRD() && inputFecha) {
+        inputFecha.value = borrador.fecha;
+        horaDelBorrador = borrador.hora || null;
+        generarPildorasDeTiempo();
+    }
+    window.dispatchEvent(new Event('borrador-restaurado'));
+}
+
+window.addEventListener('borrador-descartado', () => {
+    if (!formulario) return;
+    formulario.reset();
+    inputBarbero.value = '';
+    inputHora.value = '';
+    document.querySelectorAll('.card-barbero').forEach(t => t.classList.remove('barbero-activo'));
+    if (contenedorHoras) contenedorHoras.innerHTML = '<p class="placeholder-horas">Por favor, selecciona una fecha primero...</p>';
+});
 
 // Exponer función global para que el admin panel recargue la página
 window.recargarPaginaPrincipal = async function () {
@@ -168,108 +206,109 @@ function renderizarStaff() {
 }
 
 // ==========================================
-// PÍLDORAS DE HORA (SUPABASE REAL-TIME)
+// HORAS DE INICIO (cada 30 min, según el servidor)
 // ==========================================
+// El intervalo de inicio no es la duración: cada píldora muestra inicio y fin del servicio elegido.
 let turnoPildoras = 0;
+
+function mensajeHoras(texto, conReintento = false) {
+    contenedorHoras.classList.remove('horas-agrupadas');
+    contenedorHoras.innerHTML = `<p class="placeholder-horas">${texto}</p>${conReintento ? '<button type="button" class="btn-reintentar-horas">Reintentar</button>' : ''}`;
+    contenedorHoras.querySelector('.btn-reintentar-horas')?.addEventListener('click', generarPildorasDeTiempo);
+}
 
 export async function generarPildorasDeTiempo() {
     if (!contenedorHoras) return;
     const turno = ++turnoPildoras;
-    contenedorHoras.innerHTML = '';
     inputHora.value = '';
     contenedorHoras.setAttribute('aria-busy', 'false');
 
     if (!inputFecha || !inputFecha.value) {
-        contenedorHoras.innerHTML = `<p class="placeholder-horas">Por favor, selecciona una fecha primero...</p>`;
+        mensajeHoras('Por favor, selecciona una fecha primero...');
+        return;
+    }
+    const fechaSeleccionada = inputFecha.value;
+    const barberoNombre = inputBarbero ? inputBarbero.value : '';
+    const servicioNombre = selectServicios ? selectServicios.value : '';
+    if (!servicioNombre || !barberoNombre) {
+        mensajeHoras('Elige primero el servicio y el barbero para ver sus horas disponibles.');
         return;
     }
 
-    const fechaSeleccionada = inputFecha.value;
-    const barberoNombre = inputBarbero ? inputBarbero.value : '';
-
     contenedorHoras.setAttribute('aria-busy', 'true');
+    contenedorHoras.classList.remove('horas-agrupadas');
     contenedorHoras.innerHTML = '<span class="motion-skeleton skeleton-hora" aria-hidden="true"></span>'.repeat(6);
-    const horasOcupadas = new Set();
 
-    if (estaSupabaseListo() && barberoNombre && !usarReservaServidor()) {
-        try {
-            // Buscar barbero en Supabase por nombre
-            const { data: barberosData } = await supabase
-                .from('barberos')
-                .select('id')
-                .eq('nombre', barberoNombre)
-                .limit(1);
-
-            if (barberosData && barberosData.length > 0) {
-                const barberoId = barberosData[0].id;
-                // Consultar citas no canceladas para ese barbero y fecha
-                const { data: citasData, error } = await supabase
-                    .from('citas')
-                    .select('hora')
-                    .eq('barbero_id', barberoId)
-                    .eq('fecha', fechaSeleccionada)
-                    .neq('estado', 'cancelada');
-
-                if (citasData && !error) {
-                    citasData.forEach(cita => {
-                        const horaNormal = String(cita.hora).substring(0, 5);
-                        horasOcupadas.add(horaNormal);
-                    });
-                }
-            }
-        } catch (err) {
-            console.error("Error al consultar horarios ocupados:", err);
+    let dia;
+    try {
+        if (estaSupabaseListo()) {
+            dia = await horariosDiaServidor(servicioNombre, barberoNombre, fechaSeleccionada);
+        } else {
+            // Sin servidor (solo solicitud por WhatsApp): cuadrícula del horario general; la barbería confirma
+            const general = obtenerConfigModulos().general || {};
+            const servicio = obtenerServicios().find(s => s.nombre === servicioNombre);
+            dia = { abierto: true, duracion_minutos: servicio?.duracion_minutos || 30,
+                horas: cuadricula({ abre: general.hora_apertura, cierra: general.hora_cierre, intervalo: general.intervalo_minutos || 30,
+                    duracion: servicio?.duracion_minutos || 30, fecha: fechaSeleccionada }) };
         }
+    } catch (error) {
+        if (turno !== turnoPildoras) return;
+        contenedorHoras.setAttribute('aria-busy', 'false');
+        // Nunca se muestran horas como libres si no se pudo comprobar la disponibilidad
+        mensajeHoras(`No pudimos cargar las horas disponibles (${escapar(mensajeError(error))}). Revisa tu conexión.`, true);
+        return;
     }
-
-    // Con módulos activos: disponibilidad real del servidor (considera duración del servicio)
-    const libresServidor = await horasLibresServidor(selectServicios ? selectServicios.value : '', barberoNombre, fechaSeleccionada);
 
     // Solo pinta la última llamada (evita píldoras duplicadas por llamadas concurrentes)
     if (turno !== turnoPildoras) return;
     contenedorHoras.setAttribute('aria-busy', 'false');
-    contenedorHoras.innerHTML = '';
 
-    const fechaActualStr = new Date().toISOString().split('T')[0];
-    const ahora = new Date();
-    const horaActual = ahora.getHours();
-    const minutosActuales = ahora.getMinutes();
+    if (!dia.abierto) {
+        mensajeHoras(dia.motivo === 'no_realiza_servicio'
+            ? 'Este barbero no realiza el servicio elegido. Prueba con otro barbero.'
+            : 'La barbería no atiende ese día. Elige otra fecha.');
+        horaDelBorrador = null;
+        return;
+    }
+    if (!dia.horas.some(h => h.estado === 'libre')) {
+        mensajeHoras('No quedan horas disponibles ese día. Prueba otra fecha u otro barbero.');
+        horaDelBorrador = null;
+        return;
+    }
 
-    const horarios = libresServidor ? [...libresServidor] : HORARIOS_DISPONIBLES;
-    if (!horarios.length) contenedorHoras.innerHTML = '<p class="placeholder-horas">No hay horarios disponibles. Revisa el servicio, el profesional y la fecha.</p>';
-    horarios.forEach(horaTexto => {
-        const pildora = document.createElement('button');
-        pildora.type = 'button';
-        pildora.classList.add('pildora-hora');
-        pildora.textContent = horaTexto;
-        const [horaBloque] = horaTexto.split(':').map(Number);
+    contenedorHoras.classList.add('horas-agrupadas');
+    contenedorHoras.innerHTML = `<p class="horas-ayuda">Duración del servicio: ${Number(dia.duracion_minutos)} min · horas de República Dominicana</p>`
+        + FRANJAS.map(([clave, titulo]) => {
+            const horas = dia.horas.filter(h => franja(h.inicio) === clave);
+            if (!horas.length) return '';
+            return `<div class="franja-horas"><h4>${titulo}</h4><div class="grid-horas">${horas.map(h => {
+                const texto = rango12h(h.inicio, h.fin);
+                const motivo = h.estado === 'pasada' ? 'Hora pasada' : h.estado === 'libre' ? '' : 'No disponible';
+                return `<button type="button" class="pildora-hora${h.estado === 'libre' ? '' : ' deshabilitada'}" data-hora="${escapar(h.inicio)}"
+                    ${h.estado === 'libre' ? '' : `disabled title="${motivo}"`} aria-label="${escapar(texto)}${motivo ? `, ${motivo.toLowerCase()}` : ''}">
+                    <span>${escapar(formato12h(h.inicio))}</span><small>a ${escapar(formato12h(h.fin))}</small></button>`;
+            }).join('')}</div></div>`;
+        }).join('');
 
-        let esPasado = false;
-        if (fechaSeleccionada === fechaActualStr) {
-            if (horaBloque < horaActual || (horaBloque === horaActual && minutosActuales > 0)) {
-                esPasado = true;
-            }
-        }
-
-        const estaOcupada = horasOcupadas.has(horaTexto) || Boolean(libresServidor && !libresServidor.has(horaTexto));
-
-        if (esPasado || estaOcupada) {
-            pildora.classList.add('deshabilitada');
-            pildora.disabled = true;
-            if (estaOcupada) {
-                pildora.title = "Horario reservado por otro cliente";
-            }
-        }
-
-        if (!pildora.classList.contains('deshabilitada')) {
-            pildora.addEventListener('click', () => {
-                document.querySelectorAll('.pildora-hora').forEach(p => p.classList.remove('pildora-activa'));
-                pildora.classList.add('pildora-activa');
-                inputHora.value = horaTexto;
-            });
-        }
-        contenedorHoras.appendChild(pildora);
+    contenedorHoras.querySelectorAll('.pildora-hora:not(.deshabilitada)').forEach(pildora => {
+        pildora.addEventListener('click', () => {
+            contenedorHoras.querySelectorAll('.pildora-hora').forEach(p => { p.classList.remove('pildora-activa'); p.removeAttribute('aria-pressed'); });
+            pildora.classList.add('pildora-activa');
+            pildora.setAttribute('aria-pressed', 'true');
+            inputHora.value = pildora.dataset.hora;
+            guardarSeleccion();
+        });
     });
+
+    // Hora guardada en el borrador: solo se recupera si sigue libre
+    if (horaDelBorrador) {
+        const pildora = contenedorHoras.querySelector(`.pildora-hora[data-hora="${horaDelBorrador}"]:not(.deshabilitada)`);
+        if (pildora) {
+            pildora.click();
+            window.dispatchEvent(new Event('borrador-restaurado')); // con la hora recuperada, sigue en «Tus datos»
+        } else contenedorHoras.insertAdjacentHTML('afterbegin', `<p class="resumen-alerta" role="alert">La hora ${escapar(formato12h(horaDelBorrador))} de tu borrador ya no está disponible. Elige otra.</p>`);
+        horaDelBorrador = null;
+    }
 }
 
 // Exponer globalmente para refrescar tras choques de reservas
@@ -290,6 +329,7 @@ function configurarSeleccionBarberos() {
                 
                 // Refrescar horarios si la fecha ya está seleccionada
                 generarPildorasDeTiempo();
+                guardarSeleccion();
 
                 const contacto = document.getElementById('contacto');
                 if (contacto) contacto.scrollIntoView({ behavior: 'smooth' });

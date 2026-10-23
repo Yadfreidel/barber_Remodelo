@@ -93,7 +93,7 @@ test('citas desde administración: sin cruces, duración real, servicio y barber
     assert.equal(await errorDe(crear(admin, cita(ids.ana, f, '11:00'))), 'horario_no_disponible', 'combo de 90 min ocupa hasta 11:30');
     const walkIn = await crear(admin, cita(ids.ana, f, '11:30'));
     assert.equal(walkIn.hora, '11:30', 'el admin puede registrar horas fuera de la cuadrícula');
-    assert.equal(await errorDe(crear(admin, cita(ids.ana, f, '19:30'))), 'horario_no_disponible', 'sobrepasa el cierre');
+    assert.equal(await errorDe(crear(admin, cita(ids.ana, f, '21:30'))), 'horario_no_disponible', 'sobrepasa el cierre de las 22:00');
     // Una reserva pública tampoco puede pisar una cita creada por el admin
     assert.equal(await errorDe(rpc(anon, 'reservar_cita', 'Web', null, '8095550111', 'Corte', 'Ana Barbera', f, '10:00')), 'horario_no_disponible');
     assert.ok(!(await rpc(anon, 'horarios_disponibles', 'Corte', 'Ana Barbera', f)).includes('11:00'));

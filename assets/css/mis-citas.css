@@ -1,0 +1,77 @@
+/* «Mis citas» y horas agrupadas por franja. Reutiliza la paleta de la app (--gold, --app-card). */
+#mis-citas { max-width: 760px; width: 100%; margin: 0 auto !important; padding: 32px 0 !important; display: grid; gap: 16px; }
+body #mis-citas[hidden] { display: none !important; }
+#mis-citas .view-heading { margin-bottom: 4px; }
+/* Las secciones internas no usan el estilo general de <section> (padding de 80px y centrado) */
+#mis-citas .mc-grupo, #mis-citas .mc-cuenta { display: block; padding: 0; align-items: initial; text-align: left; }
+#mis-citas .mc-cuenta { padding: 16px 18px; }
+#mis-citas .mc-grupo[hidden] { display: none; }
+#mis-citas h2 { font: 600 13px/1.4 Inter, sans-serif; letter-spacing: 1.5px; text-transform: uppercase; color: #aaa69e; margin: 8px 0 10px; text-align: left; }
+#mis-citas h2::after { display: none; }
+.mc-lista { display: grid; gap: 12px; }
+.mc-cita { background: var(--app-card, #19191b); border: 1px solid #ffffff14; border-radius: 14px; padding: 18px; min-width: 0; }
+.mc-cita[data-estado="cancelada"] { opacity: .78; }
+.mc-cita header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.mc-cita h3 { font: 600 16px/1.35 Inter, sans-serif; margin: 0; color: #f2ede4; overflow-wrap: anywhere; }
+.mc-cita dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; margin: 0; }
+.mc-cita dt { font-size: 11px; color: #9c978d; letter-spacing: .4px; }
+.mc-cita dd { margin: 2px 0 0; font-size: 14px; color: #ece6da; overflow-wrap: anywhere; }
+.mc-borrador { border-style: dashed; border-color: #d2b16d66; }
+.badge-borrador { background: #d2b16d1f; color: var(--gold); border: 1px dashed #d2b16d80; white-space: nowrap; }
+.mc-cita .badge-estado { white-space: nowrap; flex: 0 0 auto; }
+.mc-nota { font-size: 12px; line-height: 1.5; color: #c9c2b4; margin: 12px 0 0; }
+.mc-nota i { color: var(--gold); }
+.mc-acciones { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.mc-boton { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 10px 16px; border-radius: 10px;
+    background: var(--gold); color: #16130e; border: 1px solid var(--gold); font: 600 13px/1.3 Inter, sans-serif; text-decoration: none; cursor: pointer; }
+.mc-boton.mc-secundario { background: transparent; color: #eee8dc; border-color: #ffffff2e; }
+.mc-boton:disabled { opacity: .6; cursor: progress; }
+.mc-boton:focus-visible, .mc-enlace:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.mc-estado { border-radius: 12px; padding: 14px 16px; font-size: 14px; line-height: 1.5; display: grid; gap: 10px; justify-items: start; }
+.mc-estado p { margin: 0; }
+.mc-error { background: #e74c3c14; border: 1px solid #e74c3c55; color: #f3c3bc; }
+.mc-aviso { background: #d2b16d14; border: 1px solid #d2b16d44; color: #e9dcc0; }
+#mc-estado:not(.mc-estado) p { color: #c9c2b4; margin: 0; }
+.mc-cargando { display: flex; align-items: center; gap: 12px; color: #c9c2b4; }
+.mc-cargando .motion-skeleton { display: inline-block; width: 44px; height: 44px; border-radius: 10px; }
+.mc-vacio { color: #aaa69e; font-size: 14px; margin: 0; }
+.mc-vacio a { color: var(--gold); }
+.mc-cuenta { background: var(--app-card, #19191b); border: 1px solid #ffffff14; border-radius: 14px; padding: 16px 18px; font-size: 14px; color: #ddd6c8; }
+.mc-cuenta:empty { display: none; }
+.mc-cuenta p { margin: 0 0 12px; line-height: 1.5; }
+.mc-cuenta i { color: var(--gold); }
+.mc-cuenta summary { cursor: pointer; font-weight: 600; min-height: 32px; display: flex; align-items: center; }
+.mc-form { display: grid; gap: 12px; margin-top: 12px; }
+.mc-form label { display: grid; gap: 6px; font-size: 12px; color: #aaa69e; }
+.mc-form input { min-height: 44px; padding: 10px 12px; border-radius: 10px; border: 1px solid #ffffff26; background: #0f0f10; color: #f2ede4; font-size: 16px; }
+.mc-form-error { color: #f2b29f; font-size: 13px; margin: 0 !important; }
+.mc-form-error:empty { display: none; }
+.mc-privacidad { font-size: 12px; line-height: 1.6; color: #9c978d; margin: 4px 0 0; }
+.mc-privacidad i { color: var(--gold); }
+.mc-enlace { display: block; margin-top: 8px; padding: 6px 0; background: none; border: 0; color: #c9b88f; text-decoration: underline; font-size: 12px; cursor: pointer; }
+.enlace-mis-citas { margin-top: 8px; }
+
+/* Bottom nav con cinco destinos */
+.bottom-nav a { width: min(140px, 20%); }
+
+/* Horas agrupadas: mañana, tarde y noche; cada píldora indica inicio y fin */
+#contenedor-horas.horas-agrupadas { display: block !important; }
+.horas-ayuda { font-size: 12px; color: #aaa69e; margin: 4px 0 12px; }
+.franja-horas + .franja-horas { margin-top: 14px; }
+.franja-horas h4 { font: 600 12px/1.4 Inter, sans-serif; letter-spacing: 1.2px; text-transform: uppercase; color: var(--gold); margin: 0 0 8px; }
+.formulario-citas .franja-horas .grid-horas { grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)) !important; margin-top: 0; }
+.franja-horas .pildora-hora { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; line-height: 1.2; }
+.franja-horas .pildora-hora small { font-size: 11px; opacity: .8; }
+.franja-horas .pildora-hora.deshabilitada { opacity: .55; cursor: not-allowed; }
+.btn-reintentar-horas { margin-top: 8px; min-height: 44px; padding: 8px 16px; border-radius: 10px; border: 1px solid var(--gold); background: transparent; color: var(--gold); cursor: pointer; }
+
+@media (max-width: 700px) {
+    #mis-citas { padding: 26px 0 !important; }
+    .mc-cita { padding: 16px; }
+    .mc-acciones .mc-boton { flex: 1 1 100%; }
+    .formulario-citas .franja-horas .grid-horas { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+    .bottom-nav a { font-size: 9px; }
+}
+@media (max-width: 350px) {
+    .mc-cita dl { grid-template-columns: minmax(0, 1fr); }
+}

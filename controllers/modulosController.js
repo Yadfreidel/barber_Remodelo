@@ -1,4 +1,4 @@
-import { obtenerServicios, esCorteCatalogo } from '../models/serviceModel.js';
+import { obtenerServicios } from '../models/serviceModel.js';
 import { referenciaServicio } from './catalogoController.js';
 // ==========================================
 // MÓDULOS DEL CLIENTE
@@ -8,6 +8,8 @@ import { referenciaServicio } from './catalogoController.js';
 
 import { montarTarjeta } from '../assets/appointment-card-preview.js';
 import { supabase, estaSupabaseListo } from '../assets/supabaseClient.js';
+import { guardarToken, guardarClavePendiente } from '../assets/mis-citas-store.js';
+import { formato12h, hoyRD } from '../assets/horario-utils.js';
 
 // Módulos que hacen pasar la reserva por la validación del servidor
 const MODULOS_RESERVA_SERVIDOR = ['productos', 'promociones', 'referidos', 'recuperacion'];
@@ -39,7 +41,9 @@ const AVISOS_REFERIDO = {
     autorreferido_no_permitido: 'No puedes usar tu propio código de referido.',
     ya_referido: 'Este teléfono ya fue referido antes.',
     cliente_no_nuevo: 'El código de referido aplica solo a clientes nuevos.',
-    referidos_inactivo: 'El programa de referidos no está activo.'
+    referidos_inactivo: 'El programa de referidos no está activo.',
+    solicitud_ya_usada: 'Esta solicitud ya se usó para otra cita. Revisa «Mis citas».',
+    demasiadas_citas: 'Hay demasiadas citas guardadas en este navegador.'
 };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -69,8 +73,9 @@ export function cargarConfigModulos() {
             try {
                 const { data, error } = await supabase.rpc('config_publica');
                 if (!error && data) config = data;
+                else configCargada = null; // se reintenta en la próxima llamada
             } catch (e) {
-                // Migración no aplicada: la app sigue funcionando sin módulos
+                configCargada = null; // sin conexión: se reintenta en la próxima llamada
             }
             return config;
         })();
@@ -105,15 +110,16 @@ function productosSeleccionados() {
         .filter(p => p.cantidad > 0);
 }
 
-// Horas libres según el servidor (duración real del servicio); null si no aplica
-export async function horasLibresServidor(servicio, barbero, fecha) {
-    if (!usarReservaServidor() || !servicio || !barbero || !fecha) return null;
-    try {
-        const { data, error } = await supabase.rpc('horarios_disponibles', { p_servicio: referenciaServicio(servicio), p_barbero: barbero, p_fecha: fecha });
-        return error ? (esCorteCatalogo(servicio) ? new Set() : null) : new Set(data);
-    } catch (e) {
-        return esCorteCatalogo(servicio) ? new Set() : null;
-    }
+// Horas de inicio del día con su estado (libre, pasada, no_disponible) y la hora de fin según el servicio
+export async function horariosDiaServidor(servicio, barbero, fecha) {
+    const { data, error } = await supabase.rpc('horarios_dia_publico', { p_servicio: referenciaServicio(servicio), p_barbero: barbero, p_fecha: fecha });
+    if (error) throw error;
+    return data;
+}
+
+// Sin respuesta del servidor (conexión cortada): la cita pudo guardarse o no
+function esFalloDeRed(error) {
+    return !error?.code && /fetch|network|load failed|conexi/i.test(String(error?.message || error));
 }
 
 // ==========================================
@@ -252,7 +258,8 @@ export async function reservarEnServidor(datos, mostrarAlerta) {
 
     const codigo = document.getElementById('codigo-referido');
     const consentimiento = document.getElementById('consentimiento-marketing');
-    const { data, error } = await supabase.rpc('reservar_cita', {
+    // El cliente de Supabase devuelve el fallo de red como `error`; el catch cubre cualquier excepción
+    const { data, error } = await Promise.resolve(supabase.rpc('reservar_cita', {
         p_nombre: datos.nombre,
         p_email: null,
         p_telefono: datos.telefono,
@@ -263,9 +270,16 @@ export async function reservarEnServidor(datos, mostrarAlerta) {
         p_productos: productosSeleccionados().map(({ id, cantidad }) => ({ id, cantidad })),
         p_codigo_referido: codigo ? codigo.value.trim() || null : null,
         p_consentimiento: Boolean(consentimiento && consentimiento.checked),
-        p_precio_esperado: ultimaCotizacion.datos.precio_final
-    });
+        p_precio_esperado: ultimaCotizacion.datos.precio_final,
+        p_clave_solicitud: datos.clave || null
+    })).catch(e => ({ error: e }));
 
+    if (error && esFalloDeRed(error) && datos.clave) {
+        // Se comprobará en «Mis citas»; reintentar con la misma selección no crea otra cita
+        guardarClavePendiente(datos.clave);
+        mostrarAlerta('No pudimos confirmar si tu cita se guardó por un problema de conexión. Vuelve a pulsar «Confirmar cita» o revisa «Mis citas»: no se duplicará.');
+        return null;
+    }
     if (error) {
         mostrarAlerta(mensajeError(error));
         if (/horario_no_disponible|duplicate|23505/.test(error.message + error.code) && window.generarPildorasDeTiempo) {
@@ -395,6 +409,7 @@ async function renderCita(panel, token) {
         panel.innerHTML = plantillaAviso(mensajeError(error));
         return;
     }
+    guardarToken(token); // la cita abierta con su enlace privado aparece también en «Mis citas»
     const [textoEstado, claseEstado] = estadoCita(c);
     const fecha = String(c.fecha).split('-').reverse().join('/');
     const totalProductos = Number(c.total_productos || 0);
@@ -410,7 +425,7 @@ async function renderCita(panel, token) {
             <div class="resumen-ticket">
                 <div><i class="fas fa-cut"></i> ${esc(c.servicio)}</div>
                 <div><i class="fas fa-user-tie"></i> Staff: ${esc(c.barbero)}</div>
-                <div><i class="fas fa-clock"></i> ${esc(fecha)} a las ${esc(c.hora)} hrs</div>
+                <div><i class="fas fa-clock"></i> ${esc(fecha)} a las ${esc(formato12h(c.hora))}</div>
             </div>
             ${c.precio_final !== null ? `
                 <div class="resumen-precio">
@@ -468,7 +483,7 @@ async function renderCita(panel, token) {
 }
 
 function mostrarReprogramacion(zona, token, recargar) {
-    const hoy = new Date().toISOString().split('T')[0];
+    const hoy = hoyRD();
     zona.innerHTML = `
         <div class="resumen-precio">
             <label class="label-fijo">Nueva fecha:</label>
@@ -487,7 +502,7 @@ function mostrarReprogramacion(zona, token, recargar) {
             horas.innerHTML = `<p class="placeholder-horas">${error ? esc(mensajeError(error)) : 'No hay horarios libres ese día.'}</p>`;
             return;
         }
-        horas.innerHTML = data.map(h => `<div class="pildora-hora" data-hora="${esc(h)}">${esc(h)}</div>`).join('');
+        horas.innerHTML = data.map(h => `<div class="pildora-hora" data-hora="${esc(h)}">${esc(formato12h(h))}</div>`).join('');
         horas.querySelectorAll('.pildora-hora').forEach(p => p.addEventListener('click', async () => {
             horas.querySelectorAll('.pildora-hora').forEach(x => x.classList.remove('pildora-activa'));
             p.classList.add('pildora-activa');
@@ -498,7 +513,7 @@ function mostrarReprogramacion(zona, token, recargar) {
             }
             confirmar.innerHTML = `
                 <div class="resumen-linea resumen-total"><span>Nuevo precio del servicio</span><span>${formatoPrecio(q.precio_final)}</span></div>
-                <button class="btn-admin-accion" id="btn-confirmar-reprog"><i class="fas fa-check"></i> Confirmar cambio a las ${esc(p.dataset.hora)}</button>`;
+                <button class="btn-admin-accion" id="btn-confirmar-reprog"><i class="fas fa-check"></i> Confirmar cambio a las ${esc(formato12h(p.dataset.hora))}</button>`;
             confirmar.querySelector('#btn-confirmar-reprog').addEventListener('click', async () => {
                 const { error: e2 } = await supabase.rpc('reprogramar_cita', {
                     p_token: token, p_fecha: inputFecha.value, p_hora: p.dataset.hora, p_precio_esperado: q.precio_final

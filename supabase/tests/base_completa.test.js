@@ -123,8 +123,15 @@ test('seguridad del esquema: RLS en todas las tablas, EXECUTE mínimo y SECURITY
         has_function_privilege('authenticated', 'barberia._slot_libre(text,date,time,int,text)', 'execute') b,
         has_function_privilege('anon', 'barberia.whatsapp_reclamar(int)', 'execute') c,
         has_function_privilege('service_role', 'barberia.whatsapp_reclamar(int)', 'execute') d,
-        has_function_privilege('anon', 'barberia.reservar_cita(text,text,text,text,text,date,time,jsonb,text,boolean,numeric)', 'execute') e`)).rows[0];
+        has_function_privilege('anon', 'barberia.reservar_cita(text,text,text,text,text,date,time,jsonb,text,boolean,numeric,uuid)', 'execute') e`)).rows[0];
     assert.deepEqual(internas, { a: false, b: false, c: false, d: true, e: true });
+    const misCitas = (await db.query(`select has_function_privilege('anon', 'barberia.mis_citas_por_tokens(uuid[],uuid[])', 'execute') a,
+        has_function_privilege('anon', 'barberia.horarios_dia_publico(text,text,date)', 'execute') b,
+        has_function_privilege('anon', 'barberia.mis_citas()', 'execute') c,
+        has_function_privilege('anon', 'barberia.vincular_citas(uuid[])', 'execute') d,
+        has_function_privilege('authenticated', 'barberia.mis_citas()', 'execute') e,
+        has_function_privilege('authenticated', 'barberia._cita_cliente_json(text)', 'execute') f`)).rows[0];
+    assert.deepEqual(misCitas, { a: true, b: true, c: false, d: false, e: true, f: false });
 });
 
 test('web pública (anon): catálogo, disponibilidad, reserva y sin duplicados ni datos personales', async () => {

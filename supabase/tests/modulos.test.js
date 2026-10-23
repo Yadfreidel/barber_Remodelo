@@ -86,7 +86,7 @@ test('reservar_cita valida disponibilidad por duración, horario y precio en ser
     assert.equal(await errorDe(reservar(anon, { tel: '8095550002', barbero: b, fecha, hora: '11:00' })), 'horario_no_disponible', 'solapa con combo de 90 min');
     await reservar(anon, { tel: '8095550003', barbero: b, fecha, hora: '12:00' });
     assert.equal(await errorDe(reservar(anon, { tel: '8095550004', barbero: b, fecha, hora: '14:00', precio: 1 })), 'precio_cambiado');
-    assert.equal(await errorDe(reservar(anon, { tel: '8095550005', servicio: 'Combo VIP', barbero: b, fecha, hora: '19:00' })), 'horario_no_disponible', 'excede el cierre');
+    assert.equal(await errorDe(reservar(anon, { tel: '8095550005', servicio: 'Combo VIP', barbero: b, fecha, hora: '21:00' })), 'horario_no_disponible', 'excede el cierre de las 22:00');
     assert.equal(await errorDe(reservar(anon, { tel: '8095550006', barbero: b, fecha: await fechaLocal(A, -1), hora: '10:00' })), 'horario_no_disponible', 'fecha pasada');
     const libres = await rpc(anon, 'horarios_disponibles', 'Corte', b, fecha);
     assert.ok(!libres.includes('10:00') && !libres.includes('11:00') && !libres.includes('12:00') && libres.includes('13:00'));

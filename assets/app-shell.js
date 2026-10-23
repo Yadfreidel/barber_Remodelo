@@ -4,6 +4,7 @@ import { inicializarPasosReserva } from './booking-wizard.js';
 import { obtenerServicios } from '../models/serviceModel.js';
 import { escapar } from './catalogue-ui.js';
 import { obtenerConfigModulos } from '../controllers/modulosController.js';
+import { crearVistaMisCitas, actualizarMisCitas } from '../controllers/misCitasController.js';
 
 const $ = id => document.getElementById(id);
 const form = $('form-reservas');
@@ -12,14 +13,15 @@ const header = document.createElement('header');
 header.className = 'app-header';
 header.append(hero.querySelector('.navbar'));
 document.body.prepend(header);
+const misCitas = crearVistaMisCitas();
 const more = crearVistaMas();
-document.querySelector('main').append(more);
+document.querySelector('main').append(misCitas, more);
 const nav = document.createElement('nav');
 nav.className = 'bottom-nav'; nav.setAttribute('aria-label', 'Navegación principal');
-nav.innerHTML = [['inicio','house','Inicio'],['catalogo-seccion','scissors','Catálogo'],['contacto','calendar-days','Reservar'],['mas','ellipsis','Más']].map(([id,icon,label]) => `<a href="#${id}" data-view="${id}"><i class="fas fa-${icon}" aria-hidden="true"></i><span>${label}</span></a>`).join('');
+nav.innerHTML = [['inicio','house','Inicio'],['catalogo-seccion','scissors','Catálogo'],['contacto','calendar-days','Reservar'],['mis-citas','calendar-check','Mis citas'],['mas','ellipsis','Más']].map(([id,icon,label]) => `<a href="#${id}" data-view="${id}"><i class="fas fa-${icon}" aria-hidden="true"></i><span>${label}</span></a>`).join('');
 document.body.append(nav);
 inicializarInicioInmersivo(hero, header);
-const views = [hero, $('catalogo-seccion'), $('contacto'), more];
+const views = [hero, $('catalogo-seccion'), $('contacto'), misCitas, more];
 const wizard = inicializarPasosReserva(form);
 function activeRoute() {
     const hash = location.hash.slice(1);
@@ -37,11 +39,15 @@ function showRoute() {
     $('menu-toggle').setAttribute('aria-expanded','false');
     window.scrollTo({top:0,behavior:'instant'});
     wizard.render();
+    if(route==='mis-citas') actualizarMisCitas();
 }
 function go(route) { if(location.hash===`#${route}`) showRoute(); else location.hash=route; }
 window.addEventListener('hashchange',showRoute);
 $('nav-links').addEventListener('click', event=>{if(event.target.closest('a')){ $('nav-links').classList.remove('nav-abierto'); $('menu-toggle').classList.remove('menu-activo'); $('menu-toggle').setAttribute('aria-expanded','false'); }});
 window.addEventListener('reservar-servicio',()=>{wizard.reiniciar();go('contacto');});
+window.addEventListener('borrador-restaurado',()=>wizard.retomar());
+window.addEventListener('continuar-borrador',()=>wizard.retomar());
+window.addEventListener('borrador-descartado',()=>wizard.reiniciar());
 const category = document.createElement('label');
 category.className='category-picker';
 category.innerHTML='<span>Categoría</span><select id="category-select"><option value="todos">Todos los estilos</option></select>';

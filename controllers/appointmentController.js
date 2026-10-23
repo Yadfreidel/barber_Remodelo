@@ -1,9 +1,11 @@
 import { conCarga } from '../assets/motion-utils.js';
 import { mostrarSeguimiento } from '../assets/reservation-feedback.js';
-import { catalogoServidorListo } from './catalogoController.js';
-import { obtenerServicios, esCorteCatalogo, formatoPrecioServicio } from '../models/serviceModel.js';
+import { obtenerServicios, formatoPrecioServicio } from '../models/serviceModel.js';
 import { supabase, estaSupabaseListo } from '../assets/supabaseClient.js';
-import { usarReservaServidor, reservarEnServidor, formatoPrecio, esc } from './modulosController.js';
+import { cargarConfigModulos, usarReservaServidor, reservarEnServidor, formatoPrecio } from './modulosController.js';
+import { registrarCitaReservada } from './misCitasController.js';
+import { guardarBorrador } from '../assets/mis-citas-store.js';
+import { rango12h, sumarMinutos } from '../assets/horario-utils.js';
 
 export async function procesarCita(evento) {
     evento.preventDefault();
@@ -29,134 +31,27 @@ async function procesarCitaInterna(evento) {
     if (!fecha) { mostrarAlerta("Por favor, selecciona una fecha para tu cita."); return; }
     if (!hora) { mostrarAlerta("Por favor, toca una de las horas disponibles."); return; }
 
-    let reservaServidor = null;
-    let citaGuardada = false;
     // Sin base de datos (web publicada sin servidor): la cita se envía como solicitud por WhatsApp
     const modoSolicitud = !estaSupabaseListo();
+    let reservaServidor = null;
 
-    // Los cortes importados siempre usan la validacion de duracion y precio del servidor.
-    if (esCorteCatalogo(servicio) && !modoSolicitud) {
-        if (!estaSupabaseListo() || !catalogoServidorListo() || !usarReservaServidor()) {
-            mostrarAlerta('No se pudo validar el catalogo. Recarga la pagina o contacta con la barberia.');
+    if (!modoSolicitud) {
+        // Toda reserva pasa por reservar_cita: valida horario, duración, solapamientos y precio en el servidor
+        // y queda guardada antes de mostrarse. La clave del borrador evita duplicados por reintentos.
+        await cargarConfigModulos();
+        if (!usarReservaServidor()) {
+            mostrarAlerta('No pudimos conectar con la barbería. Revisa tu conexión y vuelve a intentarlo.');
             return;
         }
-        // Conserva el alta del profesional local que ya realizaba el flujo anterior.
-        try {
-            const { data: profesionales, error } = await supabase.from('barberos').select('id').eq('nombre', barbero).limit(1);
-            if (error) throw error;
-            if (!profesionales?.length) {
-                const { error: altaError } = await supabase.from('barberos').insert([{ nombre: barbero, activo: true }]);
-                if (altaError) throw altaError;
-            }
-        } catch {
-            mostrarAlerta('No se pudo validar el profesional. Intenta nuevamente.');
-            return;
-        }
-        reservaServidor = await reservarEnServidor({ nombre, email, telefono: telefonoCliente, servicio, barbero, fecha, hora }, mostrarAlerta);
+        const borrador = guardarBorrador({ servicio, barbero, fecha, hora });
+        reservaServidor = await reservarEnServidor({ nombre, email, telefono: telefonoCliente, servicio, barbero, fecha, hora, clave: borrador?.clave }, mostrarAlerta);
         if (!reservaServidor) return;
-        citaGuardada = true;
+        registrarCitaReservada(reservaServidor);
     }
-    // Flujo anterior conservado para los servicios no importados.
-    if (estaSupabaseListo() && !reservaServidor) {
-        try {
-            // Buscar ID de barbero
-            let barberoId = null;
-            const { data: barberosData } = await supabase
-                .from('barberos')
-                .select('id')
-                .eq('nombre', barbero)
-                .limit(1);
-
-            if (barberosData && barberosData.length > 0) {
-                barberoId = barberosData[0].id;
-            } else {
-                // Auto-crear si no existe en la BD
-                const { data: nuevoBarbero } = await supabase
-                    .from('barberos')
-                    .insert([{ nombre: barbero, activo: true }])
-                    .select('id')
-                    .single();
-                if (nuevoBarbero) barberoId = nuevoBarbero.id;
-            }
-
-            // Buscar ID de servicio
-            let servicioId = null;
-            const { data: serviciosData } = await supabase
-                .from('servicios')
-                .select('id')
-                .eq('nombre', servicio)
-                .limit(1);
-
-            if (serviciosData && serviciosData.length > 0) {
-                servicioId = serviciosData[0].id;
-            } else {
-                // Auto-crear si no existe en la BD
-                const serviciosActuales = obtenerServicios();
-                const sObj = serviciosActuales.find(s => s.nombre === servicio);
-                const precioNum = sObj ? parseFloat(String(sObj.precio).replace(/[^0-9.]/g, '')) || 0 : 0;
-                
-                const { data: nuevoServicio } = await supabase
-                    .from('servicios')
-                    .insert([{ nombre: servicio, precio: precioNum, duracion_minutos: 30 }])
-                    .select('id')
-                    .single();
-                if (nuevoServicio) servicioId = nuevoServicio.id;
-            }
-
-            if (barberoId && servicioId && usarReservaServidor()) {
-                // Módulos activos: precio, promoción, stock y referido se validan en el servidor
-                reservaServidor = await reservarEnServidor({ nombre, email, telefono: telefonoCliente, servicio, barbero, fecha, hora }, mostrarAlerta);
-                if (!reservaServidor) return;
-                citaGuardada = true;
-            } else if (barberoId && servicioId) {
-                const { error: insertError } = await supabase
-                    .from('citas')
-                    .insert([{
-                        nombre_cliente: nombre,
-                        telefono_cliente: telefonoCliente,
-                        email: email,
-                        barbero_id: barberoId,
-                        servicio_id: servicioId,
-                        fecha: fecha,
-                        hora: hora,
-                        estado: 'pendiente'
-                    }]);
-
-                if (insertError) {
-                    const esConflictoUnique = 
-                        insertError.code === '23505' || 
-                        (insertError.message && (
-                            insertError.message.toLowerCase().includes('unique') || 
-                            insertError.message.toLowerCase().includes('duplicate') ||
-                            insertError.message.toLowerCase().includes('citas_barbero_id_fecha_hora')
-                        ));
-
-                    if (esConflictoUnique) {
-                        mostrarAlerta("Ese horario ya no está disponible, por favor elige otro.");
-                        if (window.generarPildorasDeTiempo) {
-                            window.generarPildorasDeTiempo();
-                        }
-                        return; // Detiene el flujo sin abrir WhatsApp ni mostrar tracking
-                    } else {
-                        mostrarAlerta("No se pudo registrar la reserva: " + (insertError.message || "Error en la base de datos"));
-                        return;
-                    }
-                }
-                citaGuardada = true;
-            }
-        } catch (err) {
-            console.error("Error al procesar reserva en Supabase:", err);
-            mostrarAlerta("Ocurrió un error inesperado al conectar con la base de datos.");
-            return;
-        }
-    }
-
-    if (!citaGuardada && !modoSolicitud) { mostrarAlerta('No se pudo guardar la cita. Comprueba la conexión con el servidor e intenta nuevamente.'); return; }
 
     const fechaFormateada = fecha.split('-').reverse().join('/');
-
-    const serviciosActuales = obtenerServicios();
-    const objetoServicio = serviciosActuales.find(s => s.nombre === servicio) || { precio: "$0.00" };
+    const objetoServicio = obtenerServicios().find(s => s.nombre === servicio) || { precio: "$0.00" };
+    const horaFin = reservaServidor?.cita?.hora_fin || (objetoServicio.duracion_minutos ? sumarMinutos(hora, objetoServicio.duracion_minutos) : null);
     const totalProductos = reservaServidor ? Number(reservaServidor.total_productos || 0) : 0;
     const precioMostrado = reservaServidor
         ? formatoPrecio(Number(reservaServidor.precio_final) + totalProductos)
@@ -177,7 +72,7 @@ async function procesarCitaInterna(evento) {
         `💈 *Servicio:* ${servicio}%0A` +
         `💈 *Barbero:* _${barbero}_%0A` +
         `📅 *Fecha:* ${fechaFormateada}%0A` +
-        `⏰ *Hora:* *${hora} hrs*%0A` +
+        `⏰ *Hora:* *${rango12h(hora, horaFin)}*%0A` +
         (totalProductos > 0 ? `🛍️ *Productos para retiro:* ${formatoPrecio(totalProductos)}%0A` : '') +
         (reservaServidor ? `💵 *Total:* ${precioMostrado}%0A` : '') +
         (modoSolicitud ? `💵 *Precio estimado:* ${precioMostrado}%0A` : '') + `%0A` +
@@ -190,16 +85,19 @@ async function procesarCitaInterna(evento) {
     const urlWhatsApp = `https://api.whatsapp.com/send?phone=${numeroWhatsApp}&text=${encodeURIComponent(textoWhatsApp)}`;
 
     activarPantallaSeguimiento({
-        nombre, servicio, barbero, hora, fecha: fechaFormateada, precio: precioMostrado,
-        guardada: citaGuardada, estado: reservaServidor?.estado || 'pendiente',
+        nombre, servicio, barbero, hora: rango12h(hora, horaFin), fecha: fechaFormateada, precio: precioMostrado,
+        guardada: Boolean(reservaServidor), estado: reservaServidor?.cita?.estado || 'pendiente',
         token: reservaServidor ? reservaServidor.token : null,
         avisos: reservaServidor ? reservaServidor.avisos : [],
         enlaceWhatsApp: modoSolicitud ? urlWhatsApp : null
     });
 
-    setTimeout(() => {
-        window.open(urlWhatsApp, '_blank');
-    }, 100);
+    // Una reserva repetida (reintento de la misma solicitud) no vuelve a avisar por WhatsApp
+    if (!reservaServidor?.repetida) {
+        setTimeout(() => {
+            window.open(urlWhatsApp, '_blank');
+        }, 100);
+    }
 
     // Resetear form y campos hidden
     evento.target.reset();
@@ -213,22 +111,25 @@ function mostrarAlerta(mensaje) {
 
     const alerta = document.createElement('div');
     alerta.className = 'alerta-cita';
+    alerta.setAttribute('role', 'alert');
     alerta.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${mensaje}`;
-    
+
     const form = document.getElementById('form-reservas');
     form.insertBefore(alerta, form.querySelector('button[type="submit"]'));
-    
+
     setTimeout(() => alerta.classList.add('alerta-visible'), 10);
     setTimeout(() => {
         alerta.classList.remove('alerta-visible');
         setTimeout(() => alerta.remove(), 300);
-    }, 3000);
+    }, 6000);
 }
 
 function guardarMetricasAnaliticas(nuevaCita) {
-    let historial = JSON.parse(localStorage.getItem('barber_analytics_citas')) || [];
-    historial.push(nuevaCita);
-    localStorage.setItem('barber_analytics_citas', JSON.stringify(historial));
+    try {
+        let historial = JSON.parse(localStorage.getItem('barber_analytics_citas')) || [];
+        historial.push(nuevaCita);
+        localStorage.setItem('barber_analytics_citas', JSON.stringify(historial));
+    } catch { /* sin almacenamiento local: no afecta a la reserva */ }
 }
 
 function activarPantallaSeguimiento(datos) {
@@ -255,7 +156,7 @@ function restaurarFormulario() {
 
     document.getElementById('barbero-seleccionado').value = "";
     document.getElementById('hora-seleccionada').value = "";
-    
+
     const contenedorHoras = document.getElementById('contenedor-horas');
     if (contenedorHoras) {
         contenedorHoras.innerHTML = `<p class="placeholder-horas">Por favor, selecciona una fecha primero...</p>`;

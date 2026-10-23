@@ -20,6 +20,7 @@ export function htmlSeguimiento(datos) {
         </div>
         ${(datos.avisos||[]).map(a=>`<p class="resumen-alerta">${esc(a)}</p>`).join('')}
         ${datos.token?`<a class="btn-regresar-form enlace-gestion" href="?cita=${encodeURIComponent(datos.token)}">Gestionar mi cita (confirmar, cancelar o reprogramar)</a>`:''}
+        ${datos.guardada?'<a class="btn-regresar-form enlace-mis-citas" href="#mis-citas">Ver en Mis citas</a>':''}
         <button type="button" id="btn-regresar-formulario" class="btn-regresar-form">Volver / Nueva cita</button>`;
 }
 export function mostrarSeguimiento(contenedor,datos,alVolver,{enfocar=false}={}) {

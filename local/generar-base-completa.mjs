@@ -10,6 +10,9 @@ import { fileURLToPath } from 'node:url';
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DIR = path.join(RAIZ, 'supabase', 'migrations');
 const SALIDA = path.join(RAIZ, 'supabase', 'base_completa.sql');
+// Actualización para un proyecto que ya ejecutó base_completa.sql hasta INSTALADO_HASTA (incluida)
+const SALIDA_ACTUALIZACION = path.join(RAIZ, 'supabase', 'barberia_actualizacion.sql');
+const INSTALADO_HASTA = '20261023120000_fotos_barberos.sql';
 const ESQUEMA = 'barberia';
 const PRIVADO = 'barberia_private';
 const URL_PUBLICA = 'https://yadfreidel.github.io/barber_Remodelo/';
@@ -19,8 +22,9 @@ const ADMIN = 'yafre2310@gmail.com';
 const FUNCIONES_PUBLICAS = ['config_publica', 'listar_productos', 'cotizar_cita', 'horarios_disponibles', 'reservar_cita',
     'consultar_cita', 'confirmar_cita', 'cancelar_cita', 'horarios_reprogramacion', 'cotizar_reprogramacion', 'reprogramar_cita',
     'unirse_lista_espera', 'consultar_lista_espera', 'cancelar_lista_espera', 'consultar_oferta', 'aceptar_oferta', 'rechazar_oferta',
-    'mi_codigo_referido', 'darse_de_baja', 'catalogo_publico', 'barberos_publicos', 'negocio_publico', 'ubicacion_publica'];
-const FUNCIONES_SESION = ['es_admin', 'rol_panel', 'barbero_actual']; // + todas las panel_* y admin_*
+    'mi_codigo_referido', 'darse_de_baja', 'catalogo_publico', 'barberos_publicos', 'negocio_publico', 'ubicacion_publica',
+    'horarios_dia_publico', 'mis_citas_por_tokens'];
+const FUNCIONES_SESION = ['es_admin', 'rol_panel', 'barbero_actual', 'mis_citas', 'vincular_citas']; // + todas las panel_* y admin_*
 const FUNCIONES_SERVIDOR = ['programar_recordatorios', 'programar_recuperacion', 'procesar_tareas_programadas',
     'whatsapp_reclamar', 'whatsapp_resultado', 'whatsapp_procesar_evento'];
 
@@ -72,12 +76,33 @@ function lista(nombres) {
     return `array[${nombres.map(n => `'${n}'`).join(', ')}]`;
 }
 
-export function generar() {
-    const archivos = fs.readdirSync(DIR).filter(f => f.endsWith('.sql')).sort();
-    const migraciones = archivos.map(f => {
+function bloqueMigraciones(archivos) {
+    return archivos.map(f => {
         const sql = trasladar(fs.readFileSync(path.join(DIR, f), 'utf8'), f).trim();
         return `\n-- #####################################################################\n-- MIGRACIÓN (trasladada a ${ESQUEMA}): ${f}\n-- #####################################################################\n${sql}\n`;
-    });
+    }).join('');
+}
+
+const INICIO = `begin;
+
+create schema if not exists ${ESQUEMA};
+create schema if not exists ${PRIVADO};
+revoke all on schema ${ESQUEMA} from public;
+revoke all on schema ${PRIVADO} from public;
+grant usage on schema ${ESQUEMA} to anon, authenticated, service_role;
+
+-- Objetos sin esquema dentro de este script se crean y resuelven en ${ESQUEMA}
+set local search_path = ${ESQUEMA}, pg_temp;
+
+-- Las funciones nuevas de este esquema no quedan ejecutables por PUBLIC
+alter default privileges in schema ${ESQUEMA} revoke execute on functions from public;
+alter default privileges in schema ${PRIVADO} revoke execute on functions from public;
+`;
+
+export function generar() {
+    const archivos = fs.readdirSync(DIR).filter(f => f.endsWith('.sql')).sort();
+    if (!archivos.includes(INSTALADO_HASTA)) fallar(`no existe la migración ${INSTALADO_HASTA}`);
+    const nuevas = archivos.filter(f => f > INSTALADO_HASTA);
 
     const contenido = `-- =====================================================================
 -- INSTALACIÓN COMPLETA DE BARBERÍA EN EL ESQUEMA \`${ESQUEMA}\`
@@ -101,21 +126,47 @@ ${archivos.map(f => `--   ${f}`).join('\n')}
 -- Es seguro ejecutarlo más de una vez.
 -- =====================================================================
 
-begin;
+${INICIO}${bloqueMigraciones(archivos)}${FINAL}
+select case when exists (select 1 from ${ESQUEMA}.admin_usuarios a join auth.users u on u.id = a.user_id
+                          where lower(u.email) = lower('${ADMIN}'))
+            then 'Instalado en ${ESQUEMA}. Listo: ${ADMIN} es administrador de barbería.'
+            else 'Instalado en ${ESQUEMA}. Falta: crea ${ADMIN} en Authentication > Users y vuelve a ejecutar el bloque ADMINISTRADOR.'
+       end as estado_instalacion;
+`;
+    const actualizacion = `-- =====================================================================
+-- ACTUALIZACIÓN DE BARBERÍA (esquema \`${ESQUEMA}\`)
+-- (generado con: npm run base:completa — no editar a mano)
+--
+-- Para un proyecto que YA ejecutó supabase/base_completa.sql (hasta ${INSTALADO_HASTA}).
+-- Aplica solo estas migraciones nuevas, trasladadas a ${ESQUEMA}:
+${nuevas.map(f => `--   ${f}`).join('\n') || '--   (ninguna)'}
+-- y vuelve a aplicar los permisos mínimos. No toca \`public\`, \`private\` ni Auth.
+-- Conserva todas las citas. Una sola transacción: si algo falla, no cambia nada.
+-- Es seguro ejecutarlo más de una vez. Una instalación nueva usa base_completa.sql.
+-- =====================================================================
 
-create schema if not exists ${ESQUEMA};
-create schema if not exists ${PRIVADO};
-revoke all on schema ${ESQUEMA} from public;
-revoke all on schema ${PRIVADO} from public;
-grant usage on schema ${ESQUEMA} to anon, authenticated, service_role;
+${INICIO}
+do $$
+begin
+    if to_regclass('${ESQUEMA}.citas') is null then
+        raise exception 'Barbería no está instalada en ${ESQUEMA}: ejecuta primero supabase/base_completa.sql';
+    end if;
+end $$;
+${bloqueMigraciones(nuevas)}${FINAL}
+select 'Actualizado: ' || (select count(*) from ${ESQUEMA}.citas) || ' citas conservadas; horario '
+       || (select (ajustes ->> 'hora_apertura') || '–' || (ajustes ->> 'hora_cierre') || ' cada ' || (ajustes ->> 'intervalo_minutos') || ' min'
+             from ${ESQUEMA}.modulos_config where modulo = 'general') as estado_actualizacion;
+`;
+    for (const [nombre, texto] of [['base_completa', contenido], ['actualización', actualizacion]]) {
+        if (/\bpublic\./.test(texto)) fallar(`${nombre}: la salida contiene public.`);
+    }
+    fs.writeFileSync(SALIDA, contenido);
+    fs.writeFileSync(SALIDA_ACTUALIZACION, actualizacion);
+    return { archivos, nuevas, kb: Math.round(fs.statSync(SALIDA).size / 1024) };
+}
 
--- Objetos sin esquema dentro de este script se crean y resuelven en ${ESQUEMA}
-set local search_path = ${ESQUEMA}, pg_temp;
-
--- Las funciones nuevas de este esquema no quedan ejecutables por PUBLIC
-alter default privileges in schema ${ESQUEMA} revoke execute on functions from public;
-alter default privileges in schema ${PRIVADO} revoke execute on functions from public;
-${migraciones.join('')}
+// Permisos mínimos y configuración: comunes a la instalación y a la actualización
+const FINAL = `
 -- #####################################################################
 -- PERMISOS MÍNIMOS DE ${ESQUEMA.toUpperCase()}
 -- La web pública reserva y consulta solo con funciones (SECURITY DEFINER con
@@ -182,19 +233,10 @@ on conflict (user_id) do nothing;
 notify pgrst, 'reload schema';
 
 commit;
-
-select case when exists (select 1 from ${ESQUEMA}.admin_usuarios a join auth.users u on u.id = a.user_id
-                          where lower(u.email) = lower('${ADMIN}'))
-            then 'Instalado en ${ESQUEMA}. Listo: ${ADMIN} es administrador de barbería.'
-            else 'Instalado en ${ESQUEMA}. Falta: crea ${ADMIN} en Authentication > Users y vuelve a ejecutar el bloque ADMINISTRADOR.'
-       end as estado_instalacion;
 `;
-    if (/\bpublic\./.test(contenido)) fallar('la salida contiene public.');
-    fs.writeFileSync(SALIDA, contenido);
-    return { archivos, kb: Math.round(fs.statSync(SALIDA).size / 1024) };
-}
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-    const { archivos, kb } = generar();
+    const { archivos, nuevas, kb } = generar();
     console.log(`Generado ${path.relative(RAIZ, SALIDA)} (esquema ${ESQUEMA}, ${archivos.length} migraciones, ${kb} KB)`);
+    console.log(`Generado ${path.relative(RAIZ, SALIDA_ACTUALIZACION)} (${nuevas.length} migraciones nuevas)`);
 }

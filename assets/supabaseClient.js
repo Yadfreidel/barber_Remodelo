@@ -13,11 +13,12 @@ const estaConfigurado =
 
 if (typeof window !== 'undefined' && window.supabase && typeof window.supabase.createClient === 'function') {
     if (estaConfigurado) {
-        // Cliente público: siempre anónimo. No guarda ni reutiliza sesiones: otra app del mismo dominio
-        // (p. ej. dominó en yadfreidel.github.io) comparte localStorage y Supabase Auth.
+        // Cliente público: anónimo salvo que el CLIENTE inicie sesión en «Mis citas». Su sesión se guarda con
+        // una storageKey propia: otra app del mismo dominio (p. ej. dominó en yadfreidel.github.io) comparte
+        // localStorage y Supabase Auth, y la sesión de administrador usa otro cliente.
         supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
             db: { schema: SUPABASE_SCHEMA },
-            auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: 'barberia-publico' }
+            auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, storageKey: 'barberia-cliente' }
         });
     } else {
         console.warn("⚠️ Supabase aún no está configurado en assets/config.js. Por favor, coloca tu URL y ANON KEY.");

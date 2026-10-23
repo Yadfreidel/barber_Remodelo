@@ -266,6 +266,19 @@ async function manejarAuth(req, res, url, db) {
         return credencialesInvalidas();
     }
 
+    // Alta de cuenta de cliente (en local, como un proyecto sin confirmación por correo)
+    if (url.pathname === '/auth/v1/signup' && req.method === 'POST') {
+        const cuerpo = JSON.parse((await leerCuerpo(req)).toString() || '{}');
+        const email = String(cuerpo.email || '').trim().toLowerCase();
+        const clave = String(cuerpo.password || '');
+        if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return responderJSON(res, req, 400, { code: 400, error_code: 'validation_failed', msg: 'Unable to validate email address: invalid format' });
+        if (clave.length < 6) return responderJSON(res, req, 422, { code: 422, error_code: 'weak_password', msg: 'Password should be at least 6 characters' });
+        const { rows: [u] } = await db.query(`insert into auth.users (email, password_hash) values ($1, $2)
+                                               on conflict (email) do nothing returning *`, [email, hashClave(clave)]);
+        if (!u) return responderJSON(res, req, 422, { code: 422, error_code: 'user_already_exists', msg: 'User already registered' });
+        return responderJSON(res, req, 200, crearSesion(u));
+    }
+
     if (url.pathname === '/auth/v1/user' && req.method === 'GET') {
         const payload = verificarJWT(String(req.headers.authorization || '').replace(/^Bearer /i, ''));
         if (!payload || payload.role !== 'authenticated') return responderJSON(res, req, 401, { code: 401, msg: 'invalid JWT' });

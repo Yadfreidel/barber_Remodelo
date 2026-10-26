@@ -80,4 +80,4 @@ function updateHours() {
 window.addEventListener('catalogo-listo',categories);
 setInterval(updateHours,60000);
 showRoute();
-if(new URLSearchParams(location.search).has('cita')||new URLSearchParams(location.search).has('oferta')||new URLSearchParams(location.search).has('espera'))go('contacto');
+if(new URLSearchParams(location.search).has('cita')||new URLSearchParams(location.search).has('oferta')||new URLSearchParams(location.search).has('espera')||new URLSearchParams(location.search).has('reclamacion'))go('contacto');

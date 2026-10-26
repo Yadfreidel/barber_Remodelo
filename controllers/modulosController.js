@@ -10,6 +10,7 @@ import { montarTarjeta } from '../assets/appointment-card-preview.js';
 import { supabase, estaSupabaseListo } from '../assets/supabaseClient.js';
 import { guardarToken, guardarClavePendiente } from '../assets/mis-citas-store.js';
 import { formato12h, hoyRD } from '../assets/horario-utils.js';
+import { abrirFormularioReclamacion, renderReclamacion } from './reclamacionesClienteController.js';
 
 // Módulos que hacen pasar la reserva por la validación del servidor
 const MODULOS_RESERVA_SERVIDOR = ['productos', 'promociones', 'referidos', 'recuperacion'];
@@ -358,7 +359,7 @@ function configurarListaEspera(bloque) {
 // PÁGINAS DE GESTIÓN POR ENLACE SEGURO
 // ==========================================
 async function manejarEnlaceEntrante(params) {
-    const tipos = { cita: renderCita, oferta: renderOferta, espera: renderEspera, baja: renderBaja };
+    const tipos = { cita: renderCita, oferta: renderOferta, espera: renderEspera, baja: renderBaja, reclamacion: renderReclamacion };
     const tipo = Object.keys(tipos).find(k => params.get(k));
     if (!tipo) return false;
 
@@ -440,6 +441,7 @@ async function renderCita(panel, token) {
                 ${c.modificable ? '<button class="btn-admin-accion" data-accion="reprogramar"><i class="fas fa-calendar-alt"></i> Reprogramar</button>' : ''}
                 ${c.modificable ? '<button class="btn-danger" data-accion="cancelar"><i class="fas fa-times"></i> Cancelar cita</button>' : ''}
                 ${c.referidos_activo ? '<button class="btn-admin-accion" data-accion="referido"><i class="fas fa-user-friends"></i> Mi código de referido</button>' : ''}
+                <button class="btn-admin-accion" data-accion="reclamar"><i class="fas fa-flag"></i> Reportar un inconveniente</button>
             </div>
             ${!c.modificable && c.estado !== 'cancelada' && !c.completada ? `<p class="nota-espera">${MENSAJES_ERROR.fuera_de_plazo}</p>` : ''}
             <div id="zona-gestion"></div>
@@ -462,6 +464,7 @@ async function renderCita(panel, token) {
         if (accion === 'confirmar') ejecutar('confirmar_cita', { p_token: token });
         if (accion === 'cancelar' && confirm('¿Seguro que deseas cancelar tu cita?')) ejecutar('cancelar_cita', { p_token: token });
         if (accion === 'reprogramar') mostrarReprogramacion(zona, token, recargar);
+        if (accion === 'reclamar') abrirFormularioReclamacion({ tokenCita: token, descripcionCita: `${c.servicio} · ${fecha}` });
         if (accion === 'referido') {
             const { data, error: err } = await supabase.rpc('mi_codigo_referido', { p_token: token });
             if (err) {

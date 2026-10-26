@@ -10,6 +10,7 @@ import { cargarBarberosServidor, aplicarNegocioPublico } from '../controllers/pu
 import { inicializarModulosCliente, horariosDiaServidor, obtenerConfigModulos, mensajeError } from '../controllers/modulosController.js';
 import { hoyRD, formato12h, rango12h, franja, FRANJAS, cuadricula } from './horario-utils.js';
 import { leerBorrador, guardarBorrador } from './mis-citas-store.js';
+import { abrirPerfilBarbero } from '../controllers/perfilBarberoController.js';
 
 // ==========================================
 // ELEMENTOS DEL DOM
@@ -88,6 +89,21 @@ function restaurarBorrador() {
     }
     window.dispatchEvent(new Event('borrador-restaurado'));
 }
+
+// «Reservar con este barbero» (perfil): selecciona su tarjeta como si se pulsara y retoma la reserva
+window.addEventListener('reservar-con-barbero', e => {
+    const boton = [...document.querySelectorAll('.btn-seleccionar-barbero')].find(b => b.dataset.nombre === e.detail.nombre);
+    if (!boton) return;
+    boton.click();
+    const barbero = obtenerBarberos().find(b => b.nombre === e.detail.nombre);
+    const servicio = obtenerServicios().find(s => s.nombre === selectServicios?.value);
+    if (servicio && Array.isArray(servicio.barberos) && servicio.barberos.length && !servicio.barberos.map(String).includes(String(barbero?.barbero_id))) {
+        selectServicios.value = '';
+        selectServicios.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    location.hash = 'contacto';
+    window.dispatchEvent(new Event('continuar-borrador'));
+});
 
 window.addEventListener('borrador-descartado', () => {
     if (!formulario) return;
@@ -196,12 +212,17 @@ function renderizarStaff() {
                 <h4>${escapar(barbero.nombre)}</h4>
                 <p>${escapar(barbero.especialidad)}</p>
                 <button type="button" class="btn-seleccionar-barbero" data-nombre="${escapar(barbero.nombre)}">Seleccionar</button>
+                ${barbero.barbero_id ? `<button type="button" class="btn-perfil-barbero" data-perfil="${escapar(barbero.nombre)}">Ver perfil${barbero.trabajos ? ` y trabajos (${barbero.trabajos})` : ''}</button>` : ''}
             </div>
         `;
         gridStaff.appendChild(cardBarbero);
     });
 
     configurarSeleccionBarberos();
+    gridStaff.querySelectorAll('[data-perfil]').forEach(b => b.addEventListener('click', () => {
+        const barbero = obtenerBarberos().find(x => x.nombre === b.dataset.perfil);
+        if (barbero) abrirPerfilBarbero(barbero);
+    }));
     configurarTouchBarberos();
 }
 
@@ -326,6 +347,7 @@ function configurarSeleccionBarberos() {
                 tarjetasBarberos.forEach(t => t.classList.remove('barbero-activo'));
                 tarjeta.classList.add('barbero-activo');
                 inputBarbero.value = e.target.getAttribute('data-nombre');
+                window.dispatchEvent(new Event('barbero-cambiado'));
                 
                 // Refrescar horarios si la fecha ya está seleccionada
                 generarPildorasDeTiempo();

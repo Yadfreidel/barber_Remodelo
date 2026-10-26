@@ -4,7 +4,7 @@
 // rol, pero cada operación se vuelve a verificar en el servidor.
 // ==========================================
 
-import { esc } from './panel/comun.js';
+import { esc, api } from './panel/comun.js';
 import { renderResumen } from './panel/resumen.js';
 import { renderAgenda } from './panel/agenda.js';
 import { renderHorarios } from './panel/horarios.js';
@@ -21,16 +21,22 @@ import { renderVentas } from './panel/ventas.js';
 import { renderCaja } from './panel/caja.js';
 import { renderGastos } from './panel/gastos.js';
 import { renderInventario } from './panel/inventario.js';
+import { renderPortafolio } from './panel/portafolio.js';
+import { renderOcupacion } from './panel/ocupacion.js';
+import { renderReclamaciones } from './panel/reclamaciones.js';
 
 // Inventario, ventas y caja: solo administradores (el servidor lo vuelve a comprobar)
 const SECCIONES = [
     { id: 'resumen', titulo: 'Resumen', icono: 'gauge-high', roles: ['admin', 'barbero'], render: renderResumen, grupo: 'Barbería' },
     { id: 'agenda', titulo: 'Agenda', icono: 'calendar-days', roles: ['admin', 'barbero'], render: renderAgenda, grupo: 'Barbería' },
+    { id: 'reclamaciones', titulo: 'Reclamaciones', icono: 'flag', roles: ['admin', 'barbero'], render: renderReclamaciones, grupo: 'Barbería' },
     { id: 'horarios', titulo: 'Horarios', icono: 'clock', roles: ['admin'], render: renderHorarios, grupo: 'Barbería' },
     { id: 'servicios', titulo: 'Servicios', icono: 'scissors', roles: ['admin'], render: renderServicios, grupo: 'Barbería' },
     { id: 'barberos', titulo: 'Barberos', icono: 'users', roles: ['admin'], render: renderBarberos, grupo: 'Barbería' },
+    { id: 'portafolio', titulo: 'Portafolio', icono: 'images', roles: ['admin', 'barbero'], render: renderPortafolio, grupo: 'Barbería' },
     { id: 'clientes', titulo: 'Clientes', icono: 'address-book', roles: ['admin'], render: renderClientes, grupo: 'Barbería' },
     { id: 'reportes', titulo: 'Reportes de citas', icono: 'chart-column', roles: ['admin'], render: renderReportes, grupo: 'Barbería' },
+    { id: 'ocupacion', titulo: 'Ocupación y horas vacías', icono: 'chart-area', roles: ['admin'], render: renderOcupacion, grupo: 'Barbería' },
     { id: 'fin-resumen', titulo: 'Resumen financiero', icono: 'sack-dollar', roles: ['admin'], render: renderFinResumen, grupo: 'Finanzas' },
     { id: 'inventario', titulo: 'Inventario', icono: 'boxes-stacked', roles: ['admin'], render: renderInventario, grupo: 'Finanzas' },
     { id: 'ventas', titulo: 'Ventas y cobros', icono: 'cash-register', roles: ['admin'], render: renderVentas, grupo: 'Finanzas' },
@@ -77,7 +83,19 @@ export function renderPanel(contenedor, { sesion, notificar, cerrar, salir }) {
 
     const cuerpo = contenedor.querySelector('.panel-contenido');
     const selector = contenedor.querySelector('.panel-menu-movil select');
-    const ctx = { ...sesion, notificar, irA: (id, opciones) => mostrar(id, opciones) };
+    const ctx = { ...sesion, notificar, irA: (id, opciones) => mostrar(id, opciones), actualizarAvisos };
+
+    // Aviso interno: reclamaciones que esperan al equipo (sin envíos externos)
+    async function actualizarAvisos() {
+        let n = 0;
+        try { n = await api('panel_reclamaciones_pendientes'); } catch { return; }
+        const boton = contenedor.querySelector('[data-seccion="reclamaciones"]');
+        if (!boton) return;
+        boton.querySelector('.panel-aviso-numero')?.remove();
+        if (n > 0) boton.insertAdjacentHTML('beforeend', `<span class="panel-aviso-numero" aria-label="${n} pendiente(s)">${n}</span>`);
+        const opcion = selector.querySelector('option[value="reclamaciones"]');
+        if (opcion) opcion.textContent = n > 0 ? `Reclamaciones (${n})` : 'Reclamaciones';
+    }
 
     async function mostrar(id, opciones = {}) {
         const seccion = disponibles.find(s => s.id === id) || disponibles[0];
@@ -100,4 +118,5 @@ export function renderPanel(contenedor, { sesion, notificar, cerrar, salir }) {
     contenedor.querySelector('#btn-cerrar-dashboard-inner').addEventListener('click', cerrar);
     contenedor.querySelector('[data-salir]').addEventListener('click', salir);
     mostrar(seccionActual);
+    actualizarAvisos();
 }

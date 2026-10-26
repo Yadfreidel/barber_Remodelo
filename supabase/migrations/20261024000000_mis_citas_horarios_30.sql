@@ -13,9 +13,11 @@
 -- ==========================================
 -- 1. HORARIO DE ATENCIÓN
 -- ==========================================
+-- Solo si conserva los valores de fábrica: volver a ejecutar la instalación no pisa un horario cambiado en el panel
 update public.modulos_config
    set ajustes = ajustes || '{"hora_apertura": "08:00", "hora_cierre": "22:00", "intervalo_minutos": 30}'::jsonb
- where modulo = 'general';
+ where modulo = 'general' and ajustes ->> 'hora_apertura' = '09:00' and ajustes ->> 'hora_cierre' = '20:00'
+   and coalesce(ajustes ->> 'intervalo_minutos', '60') = '60';
 
 -- El horario semanal general guardado con los valores de fábrica (09:00–20:00) pasa a 08:00–22:00.
 -- No se tocan días cerrados, horarios por barbero, descansos, bloqueos ni horarios distintos.

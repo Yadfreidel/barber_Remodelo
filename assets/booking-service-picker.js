@@ -1,5 +1,13 @@
 import { obtenerServicios, formatoPrecioServicio } from '../models/serviceModel.js';
 import { escapar, normalizarBusqueda } from './catalogue-ui.js';
+import { obtenerBarberos } from '../models/barberModel.js';
+
+// Con un barbero elegido, el servicio debe estar entre los que realiza (sin asignación explícita, todos)
+function loRealizaElBarbero(servicio) {
+    const nombre = document.getElementById('barbero-seleccionado')?.value;
+    const barbero = nombre && obtenerBarberos().find(b => b.nombre === nombre);
+    return !barbero?.barbero_id || !Array.isArray(servicio?.barberos) || !servicio.barberos.length || servicio.barberos.map(String).includes(String(barbero.barbero_id));
+}
 
 export function iniciarSelectorServicios(contenedor, select) {
     const titulo = document.createElement('h3');
@@ -30,7 +38,7 @@ export function iniciarSelectorServicios(contenedor, select) {
         grid.querySelectorAll('[data-service]').forEach(boton => {
             const servicio = obtenerServicios().find(s => s.id === boton.dataset.service);
             boton.hidden = expandido
-                ? !normalizarBusqueda(servicio?.nombre).includes(normalizarBusqueda(buscar.value))
+                ? !normalizarBusqueda(servicio?.nombre).includes(normalizarBusqueda(buscar.value)) || !loRealizaElBarbero(servicio)
                 : servicio?.nombre !== select.value;
         });
         vacio.hidden = [...grid.children].some(boton => !boton.hidden);
@@ -60,6 +68,7 @@ export function iniciarSelectorServicios(contenedor, select) {
         filtrar();
     });
     window.addEventListener('catalogo-listo', actualizar);
+    window.addEventListener('barbero-cambiado', filtrar);
     select.form.addEventListener('reset', () => queueMicrotask(() => {expandido = true; buscar.value = ''; actualizar();}));
     actualizar();
 }

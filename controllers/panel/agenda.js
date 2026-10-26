@@ -62,6 +62,7 @@ function tituloRango() {
 export async function renderAgenda(cont, ctx, opciones = {}) {
     estado.fecha = opciones.fecha || estado.fecha || hoyLocal();
     if (opciones.vista) estado.vista = opciones.vista;
+    if (opciones.barbero !== undefined) estado.filtros.barbero = opciones.barbero; // p. ej. desde Ocupación
     const esAdmin = ctx.rol === 'admin';
     const { barberos } = await obtenerCatalogos(ctx);
 

@@ -55,7 +55,11 @@ export function sincronizarBarberosServidor(filas) {
             barbero_id: f.id,
             nombre: f.nombre,
             especialidad: f.especialidad || local?.especialidad || '',
-            imagen: f.foto_url || local?.imagen || staffPorDefecto[0].imagen
+            imagen: f.foto_url || local?.imagen || staffPorDefecto[0].imagen,
+            // Perfil público (portafolio)
+            presentacion: f.presentacion || '',
+            especialidades: Array.isArray(f.especialidades) ? f.especialidades : [],
+            trabajos: Number(f.trabajos || 0)
         };
     });
 }

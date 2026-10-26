@@ -5,6 +5,7 @@ import { tokensGuardados, clavesPendientes, sincronizar, citasEnCache, guardarTo
     leerBorrador, borrarBorrador, olvidarTodo } from '../assets/mis-citas-store.js';
 import { rango12h, formato12h, fechaLarga } from '../assets/horario-utils.js';
 import { esc, formatoPrecio, mensajeError } from './modulosController.js';
+import { abrirFormularioReclamacion, cargarMisReclamaciones, htmlMisReclamaciones, olvidarReclamaciones } from './reclamacionesClienteController.js';
 
 const ERRORES_CUENTA = {
     'Invalid login credentials': 'Correo o contraseña incorrectos.',
@@ -27,6 +28,7 @@ export function crearVistaMisCitas() {
         <div id="mc-estado" role="status" aria-live="polite"></div>
         <section class="mc-grupo" aria-labelledby="mc-proximas-titulo"><h2 id="mc-proximas-titulo">Próximas</h2><div id="mc-proximas" class="mc-lista"></div></section>
         <section class="mc-grupo" aria-labelledby="mc-historial-titulo"><h2 id="mc-historial-titulo">Historial</h2><div id="mc-historial" class="mc-lista"></div></section>
+        <section class="mc-grupo mc-reclamaciones" aria-labelledby="mc-reclamaciones-titulo" hidden><h2 id="mc-reclamaciones-titulo">Mis reclamaciones</h2><div id="mc-reclamaciones" class="mc-lista"></div></section>
         <section class="mc-cuenta" id="mc-cuenta" aria-label="Cuenta"></section>
         <p class="mc-privacidad"><i class="fas fa-lock" aria-hidden="true"></i> Tus citas se guardan de forma privada en este navegador.
             Para verlas en otro dispositivo o si borras los datos del navegador, inicia sesión o abre tu enlace privado
@@ -37,10 +39,11 @@ export function crearVistaMisCitas() {
     supabase?.auth.onAuthStateChange(evento => {
         // Al cerrar sesión no quedan en este navegador las citas de la cuenta (ya están vinculadas a ella:
         // vuelven al iniciar sesión). Evita que otra persona las vea en un dispositivo compartido.
-        if (evento === 'SIGNED_OUT') olvidarTodo();
+        if (evento === 'SIGNED_OUT') { olvidarTodo(); olvidarReclamaciones(); }
         // Diferido: llamar a Supabase Auth dentro de este callback bloquea el cliente (supabase-js)
         if (['SIGNED_IN', 'SIGNED_OUT'].includes(evento) && !vista.hidden) setTimeout(() => actualizarMisCitas(), 0);
     });
+    window.addEventListener('reclamaciones-cambiaron', () => { if (!vista.hidden) pintarReclamaciones(); });
     document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible' && !vista.hidden) actualizarMisCitas({ silencioso: true });
     });
@@ -82,6 +85,7 @@ function tarjeta(c) {
         <div class="mc-acciones">
             <a class="mc-boton" href="?cita=${encodeURIComponent(c.token)}#contacto">${c.modificable ? 'Gestionar (confirmar, cambiar o cancelar)' : 'Ver detalle'}</a>
             <button type="button" class="mc-boton mc-secundario" data-copiar="${esc(c.token)}">Copiar enlace privado</button>
+            <button type="button" class="mc-boton mc-secundario" data-reclamar="${esc(c.token)}" data-descripcion="${esc(`${c.servicio || 'Cita'} · ${fechaLarga(c.fecha)}`)}">Reportar un inconveniente</button>
         </div>
     </article>`;
 }
@@ -186,6 +190,7 @@ export async function actualizarMisCitas({ silencioso = false } = {}) {
         grupos(true);
         pintarEstado(citas.length ? '' : `<p>Aún no tienes citas en este navegador${sesion ? ' ni en tu cuenta' : ''}.</p>`);
         pintarCitas(citas);
+        pintarReclamaciones();
     } catch (error) {
         if (miTurno !== turno) return;
         const reintentar = '<button type="button" class="mc-boton" data-reintentar>Reintentar</button>';
@@ -211,11 +216,25 @@ async function copiar(token, boton) {
     }
 }
 
+// Reclamaciones de este navegador y de la cuenta. Si fallan, no afectan a la lista de citas.
+async function pintarReclamaciones() {
+    const seccion = vista.querySelector('.mc-reclamaciones');
+    try {
+        const lista = await cargarMisReclamaciones();
+        seccion.hidden = !lista.length;
+        vista.querySelector('#mc-reclamaciones').innerHTML = htmlMisReclamaciones(lista);
+    } catch {
+        seccion.hidden = false;
+        vista.querySelector('#mc-reclamaciones').innerHTML = '<p class="mc-vacio">No pudimos cargar tus reclamaciones. Vuelve a intentarlo más tarde.</p>';
+    }
+}
+
 function manejarClic(evento) {
     const objetivo = evento.target.closest('button, a');
     if (!objetivo) return;
     if (objetivo.matches('[data-reintentar]')) actualizarMisCitas();
     else if (objetivo.matches('[data-copiar]')) copiar(objetivo.dataset.copiar, objetivo);
+    else if (objetivo.matches('[data-reclamar]')) abrirFormularioReclamacion({ tokenCita: objetivo.dataset.reclamar, descripcionCita: objetivo.dataset.descripcion });
     else if (objetivo.matches('[data-descartar]')) {
         borrarBorrador();
         window.dispatchEvent(new Event('borrador-descartado'));
@@ -227,6 +246,7 @@ function manejarClic(evento) {
     }
     else if (objetivo.id === 'mc-olvidar' && confirm('¿Quitar de este navegador la lista de tus citas? Las citas no se cancelan; podrás verlas con tu enlace privado o iniciando sesión.')) {
         olvidarTodo();
+        olvidarReclamaciones();
         actualizarMisCitas();
     }
 }

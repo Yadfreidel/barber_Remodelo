@@ -1,0 +1,136 @@
+/* ==========================================
+   Portafolio por barbero, ocupación y reclamaciones
+   Misma identidad negro/dorado; movimiento discreto y desactivado con movimiento reducido.
+   ========================================== */
+
+/* ---------- Web: acceso al perfil desde la tarjeta del barbero ---------- */
+.btn-perfil-barbero { display:block; width:100%; min-height:40px; margin-top:8px; padding:8px 12px; border:0; background:none; color:var(--dorado-brillante); font:600 .78rem var(--font-body); text-decoration:underline; text-underline-offset:3px; cursor:pointer; }
+.btn-perfil-barbero:hover { color:var(--blanco); }
+
+/* ---------- Perfil público del barbero ---------- */
+.perfil-barbero { max-width:860px; }
+.perfil-contenido { padding:18px clamp(16px, 4vw, 32px) 28px; display:grid; gap:18px; }
+.perfil-cabecera { display:flex; gap:18px; align-items:center; min-width:0; }
+.perfil-cabecera img { width:96px; height:96px; flex:0 0 auto; border-radius:50%; object-fit:cover; border:2px solid var(--dorado); }
+.perfil-cabecera h2 { margin:2px 0 4px; font:800 clamp(1.4rem, 4vw, 2rem)/1.1 var(--font-display); color:var(--blanco); overflow-wrap:anywhere; }
+.perfil-lema { margin:0; color:var(--gris-texto); font-size:.9rem; }
+.perfil-chips { display:flex; flex-wrap:wrap; gap:6px; margin:10px 0 0; padding:0; list-style:none; }
+.perfil-chips li { padding:4px 10px; border:1px solid #75633e; border-radius:999px; color:var(--dorado-brillante); font-size:.74rem; }
+.perfil-presentacion { margin:0; color:#ddd6c8; line-height:1.6; white-space:pre-line; }
+.perfil-reservar { justify-self:start; }
+.perfil-seccion { display:block; padding:0; } /* anula el estilo global de las secciones de la web */
+.perfil-seccion h3 { margin:0 0 10px; color:var(--dorado); font:600 .78rem var(--font-body); letter-spacing:1.5px; text-transform:uppercase; }
+.perfil-filtros { display:flex; gap:6px; overflow-x:auto; padding-bottom:6px; margin-bottom:10px; scrollbar-width:thin; }
+.perfil-filtros button { flex:0 0 auto; min-height:36px; padding:6px 14px; border:1px solid var(--gris-borde); border-radius:999px; background:var(--negro-elevado); color:var(--gris-texto); font:600 .78rem var(--font-body); cursor:pointer; }
+.perfil-filtros button[aria-pressed="true"] { background:var(--dorado); border-color:var(--dorado); color:#17140c; }
+.perfil-galeria { display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:10px; }
+.perfil-trabajo { position:relative; padding:0; border:1px solid var(--gris-borde); border-radius:10px; overflow:hidden; background:var(--negro-elevado); color:var(--blanco); text-align:left; cursor:zoom-in; }
+.perfil-trabajo img { display:block; width:100%; aspect-ratio:1; object-fit:cover; transition:scale var(--motion-medium, 300ms); }
+.perfil-trabajo:hover img { scale:1.03; }
+.perfil-trabajo span { display:block; padding:8px 10px; font-size:.8rem; font-weight:600; overflow-wrap:anywhere; }
+.perfil-trabajo small { display:block; color:var(--gris-texto); font-weight:400; }
+.perfil-trabajo.destacado { border-color:var(--dorado); }
+.perfil-estado { grid-column:1 / -1; margin:0; padding:18px; border:1px dashed var(--gris-borde); border-radius:10px; color:var(--gris-texto); text-align:center; }
+.perfil-mas { min-height:40px; margin-top:12px; padding:8px 16px; border:1px solid var(--dorado); border-radius:10px; background:transparent; color:var(--dorado-brillante); font:600 .8rem var(--font-body); cursor:pointer; }
+.perfil-servicios { display:grid; gap:6px; margin:0; padding:0; list-style:none; }
+.perfil-servicios li { display:flex; justify-content:space-between; gap:12px; padding:10px 0; border-bottom:1px solid var(--gris-borde); font-size:.9rem; }
+.perfil-servicios small { color:var(--dorado-brillante); white-space:nowrap; }
+.perfil-ampliada { max-width:min(960px, calc(100% - 24px)); max-height:calc(100dvh - 24px); padding:0; border:1px solid #655b44; border-radius:12px; background:#0d0d0d; color:var(--blanco); overflow:auto; }
+.perfil-ampliada::backdrop { background:rgb(0 0 0 / 88%); }
+.perfil-ampliada > [data-cerrar] { position:sticky; top:8px; float:right; margin:8px; width:44px; height:44px; border:0; border-radius:50%; background:rgb(0 0 0 / 70%); color:var(--blanco); font-size:1.6rem; cursor:pointer; z-index:1; }
+.perfil-ampliada figure { margin:0; }
+.perfil-ampliada img { display:block; width:100%; max-height:78dvh; object-fit:contain; background:#000; }
+.perfil-ampliada figcaption { display:grid; gap:4px; padding:12px 16px 16px; }
+.perfil-ampliada figcaption span { color:#ddd6c8; }
+.perfil-ampliada figcaption small { color:var(--dorado-brillante); }
+@media (max-width:560px) {
+    .perfil-cabecera img { width:72px; height:72px; }
+    .perfil-galeria { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+    .perfil-reservar { justify-self:stretch; }
+}
+
+/* ---------- Reclamaciones del cliente ---------- */
+.reclamacion-dialogo { max-width:620px; }
+.reclamacion-form { display:grid; gap:14px; padding:18px clamp(16px, 4vw, 28px) 24px; }
+.reclamacion-form h2 { margin:0; font:800 1.4rem var(--font-display); color:var(--blanco); }
+.reclamacion-form label { display:grid; gap:6px; color:var(--gris-texto); font-size:.85rem; }
+.reclamacion-form select, .reclamacion-form textarea, .reclamacion-form input[type="file"] { width:100%; min-height:44px; padding:10px 12px; border:1px solid var(--gris-borde); border-radius:10px; background:var(--negro-elevado); color:var(--blanco); font:400 .95rem var(--font-body); }
+.reclamacion-sub { margin:0; color:var(--gris-texto); font-size:.82rem; line-height:1.5; }
+.reclamacion-error { margin:0; color:#ff8a7a; font-size:.85rem; }
+.reclamacion-codigo { color:var(--dorado-brillante); font-size:1.2rem; letter-spacing:1px; }
+.reclamacion-texto { white-space:pre-line; line-height:1.55; color:#ddd6c8; overflow-wrap:anywhere; }
+.reclamacion-adjuntos { display:flex; flex-wrap:wrap; gap:8px; margin:6px 0; }
+.reclamacion-imagen { display:block; max-width:100%; max-height:360px; border-radius:8px; border:1px solid var(--gris-borde); }
+.reclamacion-mensajes { display:grid; gap:10px; margin:0 0 14px; padding:0; list-style:none; }
+.reclamacion-mensajes li { max-width:88%; padding:10px 12px; border-radius:12px; border:1px solid var(--gris-borde); background:var(--negro-elevado); overflow-wrap:anywhere; }
+.reclamacion-mensajes li p { margin:4px 0 0; white-space:pre-line; }
+.reclamacion-mensajes li small { display:block; color:var(--gris-texto); font-size:.72rem; }
+.reclamacion-mensajes .del-equipo { justify-self:start; border-color:#75633e; }
+.reclamacion-mensajes .del-cliente { justify-self:end; }
+.reclamacion-mensajes .nota-interna { justify-self:stretch; max-width:none; border-style:dashed; border-color:#8a6d2e; background:repeating-linear-gradient(135deg, #17140c, #17140c 10px, #1b170e 10px, #1b170e 20px); }
+.reclamacion-caso h4 { margin:18px 0 8px; color:var(--dorado); }
+.mc-reclamaciones { margin-top:18px; }
+.mc-reclamacion { display:flex; justify-content:space-between; align-items:center; gap:12px; min-height:56px; padding:12px 16px; border:1px solid #ffffff14; border-radius:12px; background:var(--app-card, #19191b); color:#ece6da; text-decoration:none; }
+.mc-reclamacion small { display:block; color:#9c978d; font-size:12px; }
+.mc-reclamacion:hover { border-color:var(--dorado); }
+
+/* ---------- Panel: portafolio ---------- */
+.portafolio-rejilla { display:grid; grid-template-columns:repeat(auto-fill, minmax(250px, 1fr)); gap:12px; }
+.portafolio-rejilla > .panel-vacio { grid-column:1 / -1; }
+.portafolio-tarjeta { display:grid; grid-template-rows:auto 1fr auto; border:1px solid var(--gris-borde); border-radius:12px; background:var(--negro-tarjeta); overflow:hidden; min-width:0; }
+.portafolio-mini { position:relative; }
+.portafolio-mini img { display:block; width:100%; aspect-ratio:4 / 3; object-fit:cover; background:#000; }
+.portafolio-destacado { position:absolute; top:8px; right:8px; padding:4px 8px; border-radius:999px; background:var(--dorado); color:#17140c; font-size:.75rem; }
+.portafolio-info { display:grid; gap:4px; padding:10px 12px; align-content:start; }
+.portafolio-info strong { overflow-wrap:anywhere; }
+.portafolio-info .estado-chip { justify-self:start; }
+.portafolio-info small { color:var(--gris-texto); font-size:.76rem; overflow-wrap:anywhere; }
+.portafolio-acciones { display:flex; flex-wrap:wrap; gap:6px; padding:0 12px 12px; }
+.portafolio-previa img { max-width:220px; max-height:220px; border-radius:8px; border:1px solid var(--gris-borde); }
+.portafolio-vista { margin:0; }
+.portafolio-vista img { display:block; max-width:100%; max-height:70dvh; margin:0 auto; border-radius:8px; }
+.portafolio-vista figcaption { margin-top:8px; color:var(--gris-texto); }
+
+/* ---------- Panel: ocupación ---------- */
+.ocupacion-barras { display:grid; gap:12px; }
+.ocupacion-fila { display:grid; grid-template-columns:minmax(110px, 180px) 1fr auto; grid-template-areas:"nombre barra pct" ". detalle detalle"; gap:4px 12px; align-items:center; }
+.ocupacion-fila > span { grid-area:nombre; overflow-wrap:anywhere; }
+.ocupacion-fila > strong { grid-area:pct; color:var(--dorado-brillante); white-space:nowrap; }
+.ocupacion-fila > small { grid-area:detalle; color:var(--gris-texto); font-size:.75rem; }
+.ocupacion-barra { grid-area:barra; height:12px; border-radius:999px; background:var(--negro-elevado); border:1px solid var(--gris-borde); overflow:hidden; }
+.ocupacion-barra i { display:block; height:100%; background:linear-gradient(90deg, #8a6d2e, var(--dorado-brillante)); border-radius:inherit; transition:width var(--motion-medium, 300ms); }
+.ocupacion-calor { width:100%; border-collapse:separate; border-spacing:3px; font-size:.75rem; }
+.ocupacion-calor th { color:var(--gris-texto); font-weight:600; padding:4px; white-space:nowrap; }
+.ocupacion-calor td { --p:0; min-width:44px; height:32px; text-align:center; border-radius:6px; color:var(--blanco);
+    background:color-mix(in srgb, var(--dorado) calc(var(--p) * 100%), #1a1a1a); }
+.ocupacion-calor td.sin-jornada { background:transparent; color:#555; border:1px dashed #262626; }
+.ocupacion-detalle > summary, .ocupacion-explica > summary { cursor:pointer; color:var(--dorado-brillante); }
+.ocupacion-explica { margin:12px 0 24px; }
+@media (max-width:640px) {
+    .ocupacion-fila { grid-template-columns:1fr auto; grid-template-areas:"nombre pct" "barra barra" "detalle detalle"; }
+}
+
+/* ---------- Panel: reclamaciones ---------- */
+.panel-aviso-numero { margin-left:auto; min-width:22px; height:22px; padding:0 6px; border-radius:999px; background:var(--dorado); color:#17140c; font:700 .72rem/22px var(--font-body); text-align:center; }
+.reclamacion-cabecera { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; }
+.reclamacion-datos { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:8px 16px; margin:0 0 12px; }
+.reclamacion-datos dt { color:var(--gris-texto); font-size:.72rem; }
+.reclamacion-datos dd { margin:2px 0 0; overflow-wrap:anywhere; }
+.reclamacion-responder { padding:12px; border:1px solid var(--gris-borde); border-radius:12px; background:var(--negro-elevado); }
+.reclamacion-responder.es-nota { border-style:dashed; border-color:#8a6d2e; }
+.reclamacion-gestion { display:flex; flex-wrap:wrap; gap:10px; align-items:end; }
+.reclamacion-gestion label { display:grid; gap:4px; color:var(--gris-texto); font-size:.8rem; }
+.reclamacion-gestion .panel-sub { flex-basis:100%; margin:0; }
+.reclamacion-historial { margin-top:16px; }
+.reclamacion-historial summary { cursor:pointer; color:var(--dorado-brillante); }
+.reclamacion-historial ol { display:grid; gap:8px; margin:8px 0 0; padding-left:18px; font-size:.84rem; }
+.reclamacion-historial small { color:var(--gris-texto); margin-right:6px; }
+.reclamacion-historial em { color:#ddd6c8; }
+.reclamacion-enlace { width:100%; min-height:44px; padding:8px 10px; border:1px solid var(--gris-borde); border-radius:8px; background:var(--negro-elevado); color:var(--blanco); }
+.reclamacion-categorias { display:grid; gap:8px; }
+.reclamacion-categorias .panel-rejilla { align-items:end; }
+
+@media (prefers-reduced-motion: reduce) {
+    .perfil-trabajo img, .ocupacion-barra i { transition:none; }
+    .perfil-trabajo:hover img { scale:1; }
+}

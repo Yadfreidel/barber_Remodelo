@@ -41,6 +41,7 @@ export async function renderBarberos(cont, ctx) {
                 <div class="barbero-acciones">
                     <button type="button" class="panel-btn" data-editar="${esc(b.id)}">Editar</button>
                     <button type="button" class="panel-btn" data-horario="${esc(b.id)}"><i class="fas fa-clock"></i> Horario</button>
+                    <button type="button" class="panel-btn" data-portafolio="${esc(b.id)}"><i class="fas fa-images"></i> Portafolio</button>
                     <button type="button" class="panel-btn ${b.activo ? 'panel-btn-peligro' : ''}" data-alternar="${esc(b.id)}">${b.activo ? 'Desactivar' : 'Activar'}</button>
                 </div>
             </article>`).join('') : vacio('Aún no hay barberos.', 'users')}</div>`;
@@ -52,6 +53,7 @@ export async function renderBarberos(cont, ctx) {
     cont.querySelector('[data-nuevo]').addEventListener('click', () => abrirBarbero(ctx, null, servicios, recargar));
     cont.querySelectorAll('[data-editar]').forEach(x => x.addEventListener('click', () => abrirBarbero(ctx, buscar(x.dataset.editar), servicios, recargar)));
     cont.querySelectorAll('[data-horario]').forEach(x => x.addEventListener('click', () => ctx.irA('horarios', { barbero: x.dataset.horario })));
+    cont.querySelectorAll('[data-portafolio]').forEach(x => x.addEventListener('click', () => ctx.irA('portafolio', { barbero: x.dataset.portafolio })));
     cont.querySelectorAll('[data-alternar]').forEach(x => x.addEventListener('click', async () => {
         const b = buscar(x.dataset.alternar);
         if (b.activo && !await confirmar(`¿Desactivar a ${b.nombre}? No aparecerá en la web ni podrá entrar al panel.${b.citas_futuras ? ` Tiene ${b.citas_futuras} cita(s) futura(s) que se conservan: reprográmalas desde la Agenda.` : ''}`, { textoOk: 'Desactivar', peligro: true })) return;

@@ -5,9 +5,10 @@
 // ==========================================
 
 import { api, esc, dinero, hoyLocal, sumarDias, inicioSemana, inicioMes, finMes, fechaCorta, ESTADOS, etiquetaEstado, descargarCSV, vacio } from './comun.js';
-import { abrirDetalle, exportarCitasCSV } from './agenda.js';
+import { exportarCitasCSV } from './agenda.js';
+import { abrirCobroDeCita } from './ventas.js';
 
-const METODOS = { efectivo: 'Efectivo', tarjeta: 'Tarjeta', transferencia: 'Transferencia', otro: 'Otro' };
+const METODOS = { efectivo: 'Efectivo', tarjeta: 'Tarjeta', transferencia: 'Transferencia', otro: 'Otro', mixto: 'Mixto' };
 let periodo = { tipo: 'mes', desde: null, hasta: null };
 
 function calcularPeriodo() {
@@ -22,8 +23,8 @@ function calcularPeriodo() {
 export async function renderReportes(cont, ctx) {
     const [desde, hasta] = calcularPeriodo();
     cont.innerHTML = `
-        <div class="panel-encabezado"><div><h2>Cobros y reportes</h2>
-            <p class="panel-sub">Una cita completada no cuenta como cobrada hasta registrar su pago.</p></div></div>
+        <div class="panel-encabezado"><div><h2>Reportes de citas</h2>
+            <p class="panel-sub">Una cita completada no cuenta como cobrada hasta registrar su pago. Ventas de productos, caja y gastos: Reportes financieros.</p></div></div>
         <div class="agenda-filtros">
             <select data-periodo aria-label="Periodo">
                 ${Object.entries({ hoy: 'Hoy', semana: 'Esta semana', mes: 'Este mes', mes_anterior: 'Mes anterior', personalizado: 'Personalizado' })
@@ -74,7 +75,7 @@ export async function renderReportes(cont, ctx) {
         ${tabla('Cancelaciones y ausencias', r.incidencias, [['Fecha', f => `${esc(fechaCorta(f.fecha))} ${esc(f.hora)}`], ['Cliente', f => `${esc(f.cliente)}<br><small>${esc(f.telefono)}</small>`],
             ['Servicio', f => esc(f.servicio || '')], ['Barbero', f => esc(f.barbero || '')], ['Tipo', f => etiquetaEstado({ estado_visual: f.tipo })], ['Motivo', f => esc(f.motivo || '—')]])}`;
 
-    cuerpo.querySelectorAll('[data-cita]').forEach(b => b.addEventListener('click', () => abrirDetalle(b.dataset.cita, ctx, () => renderReportes(cont, ctx))));
+    cuerpo.querySelectorAll('[data-cita]').forEach(b => b.addEventListener('click', () => abrirCobroDeCita(b.dataset.cita, ctx, () => renderReportes(cont, ctx))));
     cont.querySelector('[data-csv="citas"]').addEventListener('click', () => exportarCitasCSV(citas, `citas-${desde}_${hasta}.csv`));
     cont.querySelector('[data-csv="reporte"]').addEventListener('click', () => descargarCSV(`reporte-${desde}_${hasta}.csv`, [
         ['Resumen', 'Valor'], ['Periodo', `${desde} a ${hasta}`], ['Citas', t.citas], ['Completadas', t.completadas], ['Canceladas', t.canceladas],

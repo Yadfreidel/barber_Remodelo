@@ -195,17 +195,21 @@ test('flujo completo: confirmar, reprogramar, cancelar con motivo, no asistió, 
     assert.deepEqual([completada.estado_visual, completada.pagada], ['completada', false], 'completar no la marca como pagada');
     assert.equal(await errorDe(accion(admin, pasada, 'registrar_pago', { monto: -5, metodo: 'efectivo' })), 'pago_invalido');
     assert.equal(await errorDe(accion(admin, pasada, 'registrar_pago', { monto: 700, metodo: 'cripto' })), 'pago_invalido');
-    const pagada = await accion(admin, pasada, 'registrar_pago', { monto: 650, metodo: 'transferencia' });
-    assert.deepEqual([pagada.pagada, Number(pagada.monto_cobrado), pagada.metodo_pago], [true, 650, 'transferencia']);
+    // Un pago parcial deja saldo pendiente: la cita no queda "pagada" hasta cubrir el total
+    const parcial = await accion(admin, pasada, 'registrar_pago', { monto: 650, metodo: 'transferencia' });
+    assert.deepEqual([parcial.pagada, Number(parcial.monto_cobrado), parcial.metodo_pago], [false, 650, 'transferencia']);
+    assert.equal(await errorDe(accion(admin, pasada, 'registrar_pago', { monto: 100, metodo: 'tarjeta' })), 'pago_excede_saldo');
+    const pagada = await accion(admin, pasada, 'registrar_pago', { monto: 50, metodo: 'tarjeta' });
+    assert.deepEqual([pagada.pagada, Number(pagada.monto_cobrado), pagada.metodo_pago], [true, 700, 'mixto']);
     assert.equal(await errorDe(accion(admin, pasada, 'no_asistio')), 'cita_completada');
 
     const resumen = await rpc(admin, 'panel_resumen');
-    assert.ok(Number(resumen.cobrado_hoy) >= 650, 'cobrado (por fecha de cobro)');
+    assert.ok(Number(resumen.cobrado_hoy) >= 700, 'cobrado (por fecha de cobro)');
     assert.ok(Number(resumen.estimado_reservas) > 0, 'valor estimado de reservas separado');
     const rep = await rpc(admin, 'panel_reporte', await fechaLocal(A, -3), await fechaLocal(A, 30));
-    assert.equal(Number(rep.por_metodo.transferencia), 650);
+    assert.equal(Number(rep.por_metodo.mixto), 700);
     assert.ok(rep.incidencias.some(i => i.tipo === 'cancelada' && i.motivo === 'Cliente enfermo'));
-    assert.ok(rep.por_barbero.some(b => b.barbero === 'Ana Barbera' && Number(b.cobrado) === 650));
+    assert.ok(rep.por_barbero.some(b => b.barbero === 'Ana Barbera' && Number(b.cobrado) === 700));
 });
 
 test('catálogo: precios y duración de citas registradas no cambian; orden, duplicados y catálogo público', async () => {

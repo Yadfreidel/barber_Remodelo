@@ -1,0 +1,83 @@
+/* Inventario, ventas y caja (panel). Reutiliza la paleta del panel (--dorado, --negro-tarjeta, --gris-borde). */
+.panel-menu-grupo { margin: 14px 12px 4px; font-size: 0.68rem; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; color: var(--gris-texto); }
+.panel-menu-grupo:first-child { margin-top: 2px; }
+.panel-segmentos button[aria-selected="true"] { background: var(--dorado); color: #17140c; }
+
+.texto-negativo { color: #f2a097; }
+.texto-positivo { color: #7fe0a8; }
+.fila-anulada { opacity: 0.6; }
+.fila-anulada td:first-child, .fila-anulada > span { text-decoration: line-through; text-decoration-color: rgb(255 255 255 / 35%); }
+.fila-clic { cursor: pointer; }
+.fila-clic:hover, .fila-clic:focus-visible { background: var(--negro-elevado); outline: none; }
+
+/* Explicación de cada indicador */
+.fin-explica { margin-top: 6px; font-size: 0.75rem; color: var(--gris-texto); }
+.fin-explica summary { cursor: pointer; color: var(--dorado-brillante); list-style: none; min-height: 24px; display: inline-flex; align-items: center; }
+.fin-explica summary::-webkit-details-marker { display: none; }
+.fin-explica p { margin: 4px 0 0; line-height: 1.45; }
+
+/* Cobro rápido */
+.cobro { display: flex; flex-direction: column; gap: 12px; }
+.cobro-estados { display: flex; flex-wrap: wrap; gap: 8px 16px; padding: 10px 12px; border: 1px solid var(--gris-borde); border-radius: 10px; background: var(--negro-elevado); font-size: 0.85rem; align-items: center; }
+.cobro-aviso { margin: 0; }
+.cobro-buscar input { width: 100%; min-height: 46px; font-size: 1rem; }
+.cobro-resultados { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 8px; max-height: 260px; overflow-y: auto; }
+.cobro-item { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 8px 10px; border: 1px solid var(--gris-borde); border-radius: 10px;
+    background: var(--negro-tarjeta); color: var(--blanco); text-align: left; cursor: pointer; font: inherit; }
+.cobro-item:hover, .cobro-item:focus-visible { border-color: var(--dorado); outline: none; }
+.cobro-item:disabled { opacity: 0.45; cursor: not-allowed; }
+.cobro-item i { color: var(--dorado); width: 18px; text-align: center; }
+.cobro-item span { flex: 1; min-width: 0; font-size: 0.86rem; overflow-wrap: anywhere; }
+.cobro-item small { display: block; color: var(--gris-texto); font-size: 0.72rem; }
+.cobro-item strong { font-size: 0.86rem; white-space: nowrap; }
+.cobro-carrito { display: flex; flex-direction: column; gap: 8px; }
+.cobro-linea { display: grid; grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr)) auto; gap: 8px; align-items: end; padding: 10px;
+    border: 1px solid var(--gris-borde); border-radius: 10px; background: var(--negro-elevado); }
+.cobro-linea label { display: flex; flex-direction: column; gap: 4px; font-size: 0.72rem; color: var(--gris-texto); min-width: 0; }
+.cobro-linea input, .cobro-linea select { min-height: 40px; width: 100%; }
+.cobro-linea-nombre { font-size: 0.9rem; overflow-wrap: anywhere; align-self: center; }
+.cobro-linea-nombre small, .cobro-linea-fija small { display: block; color: var(--gris-texto); font-size: 0.74rem; }
+.cobro-linea-fija { display: flex; justify-content: space-between; gap: 10px; align-items: center; }
+.cobro-totales { display: flex; flex-direction: column; gap: 4px; padding: 12px; border-radius: 10px; border: 1px solid var(--gris-borde); background: var(--negro-tarjeta); }
+.cobro-totales > div { display: flex; justify-content: space-between; gap: 10px; font-size: 0.9rem; }
+.cobro-total { font-size: 1.15rem !important; color: var(--dorado-brillante); }
+.cobro-cambio { color: #7fe0a8; font-size: 1.05rem !important; }
+.cobro-saldo { color: #f1c40f; }
+.cobro-pagos { display: flex; flex-direction: column; gap: 8px; }
+.cobro-rapidos { display: flex; flex-wrap: wrap; gap: 6px; }
+.cobro-pago { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) auto; gap: 8px; align-items: end; }
+.cobro-pago label { display: flex; flex-direction: column; gap: 4px; font-size: 0.72rem; color: var(--gris-texto); min-width: 0; }
+.cobro-pago input, .cobro-pago select { min-height: 44px; width: 100%; }
+.cobro-confirmar { min-height: 50px; font-size: 1rem; }
+.cobro-cliente summary { cursor: pointer; min-height: 32px; }
+.cobro-ok { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; padding: 6px 0 12px; }
+.cobro-ok i { font-size: 2.4rem; color: #7fe0a8; }
+.cobro-ok h4 { margin: 4px 0 0; font-size: 1.15rem; }
+
+/* Comprobante interno */
+.comprobante { padding: 12px; border: 1px dashed var(--gris-borde); border-radius: 10px; background: var(--negro-tarjeta); }
+.comprobante header { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.comprobante td:last-child { text-align: right; white-space: nowrap; }
+.comprobante-totales { margin: 10px 0 0; display: flex; flex-direction: column; gap: 4px; }
+.comprobante-totales div { display: flex; justify-content: space-between; gap: 10px; font-size: 0.88rem; }
+.comprobante-totales dt { color: var(--gris-texto); }
+.comprobante-totales dd { margin: 0; text-align: right; }
+
+/* Caja */
+.caja-cuentas { margin: 0 0 10px; display: flex; flex-direction: column; gap: 2px; }
+.caja-cuentas div { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--gris-borde); font-size: 0.9rem; }
+.caja-cuentas dt { color: var(--gris-texto); }
+.caja-cuentas dd { margin: 0; font-variant-numeric: tabular-nums; }
+.caja-esperado { font-size: 1.05rem !important; border-bottom: 0 !important; }
+.caja-esperado dt, .caja-esperado dd { color: var(--dorado-brillante) !important; font-weight: 700; }
+.caja-otros { opacity: 0.85; }
+.caja-diferencia { margin: 0; font-size: 0.9rem; }
+
+@media (max-width: 760px) {
+    .cobro-linea { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .cobro-linea-nombre { grid-column: 1 / -1; }
+    .cobro-linea .panel-icono { justify-self: end; }
+    .cobro-pago { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .cobro-resultados { grid-template-columns: minmax(0, 1fr); max-height: 220px; }
+    .cobro-confirmar { width: 100%; }
+}

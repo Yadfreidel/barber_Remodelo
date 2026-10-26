@@ -39,6 +39,60 @@ const MENSAJES = {
     rango_invalido: 'El rango de fechas no es válido (máximo 400 días).',
     datos_invalidos: 'Revisa los datos ingresados.',
     bloqueo_no_encontrado: 'El bloqueo ya no existe.',
+    // Inventario, ventas y caja
+    sin_stock: 'No hay existencias suficientes.',
+    caja_cerrada: 'La caja está cerrada: ábrela para cobrar o devolver en efectivo.',
+    caja_ya_abierta: 'Ya hay una caja abierta.',
+    caja_no_cerrada: 'Solo se corrigen cajas cerradas.',
+    caja_de_gasto_cerrada: 'La caja de ese gasto ya se cerró: registra una entrada en la caja actual para compensarlo.',
+    pago_excede_saldo: 'El pago supera el saldo pendiente.',
+    efectivo_insuficiente_en_caja: 'No hay tanto efectivo en la caja.',
+    efectivo_insuficiente: 'El efectivo recibido es menor que el importe a cobrar.',
+    motivo_descuento_requerido: 'Escribe el motivo del descuento.',
+    descuento_invalido: 'El descuento no puede superar el importe de la línea.',
+    barbero_requerido: 'Indica el barbero que realiza el servicio.',
+    producto_no_vendible: 'Ese artículo no está a la venta (inactivo, sin precio o es un insumo).',
+    venta_sin_cliente_debe_pagarse: 'Sin cliente identificado la venta debe pagarse completa (o indica el teléfono del cliente).',
+    reembolsa_antes_de_anular: 'Devuelve primero el dinero cobrado; después podrás anular la venta.',
+    ventas_reembolso_valido: 'No se puede devolver más dinero del cobrado.',
+    ventas_sin_saldo_a_favor: 'Al devolver productos o servicios ya pagados, devuelve también ese dinero.',
+    ventas_devolucion_valida: 'La devolución supera el total de la venta.',
+    ventas_cita_activa: 'Esa cita ya tiene una venta.',
+    importe_devolucion_invalido: 'Revisa el importe a devolver.',
+    cantidad_devolucion_invalida: 'Revisa la cantidad a devolver.',
+    venta_no_disponible: 'La venta no existe o está anulada.',
+    venta_vacia: 'Agrega al menos un servicio o producto.',
+    operacion_vacia: 'No hay nada que registrar.',
+    observacion_requerida: 'Hay diferencia entre lo contado y lo esperado: escribe una observación.',
+    pago_excede_compra: 'El pago supera lo que falta por pagar de esa compra.',
+    compra_con_pagos: 'La compra tiene pagos: anúlalos antes.',
+    compra_no_disponible: 'La compra no existe o está anulada.',
+    compra_vacia: 'Agrega al menos un artículo a la compra.',
+    codigo_duplicado: 'Ya existe un artículo con ese código.',
+    producto_duplicado: 'Ya existe un artículo con ese nombre.',
+    producto_invalido: 'Revisa los datos del artículo (nombre, código, unidad y precio de venta).',
+    producto_no_encontrado: 'No se encontró el artículo.',
+    unidad_con_movimientos: 'No se puede cambiar la unidad de un artículo con movimientos.',
+    unidades_incompatibles: 'La unidad no es compatible con la del artículo (ml con litros, g con kg).',
+    sin_diferencia: 'El conteo coincide con la existencia: no hay nada que ajustar.',
+    inicial_no_permitida: 'La existencia inicial solo se registra en artículos sin movimientos.',
+    cantidad_invalida: 'Revisa la cantidad (las unidades y pares van sin decimales).',
+    linea_invalida: 'Revisa las cantidades y precios.',
+    tipo_movimiento_invalido: 'Tipo de movimiento no válido.',
+    gasto_no_disponible: 'El gasto no existe o ya está anulado.',
+    monto_invalido: 'Revisa el importe.',
+    fecha_invalida: 'Revisa la fecha.',
+    imagen_invalida: 'La imagen del comprobante no es válida.',
+    proveedor_duplicado: 'Ya existe un proveedor con ese nombre.',
+    proveedor_invalido: 'Revisa los datos del proveedor.',
+    proveedor_no_encontrado: 'No se encontró el proveedor.',
+    cita_sin_cobro: 'La cita no tiene cobros que anular.',
+    clave_operacion_usada: 'Operación repetida con otros datos. Vuelve a abrir la pantalla.',
+    registro_inmutable: 'Las operaciones confirmadas no se modifican: usa una devolución o anulación.',
+    usa_cobro_de_cita: 'Los productos reservados se entregan al cobrar la cita.',
+    'Failed to fetch': 'Sin conexión: la operación NO se confirmó. Revisa la conexión y vuelve a intentarlo (no se duplicará).',
+    NetworkError: 'Sin conexión: la operación NO se confirmó. Revisa la conexión y vuelve a intentarlo (no se duplicará).',
+    'Load failed': 'Sin conexión: la operación NO se confirmó. Revisa la conexión y vuelve a intentarlo (no se duplicará).',
     'time zone': 'Zona horaria no válida.',
     JWT: 'Tu sesión expiró. Vuelve a iniciar sesión.'
 };
@@ -53,7 +107,8 @@ export async function api(funcion, argumentos = {}) {
     const cliente = obtenerClienteAdmin();
     if (!cliente) throw new Error('No hay conexión con el servidor.');
     const { data, error } = await cliente.rpc(funcion, argumentos);
-    if (error) throw new Error(mensajeError(error));
+    // sin_stock indica en el detalle qué artículo se agotó
+    if (error) throw new Error(mensajeError(error) + (/sin_stock/.test(error.message) && error.details ? ` (${error.details})` : ''));
     return data;
 }
 

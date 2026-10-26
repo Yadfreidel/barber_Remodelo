@@ -6,7 +6,7 @@
 
 import { montarPruebasTarjeta } from '../assets/appointment-card-preview.js';
 import { supabase, obtenerClienteAdmin } from '../assets/supabaseClient.js';
-import { cargarConfigModulos, obtenerConfigModulos, moduloActivo, esc, formatoPrecio, mensajeError } from './modulosController.js';
+import { cargarConfigModulos, esc, formatoPrecio, mensajeError } from './modulosController.js';
 
 const NOMBRES_MODULOS = {
     whatsapp: 'Recordatorios WhatsApp',
@@ -178,51 +178,11 @@ async function seccionModulos(cuerpo, admin, ejecutar) {
     });
 }
 
-async function seccionProductos(cuerpo, admin, ejecutar) {
-    const { data = [] } = await admin.from('productos').select('*').order('nombre');
-    cuerpo.innerHTML = `
-        <form id="form-producto" class="admin-form">
-            <input id="prod-nombre" placeholder="Nombre" required>
-            <input id="prod-descripcion" placeholder="Descripción (opcional)">
-            <input id="prod-precio" type="number" min="0" step="0.01" placeholder="Precio RD$" required>
-            <input id="prod-stock" type="number" min="0" step="1" placeholder="Stock inicial" required>
-            <label class="check-consentimiento"><input type="checkbox" id="prod-activo" checked> <span>Visible para clientes</span></label>
-            <button type="submit" class="btn-admin-accion"><i class="fas fa-plus"></i> Agregar producto</button>
-        </form>
-        ${tabla(['Producto', 'Precio', 'Stock', 'Estado', 'Acciones'], (data || []).map(p => `
-            <tr>
-                <td><strong>${esc(p.nombre)}</strong><br><small class="subtext-email">${esc(p.descripcion || '')}</small></td>
-                <td>${formatoPrecio(p.precio)}</td>
-                <td><strong>${p.stock}</strong></td>
-                <td><span class="badge-estado ${p.activo ? 'badge-confirmada' : 'badge-cancelada'}">${p.activo ? 'ACTIVO' : 'INACTIVO'}</span></td>
-                <td><div class="acciones-cita-row">
-                    <button class="btn-accion-cita" data-stock="${esc(p.id)}" title="Ajustar stock"><i class="fas fa-boxes"></i></button>
-                    <button class="btn-accion-cita" data-precio="${esc(p.id)}" title="Cambiar precio"><i class="fas fa-dollar-sign"></i></button>
-                    <button class="btn-accion-cita" data-activo="${esc(p.id)}" data-valor="${!p.activo}" title="${p.activo ? 'Desactivar' : 'Activar'}"><i class="fas fa-power-off"></i></button>
-                </div></td>
-            </tr>`))}`;
-
-    cuerpo.querySelector('#form-producto').addEventListener('submit', e => {
-        e.preventDefault();
-        ejecutar(admin.from('productos').insert([{
-            nombre: cuerpo.querySelector('#prod-nombre').value.trim(),
-            descripcion: cuerpo.querySelector('#prod-descripcion').value.trim() || null,
-            precio: Number(cuerpo.querySelector('#prod-precio').value),
-            stock: Number(cuerpo.querySelector('#prod-stock').value),
-            activo: cuerpo.querySelector('#prod-activo').checked
-        }]), 'Producto agregado');
-    });
-    cuerpo.querySelectorAll('[data-stock]').forEach(b => b.addEventListener('click', () => {
-        const delta = parseInt(prompt('Unidades a sumar (use negativo para restar):'), 10);
-        if (Number.isInteger(delta) && delta !== 0) ejecutar(admin.rpc('admin_ajustar_stock', { p_producto_id: b.dataset.stock, p_delta: delta }), 'Stock actualizado');
-    }));
-    cuerpo.querySelectorAll('[data-precio]').forEach(b => b.addEventListener('click', () => {
-        const precio = Number(prompt('Nuevo precio RD$:'));
-        if (precio >= 0 && !Number.isNaN(precio)) ejecutar(admin.from('productos').update({ precio }).eq('id', b.dataset.precio), 'Precio actualizado');
-    }));
-    cuerpo.querySelectorAll('[data-activo]').forEach(b => b.addEventListener('click', () => {
-        ejecutar(admin.from('productos').update({ activo: b.dataset.valor === 'true' }).eq('id', b.dataset.activo), 'Producto actualizado');
-    }));
+// Los artículos se gestionan en Finanzas › Inventario: la existencia solo cambia con movimientos registrados
+async function seccionProductos(cuerpo) {
+    cuerpo.innerHTML = `<p class="nota-espera">Los productos (precio, existencias, compras y ajustes) se gestionan en
+        <strong>Finanzas › Inventario</strong>, donde cada cambio de existencia queda registrado con su motivo.
+        Aquí solo se activa o desactiva la venta de productos en la web (pestaña Módulos › Productos).</p>`;
 }
 
 async function seccionPromociones(cuerpo, admin, ejecutar) {
@@ -341,62 +301,6 @@ async function seccionMensajes(cuerpo, admin, ejecutar) {
     cuerpo.querySelectorAll('[data-reintentar]').forEach(b => b.addEventListener('click', () => {
         if (confirm('Si el mensaje llegó pero no se confirmó, el cliente lo recibirá dos veces. ¿Reintentar?')) {
             ejecutar(admin.rpc('admin_reintentar_mensaje', { p_id: b.dataset.reintentar }), 'Mensaje en cola');
-        }
-    }));
-}
-
-// ==========================================
-// ACCIONES EXTRA EN LA TABLA DE CITAS
-// ==========================================
-export function columnasExtraCitas() {
-    return obtenerConfigModulos().instalado ? 'completada_en, pagada_en, reembolsada_en, total_productos,' : '';
-}
-
-export function accionesCitaAdmin(c) {
-    if (!obtenerConfigModulos().instalado) return '';
-    let html = '';
-    if (moduloActivo('referidos') || moduloActivo('recuperacion')) {
-        html += `<button class="btn-accion-cita btn-confirmar" data-modulo-accion="completar_pagar" data-id="${esc(c.id)}" title="Completada y pagada" ${c.pagada_en || c.estado === 'cancelada' ? 'disabled' : ''}><i class="fas fa-cash-register"></i></button>`;
-        html += `<button class="btn-accion-cita btn-cancelar" data-modulo-accion="reembolsar" data-id="${esc(c.id)}" title="Registrar reembolso" ${!c.pagada_en || c.reembolsada_en ? 'disabled' : ''}><i class="fas fa-undo"></i></button>`;
-    }
-    if (moduloActivo('referidos')) {
-        html += `<button class="btn-accion-cita" data-modulo-accion="beneficio" data-id="${esc(c.id)}" data-telefono="${esc(c.telefono_cliente)}" title="Aplicar beneficio de referido"><i class="fas fa-gift"></i></button>`;
-    }
-    if (moduloActivo('productos') && Number(c.total_productos) > 0) {
-        html += `<button class="btn-accion-cita" data-modulo-accion="entregar_productos" data-id="${esc(c.id)}" title="Productos entregados (${formatoPrecio(c.total_productos)})"><i class="fas fa-shopping-bag"></i></button>`;
-    }
-    return html;
-}
-
-export function configurarAccionesCitaAdmin(tbody, recargar, notificar) {
-    const admin = obtenerClienteAdmin();
-    tbody.querySelectorAll('[data-modulo-accion]').forEach(btn => btn.addEventListener('click', async () => {
-        const { data: { session } } = await admin.auth.getSession();
-        if (!session) {
-            notificar('Inicia sesión en la pestaña Módulos para esta acción', 'error');
-            return;
-        }
-        let resultado;
-        if (btn.dataset.moduloAccion === 'beneficio') {
-            const digitos = String(btn.dataset.telefono || '').replace(/\D/g, '').slice(-10);
-            const { data: disponibles } = await admin.from('beneficios').select('*')
-                .like('telefono', `%${digitos}`).eq('estado', 'disponible').order('creado_en').limit(1);
-            if (!disponibles || !disponibles.length) {
-                notificar('Este cliente no tiene beneficios disponibles', 'error');
-                return;
-            }
-            const b = disponibles[0];
-            const texto = b.tipo === 'porcentaje' ? `${Number(b.valor)}%` : formatoPrecio(b.valor);
-            if (!confirm(`¿Aplicar beneficio de ${texto} a esta cita?`)) return;
-            resultado = await admin.rpc('admin_usar_beneficio', { p_beneficio_id: b.id, p_cita_id: String(btn.dataset.id) });
-        } else {
-            if (btn.dataset.moduloAccion === 'reembolsar' && !confirm('¿Registrar reembolso de esta cita?')) return;
-            resultado = await admin.rpc('admin_marcar_cita', { p_cita_id: String(btn.dataset.id), p_accion: btn.dataset.moduloAccion });
-        }
-        if (resultado.error) notificar(mensajeError(resultado.error), 'error');
-        else {
-            notificar('Cita actualizada');
-            recargar();
         }
     }));
 }

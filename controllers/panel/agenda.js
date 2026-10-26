@@ -6,6 +6,7 @@ import {
     api, esc, dinero, hoyLocal, sumarDias, inicioSemana, inicioMes, finMes, diaSemana, fechaLarga, fechaCorta,
     fechaHora, ESTADOS, etiquetaEstado, dialogo, confirmar, ejecutar, descargarCSV, telefonoWhatsApp, vacio
 } from './comun.js';
+import { abrirCobroDeCita, abrirVenta } from './ventas.js';
 
 const estado = {
     vista: window.matchMedia('(max-width: 760px)').matches ? 'lista' : 'dia',
@@ -19,7 +20,7 @@ const ACCIONES_HISTORIAL = {
     cita_reprogramada: 'Reprogramada', cita_completada: 'Completada', cita_no_asistio: 'Marcada como no asistió',
     pago_registrado: 'Pago registrado', pago_anulado: 'Pago anulado', notas_actualizadas: 'Notas actualizadas'
 };
-const METODOS = { efectivo: 'Efectivo', tarjeta: 'Tarjeta', transferencia: 'Transferencia', otro: 'Otro' };
+const METODOS = { efectivo: 'Efectivo', tarjeta: 'Tarjeta', transferencia: 'Transferencia', otro: 'Otro', mixto: 'Mixto' };
 
 let catalogos = null;
 async function obtenerCatalogos(ctx) {
@@ -376,7 +377,6 @@ export async function abrirDetalle(id, ctx, recargar) {
     const esAdmin = ctx.rol === 'admin';
     const abierta = c.estado_visual === 'pendiente' || c.estado_visual === 'confirmada';
     const yaPaso = `${c.fecha} ${c.hora}` <= `${hoyLocal()} ${new Intl.DateTimeFormat('en-GB', { timeZone: 'America/Santo_Domingo', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date())}`;
-    const total = Number(c.precio || 0) + Number(c.total_productos || 0);
     const { cuerpo, cerrar } = dialogo({ titulo: `Cita de ${c.cliente}`, ancho: 'lg', html: `
         <div class="detalle-cita">
             <div class="detalle-estado">${etiquetaEstado(c)} ${c.cliente_confirmo ? '<span class="estado-chip estado-confirmada">Cliente confirmó</span>' : ''}</div>
@@ -386,7 +386,8 @@ export async function abrirDetalle(id, ctx, recargar) {
                 <div><dt>Servicio</dt><dd>${esc(c.servicio || '')}</dd></div>
                 <div><dt>Barbero</dt><dd>${esc(c.barbero || '')}</dd></div>
                 <div><dt>Precio</dt><dd>${dinero(c.precio)}${Number(c.descuento) > 0 ? ` <small>(descuento ${dinero(c.descuento)})</small>` : ''}${Number(c.total_productos) > 0 ? ` + productos ${dinero(c.total_productos)}` : ''}</dd></div>
-                <div><dt>Cobro</dt><dd>${c.pagada ? `${dinero(c.monto_cobrado)} · ${esc(METODOS[c.metodo_pago] || c.metodo_pago)} · ${esc(fechaHora(c.pagada_en))}` : 'Pendiente'}</dd></div>
+                <div><dt>Pago</dt><dd>${c.pagada ? `Pagada: ${dinero(c.monto_cobrado)} · ${esc(METODOS[c.metodo_pago] || c.metodo_pago)} · ${esc(fechaHora(c.pagada_en))}`
+                    : Number(c.monto_cobrado) > 0 ? `Pago parcial: ${dinero(c.monto_cobrado)} cobrado` : 'Pendiente de cobro'}</dd></div>
                 <div><dt>Cliente</dt><dd>${esc(c.cliente)}<br><a href="tel:${esc(c.telefono)}">${esc(c.telefono)}</a>${c.email ? `<br>${esc(c.email)}` : ''}</dd></div>
                 <div><dt>Origen</dt><dd>${esc({ web: 'Web', admin: 'Administración', lista_espera: 'Lista de espera' }[c.origen] || c.origen)} · ${esc(fechaHora(c.creado_en))}</dd></div>
                 ${c.motivo_cancelacion ? `<div class="ancho"><dt>Motivo de cancelación</dt><dd>${esc(c.motivo_cancelacion)}</dd></div>` : ''}
@@ -420,8 +421,8 @@ export async function abrirDetalle(id, ctx, recargar) {
                     ${abierta ? '<button type="button" class="panel-btn" data-accion="completar"><i class="fas fa-check-double"></i> Marcar completada</button>' : ''}
                     ${abierta && yaPaso ? '<button type="button" class="panel-btn" data-accion="no_asistio"><i class="fas fa-user-xmark"></i> No asistió</button>' : ''}
                     ${esAdmin && abierta ? '<button type="button" class="panel-btn" data-mostrar="reprogramar"><i class="fas fa-calendar-alt"></i> Reprogramar</button>' : ''}
-                    ${esAdmin && c.estado_visual !== 'cancelada' && !c.pagada ? '<button type="button" class="panel-btn" data-mostrar="pago"><i class="fas fa-cash-register"></i> Registrar cobro</button>' : ''}
-                    ${esAdmin && c.pagada ? '<button type="button" class="panel-btn" data-mostrar="pago"><i class="fas fa-pen"></i> Corregir cobro</button><button type="button" class="panel-btn panel-btn-peligro" data-anular-pago>Anular cobro</button>' : ''}
+                    ${esAdmin && c.estado_visual !== 'cancelada' && !c.pagada ? '<button type="button" class="panel-btn" data-cobrar><i class="fas fa-cash-register"></i> Cobrar</button>' : ''}
+                    ${esAdmin && (c.pagada || Number(c.monto_cobrado) > 0) ? '<button type="button" class="panel-btn" data-ver-venta><i class="fas fa-receipt"></i> Ver cobro, devolver o anular</button>' : ''}
                     ${esAdmin && abierta ? '<button type="button" class="panel-btn panel-btn-peligro" data-mostrar="cancelar"><i class="fas fa-ban"></i> Cancelar cita</button>' : ''}
                 </div>
                 <form class="panel-form detalle-sub" data-sub="reprogramar" hidden novalidate>
@@ -432,13 +433,6 @@ export async function abrirDetalle(id, ctx, recargar) {
                     </div>
                     <div data-horas></div>
                     <button type="submit" class="panel-btn panel-btn-principal">Guardar nuevo horario</button>
-                </form>
-                <form class="panel-form detalle-sub" data-sub="pago" hidden novalidate>
-                    <div class="panel-rejilla">
-                        <label>Importe cobrado (RD$)<input type="number" name="monto" min="0" step="1" value="${esc(c.monto_cobrado ?? total)}"></label>
-                        <label>Método<select name="metodo">${Object.entries(METODOS).map(([k, v]) => `<option value="${k}" ${c.metodo_pago === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
-                    </div>
-                    <button type="submit" class="panel-btn panel-btn-principal">Guardar cobro</button>
                 </form>
                 <form class="panel-form detalle-sub" data-sub="cancelar" hidden novalidate>
                     <label>Motivo de la cancelación<input name="motivo" maxlength="300" required placeholder="Ej.: el cliente avisó que no puede venir"></label>
@@ -480,14 +474,14 @@ export async function abrirDetalle(id, ctx, recargar) {
         form.querySelector('input,select')?.focus();
         if (b.dataset.mostrar === 'reprogramar') prepararReprogramacion(form, c, ctx);
     }));
-    cuerpo.querySelector('[data-sub="pago"]').addEventListener('submit', async e => {
-        e.preventDefault();
-        const d = Object.fromEntries(new FormData(e.target));
-        if (await actuar(e.submitter, 'registrar_pago', { monto: Number(d.monto), metodo: d.metodo }, 'Cobro registrado')) refrescar();
-    });
-    cuerpo.querySelector('[data-anular-pago]')?.addEventListener('click', async e => {
-        if (!await confirmar('¿Anular el cobro registrado? Quedará en el historial.', { textoOk: 'Anular cobro', peligro: true })) return;
-        if (await actuar(e.currentTarget, 'anular_pago', {}, 'Cobro anulado')) refrescar();
+    // El cobro se registra en Ventas y cobros (caja, pagos mixtos, saldos y devoluciones)
+    const tras = async () => { await recargar?.(); };
+    cuerpo.querySelector('[data-cobrar]')?.addEventListener('click', () => { cerrar(); abrirCobroDeCita(id, ctx, tras); });
+    cuerpo.querySelector('[data-ver-venta]')?.addEventListener('click', async () => {
+        try {
+            const { venta } = await api('panel_venta_de_cita', { p_cita: id });
+            if (venta) { cerrar(); abrirVenta(venta.id, ctx, tras); }
+        } catch (e) { ctx.notificar(e.message, 'error'); }
     });
     cuerpo.querySelector('[data-sub="cancelar"]').addEventListener('submit', async e => {
         e.preventDefault();

@@ -185,7 +185,7 @@ test('productos: stock concurrente, total separado y devolución por cancelació
     assert.equal(ok.length, 3, 'solo se venden 3 unidades');
     assert.ok(res.filter(r => r.status === 'rejected').every(r => r.reason.message === 'sin_stock'));
     const { rows: [estado] } = await A.query(`select stock from productos where id = $1`, [prod.id]);
-    assert.equal(estado.stock, 0);
+    assert.equal(Number(estado.stock), 0);
     const { rows: [n] } = await A.query(`select count(*)::int n from citas c join barberos b on b.id = c.barbero_id where b.nombre = $1 and c.fecha = $2`, [b, fecha]);
     assert.equal(n.n, 3, 'las reservas sin stock no dejan cita creada');
 
@@ -197,7 +197,9 @@ test('productos: stock concurrente, total separado y devolución por cancelació
     await rpc(anon, 'cancelar_cita', primera.token);
     await cancelarDirecto(primera.token);
     const { rows: [despues] } = await A.query(`select stock from productos where id = $1`, [prod.id]);
-    assert.equal(despues.stock, 1, 'se devuelve una sola vez');
+    assert.equal(Number(despues.stock), 1, 'se devuelve una sola vez');
+    const { rows: movs } = await A.query(`select tipo, cantidad::int c from inventario_movimientos where producto_id = $1 order by id`, [prod.id]);
+    assert.deepEqual(movs.map(m => m.tipo), ['inicial', 'reserva', 'reserva', 'reserva', 'reserva_liberada'], 'cada cambio de existencia queda en el historial');
     const det = await rpc(anon, 'consultar_cita', primera.token);
     assert.equal(det.productos[0].estado, 'devuelto');
 });
@@ -372,8 +374,10 @@ test('permisos: tablas y funciones protegidas, administración con Supabase Auth
     assert.match(await errorDe(rpc(adminCli, 'admin_guardar_modulo', 'productos', true, '{"inventado": 1}')), /ajuste_invalido/);
     assert.match(await errorDe(rpc(adminCli, 'admin_guardar_modulo', 'whatsapp', true, '{"horas_antes": [0]}')), /ajuste_fuera_de_rango/);
 
-    const { rows: [p] } = await adminCli.query(`insert into productos (nombre, precio, stock, activo) values ('Gel', 300, 2, true) returning id`);
+    // Los artículos se crean por la función del inventario: la existencia inicial queda como movimiento
+    assert.match(await errorDe(adminCli.query(`insert into productos (nombre, precio, stock, activo) values ('Gel', 300, 2, true)`)), /permission denied/);
+    const p = await rpc(adminCli, 'panel_inv_guardar_producto', null, JSON.stringify({ nombre: 'Gel', precio: 300, existencia_inicial: 2 }));
     assert.match(await errorDe(adminCli.query(`update productos set stock = 99 where id = $1`, [p.id])), /permission denied/);
-    assert.equal((await rpc(adminCli, 'admin_ajustar_stock', p.id, -1)).stock, 1);
+    assert.equal(Number((await rpc(adminCli, 'admin_ajustar_stock', p.id, -1)).stock), 1);
     assert.equal(await errorDe(rpc(adminCli, 'admin_ajustar_stock', p.id, -5)), 'stock_invalido');
 });

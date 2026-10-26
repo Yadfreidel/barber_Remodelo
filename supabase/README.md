@@ -129,3 +129,30 @@ npm install
 npm test        # PostgreSQL 17 real local (embedded-postgres) + módulo de WhatsApp
 npm run check   # sintaxis de los módulos JS del frontend
 ```
+
+## 7. Inventario, ventas y caja (Panel › Finanzas)
+
+Solo para administradores; el servidor rechaza a barberos, clientes y visitantes aunque llamen a la API. Requiere conexión: un cobro nunca se da por confirmado si no lo guardó el servidor.
+
+**Cargar el inventario inicial**
+1. *Inventario › Proveedores*: agrega tus proveedores (opcional).
+2. *Inventario › Artículos › Nuevo artículo*: nombre, tipo (*Para vender* o *Insumo*), unidad (unidad, par, ml, l, g, kg), precio de venta, **costo unitario**, existencia mínima y **existencia inicial**. Sin costo, el valor del inventario y el margen salen como incompletos.
+3. Más adelante, la mercancía nueva se registra en *Inventario › Compras › Registrar compra*. Su pago se registra aparte con *Registrar pago*, que queda como gasto enlazado a la compra.
+4. Opcional: en *Consumo por servicio* indica cuánto insumo usa cada servicio, por ejemplo 20 ml por corte. Se descuenta al completar la cita.
+
+**Registrar una venta**
+1. *Caja › Abrir caja* con el fondo inicial. Solo hace falta para cobrar o devolver en efectivo.
+2. *Ventas y cobros › Nuevo cobro*, o *Cobrar* en una cita de la agenda. Busca, toca los servicios o productos, elige el barbero de cada servicio y, si hay descuento, escribe el motivo.
+3. Elige el medio de pago. Puedes combinar varios. En efectivo escribe lo recibido: se muestra el cambio y se registra solo el importe cobrado.
+4. Pulsa *Confirmar cobro*. El comprobante interno (no fiscal) aparece en pantalla y se puede imprimir.
+5. Si el cliente paga una parte antes (anticipo), el resto se cobra con *Cobrar saldo*. El ingreso cuenta una sola vez.
+
+**Cerrar la caja**
+1. *Caja › Cerrar caja*: cuenta el efectivo de la gaveta y escribe la cifra. Se muestra la diferencia con el esperado.
+2. Si hay diferencia, la observación es obligatoria. El cierre queda guardado, y una corrección posterior registra el valor anterior, el motivo y quién la hizo.
+
+**Reglas**
+- La existencia solo cambia con movimientos: compra, venta, consumo, pérdida, devolución o ajuste por conteo. Nunca queda negativa. Los artículos se desactivan, no se borran.
+- Las ventas, pagos y cierres confirmados no se editan ni se borran. Se corrigen con devoluciones, reembolsos o anulaciones, que quedan en el historial.
+- Valoración del inventario: costo promedio ponderado. El margen estimado es ventas netas menos el costo de lo vendido y de los insumos consumidos. **No** es la ganancia neta, porque no incluye gastos.
+- No hay impuestos ni comisiones configurados en el sistema, así que no se aplican.

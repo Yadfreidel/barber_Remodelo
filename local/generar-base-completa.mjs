@@ -12,10 +12,10 @@ const DIR = path.join(RAIZ, 'supabase', 'migrations');
 const SALIDA = path.join(RAIZ, 'supabase', 'base_completa.sql');
 // Actualización para un proyecto que ya ejecutó base_completa.sql hasta INSTALADO_HASTA (incluida)
 const SALIDA_ACTUALIZACION = path.join(RAIZ, 'supabase', 'barberia_actualizacion.sql');
-const INSTALADO_HASTA = '20261027000000_portafolio_ocupacion_reclamaciones.sql';
+const INSTALADO_HASTA = '20261028000000_cuentas_permisos_notificaciones.sql';
 const ESQUEMA = 'barberia';
 const PRIVADO = 'barberia_private';
-const URL_PUBLICA = 'https://yadfreidel.github.io/barber_Remodelo/';
+const URL_PUBLICA = 'https://yadfreidel.github.io/barberia-master/';
 const ADMIN = 'yafre2310@gmail.com';
 
 // Funciones que puede ejecutar cada rol (el resto queda interno: solo las usan otras funciones)
@@ -25,7 +25,7 @@ const FUNCIONES_PUBLICAS = ['config_publica', 'listar_productos', 'cotizar_cita'
     'mi_codigo_referido', 'darse_de_baja', 'catalogo_publico', 'barberos_publicos', 'negocio_publico', 'ubicacion_publica',
     'horarios_dia_publico', 'mis_citas_por_tokens', 'portafolio_publico', 'portafolio_imagen', 'reclamacion_categorias_publicas',
     'reclamacion_crear', 'reclamacion_consultar', 'reclamacion_adjunto', 'reclamacion_responder', 'mis_reclamaciones_por_tokens'];
-const FUNCIONES_SESION = ['es_admin', 'rol_panel', 'barbero_actual', 'mis_citas', 'vincular_citas', 'mis_reclamaciones',
+const FUNCIONES_SESION = ['_clave_panel_lista', 'es_admin', 'rol_panel', 'barbero_actual', 'mis_citas', 'vincular_citas', 'mis_reclamaciones',
     'solicitud_profesional_estado', 'solicitud_profesional_crear', 'push_suscribir', 'push_desuscribir']; // + todas las panel_* y admin_*
 const FUNCIONES_SERVIDOR = ['push_reclamar', 'push_resultado', 'programar_recordatorios', 'programar_recuperacion', 'procesar_tareas_programadas',
     'whatsapp_reclamar', 'whatsapp_resultado', 'whatsapp_procesar_evento'];

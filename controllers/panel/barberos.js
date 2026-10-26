@@ -6,7 +6,7 @@ import { obtenerBarberosLocales } from '../../models/barberModel.js';
 import { api, esc, dialogo, confirmar, ejecutar, imagenADataURL, vacio } from './comun.js';
 import { servicioEfectivo } from './servicios.js';
 import { invalidarCatalogosAgenda } from './agenda.js';
-import { habilitarAcceso, enviarRestablecimiento, mensajeAlta, generarClaveTemporal, PERMISOS, CORREO } from './cuentas.js';
+import { habilitarAcceso, enviarRestablecimiento, mensajeAlta, PERMISOS, CORREO, problemaClave, camposClave, conectarCamposClave, limpiarCamposClave } from './cuentas.js';
 
 export async function renderBarberos(cont, ctx) {
     cont.innerHTML = '<p class="panel-cargando">Cargando barberos…</p>';
@@ -38,8 +38,7 @@ export async function renderBarberos(cont, ctx) {
                     <small>${esc(b.especialidad || 'Sin especialidad')}</small>
                     <small>${b.servicios.length === servicios.length ? 'Todos los servicios' : `${b.servicios.length} de ${servicios.length} servicios`}
                         ${b.citas_futuras ? ` · ${b.citas_futuras} cita(s) futura(s)` : ''}</small>
-                    <small><i class="fas fa-key"></i> ${(c => c ? `Acceso: ${esc(c.email)}${c.verificado ? '' : ' · correo sin verificar'}${c.debe_cambiar_clave ? ' · debe cambiar la contraseña temporal' : ''}${c.permisos.length ? ` · ${c.permisos.map(x => esc(x)).join(', ')}` : ''}`
-                        : 'Sin acceso al panel')(cuentaDe(b))}</small>
+                    <small><i class="fas fa-key"></i> ${(e => `${esc(e.texto)} ${chipsHtml(e.chips)}`)(estadoAcceso(cuentaDe(b)))}</small>
                 </div>
                 <div class="barbero-acciones">
                     <button type="button" class="panel-btn" data-editar="${esc(b.id)}">Editar</button>
@@ -78,33 +77,94 @@ export async function renderBarberos(cont, ctx) {
 
 const permisosHtml = (marcados = []) => Object.entries(PERMISOS).map(([k, v]) =>
     `<label class="panel-check"><input type="checkbox" name="permisos" value="${k}" ${marcados.includes(k) ? 'checked' : ''}> ${esc(v)}</label>`).join('');
+const permisosMarcados = raiz => [...raiz.querySelectorAll('[name=permisos]:checked')].map(x => x.value);
 
-// Habilitar acceso a un perfil sin cuenta (cuenta nueva con contraseña temporal o cuenta existente)
+// Estado del acceso para mostrar (nunca la contraseña: no se puede consultar)
+export function estadoAcceso(c) {
+    if (!c) return { texto: 'Sin acceso al panel', chips: [] };
+    const chips = [];
+    if (!c.acceso_activo) chips.push(['Acceso desactivado', 'estado-cancelada']);
+    else if (!c.verificado) chips.push(['Pendiente de verificar correo', 'estado-pendiente']);
+    else if (c.debe_cambiar_clave) chips.push(['Debe cambiar la contraseña inicial', 'estado-pendiente']);
+    else chips.push(['Acceso activo', 'estado-confirmada']);
+    if (c.permisos.length) chips.push([c.permisos.join(', '), '']);
+    return { texto: c.email, chips };
+}
+const chipsHtml = chips => chips.map(([t, clase]) => `<span class="estado-chip ${clase}">${esc(t)}</span>`).join(' ');
+
+// Crea o vincula la cuenta (validando antes en el navegador; el servidor vuelve a validar todo)
+async function crearAcceso(ctx, raiz, barberoId, { reemplazar = false } = {}) {
+    const email = raiz.querySelector('[name=email]').value.trim();
+    if (!CORREO.test(email)) throw new Error('Escribe un correo válido.');
+    // Solo se exige si hay que crear la cuenta (una cuenta existente conserva su contraseña)
+    const clave = raiz.querySelector('[name=clave]').value;
+    const problema = clave || raiz.querySelector('[name=clave2]').value ? problemaClave(clave, raiz.querySelector('[name=clave2]').value) : null;
+    if (problema) throw new Error(problema);
+    const r = await habilitarAcceso(barberoId, { email, clave, permisos: permisosMarcados(raiz), reemplazar });
+    limpiarCamposClave(raiz);
+    return r;
+}
+
+const ayudaVerificacion = '<p class="panel-sub">Si el servidor exige verificar el correo, el barbero recibirá un enlace: hasta abrirlo verás «Pendiente de verificar correo» y no podrá entrar.</p>';
+
+// Habilitar acceso a un perfil sin cuenta (desde la tarjeta)
 function abrirHabilitar(ctx, b, recargar) {
     const { cuerpo, cerrar } = dialogo({ titulo: `Habilitar acceso: ${b.nombre}`, ancho: 'md', html: `
         <form class="panel-form" novalidate>
             <label>Correo de acceso<input type="email" name="email" autocomplete="off" required></label>
-            <label>Contraseña temporal (solo para una cuenta nueva)<span class="panel-fila"><input type="text" name="clave" minlength="8" maxlength="72" autocomplete="new-password">
-                <button type="button" class="panel-btn panel-btn-mini" data-generar>Generar</button></span></label>
-            <p class="panel-sub">Entrégasela al barbero en persona: no se guarda ni se vuelve a mostrar. Al entrar deberá cambiarla.
-                Si el correo ya tiene una cuenta, se vincula sin cambiar su contraseña.</p>
+            ${camposClave()}
             <fieldset class="panel-fieldset"><legend>Permisos adicionales</legend>${permisosHtml()}</fieldset>
+            ${ayudaVerificacion}
             <div class="panel-acciones"><button type="button" class="panel-btn" data-cerrar>Cancelar</button><button type="submit" class="panel-btn panel-btn-principal">Habilitar acceso</button></div>
         </form>` });
     const form = cuerpo.querySelector('form');
-    form.querySelector('[data-generar]').addEventListener('click', () => { form.elements.clave.value = generarClaveTemporal(); });
+    conectarCamposClave(form);
     form.addEventListener('submit', async e => {
         e.preventDefault();
         const boton = e.submitter;
         if (boton.disabled) return;
         boton.disabled = true;
+        boton.textContent = 'Creando acceso…';
         try {
-            const r = await habilitarAcceso(b.id, { email: form.elements.email.value, clave: form.elements.clave.value,
-                permisos: [...form.querySelectorAll('[name=permisos]:checked')].map(x => x.value) });
-            if (r) { form.elements.clave.value = ''; cerrar(); ctx.notificar(mensajeAlta(r), r.pendienteConfirmar ? 'info' : 'success'); recargar(); }
+            const r = await crearAcceso(ctx, form, b.id);
+            if (r) { cerrar(); ctx.notificar(mensajeAlta(r), r.verificado ? 'success' : 'info'); recargar(); }
         } catch (err) { ctx.notificar(err.message, 'error'); }
-        finally { boton.disabled = false; }
+        finally { boton.disabled = false; boton.textContent = 'Habilitar acceso'; }
     });
+}
+
+function seccionCuenta(b, cuenta) {
+    if (!b) return `<fieldset class="panel-fieldset" data-cuenta><legend>Cuenta de acceso (opcional)</legend>
+        <p class="panel-sub">Con cuenta, el barbero entra al panel y ve solo su agenda, su atención, su portafolio, sus ingresos y sus casos.</p>
+        <label>Correo de acceso<input type="email" name="email" autocomplete="off"></label>
+        ${camposClave()}${permisosHtml()}${ayudaVerificacion}</fieldset>`;
+    if (!cuenta) return `<fieldset class="panel-fieldset" data-cuenta><legend>Cuenta de acceso</legend>
+        <p class="panel-sub">Sin cuenta vinculada.</p>
+        <label>Correo de acceso<input type="email" name="email" autocomplete="off"></label>
+        ${camposClave()}${permisosHtml()}${ayudaVerificacion}
+        <button type="button" class="panel-btn panel-btn-principal" data-habilitar-aqui><i class="fas fa-key"></i> Habilitar acceso</button></fieldset>`;
+    const e = estadoAcceso(cuenta);
+    return `<fieldset class="panel-fieldset" data-cuenta><legend>Cuenta de acceso</legend>
+        <p><strong>${esc(cuenta.email)}</strong> ${chipsHtml(e.chips)}</p>
+        <p class="panel-sub">${cuenta.vinculado_en ? `Vinculada el ${esc(new Date(cuenta.vinculado_en).toLocaleString('es-DO'))}${cuenta.vinculado_por ? ` por ${esc(cuenta.vinculado_por)}` : ''}. ` : ''}
+            ${cuenta.ultimo_acceso ? `Último acceso: ${esc(new Date(cuenta.ultimo_acceso).toLocaleString('es-DO'))}.` : 'Aún no ha entrado.'}
+            ${!cuenta.acceso_activo ? ` Desactivado${cuenta.desactivado_por ? ` por ${esc(cuenta.desactivado_por)}` : ''}${cuenta.motivo_desactivacion ? `: ${esc(cuenta.motivo_desactivacion)}` : ''}.` : ''}
+            La contraseña no se puede consultar.</p>
+        ${!cuenta.verificado ? '<p class="panel-aviso">Pendiente de verificar correo: el barbero debe abrir el enlace de verificación que recibió. Hasta entonces no puede entrar.</p>' : ''}
+        <div data-permisos>${permisosHtml(cuenta.permisos)}</div>
+        <div class="panel-fila panel-fila-wrap">
+            <button type="button" class="panel-btn" data-guardar-permisos>Guardar permisos</button>
+            <button type="button" class="panel-btn" data-restablecer><i class="fas fa-envelope"></i> Enviar enlace para restablecer contraseña</button>
+            <button type="button" class="panel-btn ${cuenta.acceso_activo ? 'panel-btn-peligro' : 'panel-btn-principal'}" data-acceso="${cuenta.acceso_activo ? '0' : '1'}">
+                ${cuenta.acceso_activo ? 'Desactivar acceso' : 'Reactivar acceso'}</button></div>
+        <details class="cuenta-cambiar-correo"><summary>Cambiar el correo de acceso</summary>
+            <p class="panel-sub">Se vincula otra cuenta al mismo perfil (citas e historial se conservan). La cuenta anterior deja de tener acceso
+                profesional pero no se borra: si también es cliente, lo sigue siendo. El propio barbero también puede cambiar su correo desde
+                «Mi perfil», confirmándolo por correo.</p>
+            <label>Correo nuevo<input type="email" name="email" autocomplete="off"></label>
+            ${camposClave()}
+            <button type="button" class="panel-btn" data-cambiar-correo>Cambiar correo de acceso</button></details>
+    </fieldset>`;
 }
 
 async function abrirBarbero(ctx, b, servicios, cuenta, recargar) {
@@ -127,46 +187,61 @@ async function abrirBarbero(ctx, b, servicios, cuenta, recargar) {
                     <fieldset class="panel-fieldset"><legend>Servicios que realiza</legend>
                         <div class="panel-fila panel-fila-checks">${servicios.map(s => `<label class="panel-check"><input type="checkbox" name="servicios" value="${esc(s.id)}" ${!b || b.servicios.includes(s.id) ? 'checked' : ''}> ${esc(s.nombre)}</label>`).join('')}</div>
                     </fieldset>
-                    <fieldset class="panel-fieldset"><legend>Acceso al panel (rol barbero)</legend>
-                        ${!b ? `<p class="panel-sub">Opcional. Verá solo su agenda, su atención, su portafolio, sus ingresos y sus casos asignados.</p>
-                            <label>Correo de acceso<input type="email" name="email" autocomplete="off"></label>
-                            <label>Contraseña temporal<span class="panel-fila"><input type="text" name="clave" minlength="8" maxlength="72" autocomplete="new-password">
-                                <button type="button" class="panel-btn panel-btn-mini" data-generar>Generar</button></span></label>
-                            <p class="panel-sub">Entrégasela en persona: no se guarda ni se vuelve a mostrar. Deberá cambiarla al entrar.</p>
-                            ${permisosHtml()}`
-                        : cuenta ? `<p class="panel-sub"><strong>${esc(cuenta.email)}</strong>${cuenta.verificado ? '' : ' · correo sin verificar'}${cuenta.debe_cambiar_clave ? ' · pendiente de cambiar la contraseña temporal' : ''}
-                                ${cuenta.ultimo_acceso ? ` · último acceso ${esc(new Date(cuenta.ultimo_acceso).toLocaleString('es-DO'))}` : ''}</p>
-                            <div data-permisos>${permisosHtml(cuenta.permisos)}</div>
-                            <div class="panel-fila"><button type="button" class="panel-btn" data-guardar-permisos>Guardar permisos</button>
-                                <button type="button" class="panel-btn" data-restablecer><i class="fas fa-envelope"></i> Enviar enlace para restablecer contraseña</button>
-                                <button type="button" class="panel-btn panel-btn-peligro" data-quitar-acceso>Quitar acceso</button></div>
-                            <p class="panel-sub">El correo de la cuenta lo cambia el propio barbero desde «Mi perfil» (se confirma por correo).</p>`
-                        : `<p class="panel-sub">Sin cuenta vinculada.</p><button type="button" class="panel-btn" data-habilitar><i class="fas fa-key"></i> Habilitar acceso</button>`}
-                    </fieldset>
+                    ${seccionCuenta(b, cuenta)}
                 </div>
             </div>
             <div class="panel-acciones"><button type="button" class="panel-btn" data-cerrar>Cancelar</button>
                 <button type="submit" class="panel-btn panel-btn-principal">Guardar</button></div>
         </form>` });
     const form = cuerpo.querySelector('form');
+    const seccion = form.querySelector("[data-cuenta]");
+    conectarCamposClave(seccion);
     cuerpo.querySelector('[data-archivo]').addEventListener('change', async e => {
         if (!e.target.files[0]) return;
         try { foto = await imagenADataURL(e.target.files[0], 600); cuerpo.querySelector('[data-vista]').innerHTML = `<img src="${esc(foto)}" alt="">`; }
         catch (err) { ctx.notificar(err.message, 'error'); }
     });
-    const permisosMarcados = () => [...form.querySelectorAll('[name=permisos]:checked')].map(x => x.value);
-    cuerpo.querySelector('[data-generar]')?.addEventListener('click', () => { form.elements.clave.value = generarClaveTemporal(); });
-    cuerpo.querySelector('[data-habilitar]')?.addEventListener('click', () => { cerrar(); abrirHabilitar(ctx, b, recargar); });
-    cuerpo.querySelector('[data-guardar-permisos]')?.addEventListener('click', async e => {
-        if (await ejecutar(e.currentTarget, () => api('panel_cuenta_permisos', { p_barbero: b.id, p_permisos: permisosMarcados() }), ctx.notificar, 'Permisos actualizados')) recargar();
-    });
+    const accionCuenta = async (boton, operacion, textoEspera) => {
+        if (boton.disabled) return;
+        const texto = boton.innerHTML;
+        boton.disabled = true;
+        boton.textContent = textoEspera;
+        try {
+            const r = await operacion();
+            if (r !== null) { cerrar(); recargar(); }
+        } catch (err) { ctx.notificar(err.message, 'error'); }
+        finally { boton.disabled = false; boton.innerHTML = texto; }
+    };
+    cuerpo.querySelector('[data-habilitar-aqui]')?.addEventListener('click', e => accionCuenta(e.currentTarget, async () => {
+        const r = await crearAcceso(ctx, seccion, b.id);
+        if (r) ctx.notificar(mensajeAlta(r), r.verificado ? 'success' : 'info');
+        return r;
+    }, 'Creando acceso…'));
+    cuerpo.querySelector('[data-cambiar-correo]')?.addEventListener('click', e => accionCuenta(e.currentTarget, async () => {
+        const detalle = seccion.querySelector('.cuenta-cambiar-correo');
+        if (!await confirmar(`¿Cambiar el correo de acceso de ${b.nombre}? ${cuenta.email} dejará de tener acceso profesional (la cuenta no se borra).`, { textoOk: 'Cambiar correo' })) return null;
+        const r = await crearAcceso(ctx, detalle, b.id, { reemplazar: true });
+        if (r) ctx.notificar(mensajeAlta(r), r.verificado ? 'success' : 'info');
+        return r;
+    }, 'Cambiando…'));
+    cuerpo.querySelector('[data-guardar-permisos]')?.addEventListener('click', e => accionCuenta(e.currentTarget, async () => {
+        await api('panel_cuenta_permisos', { p_barbero: b.id, p_permisos: permisosMarcados(seccion.querySelector('[data-permisos]')) });
+        ctx.notificar('Permisos actualizados');
+    }, 'Guardando…'));
     cuerpo.querySelector('[data-restablecer]')?.addEventListener('click', async e => {
         await ejecutar(e.currentTarget, () => enviarRestablecimiento(cuenta.email), ctx.notificar, `Enlace enviado a ${cuenta.email}`);
     });
-    cuerpo.querySelector('[data-quitar-acceso]')?.addEventListener('click', async e => {
-        if (!await confirmar(`¿Quitar el acceso al panel de ${b.nombre}? Su cuenta no se borra (si también es cliente, conserva su historial).`, { textoOk: 'Quitar acceso', peligro: true })) return;
-        if (await ejecutar(e.currentTarget, () => api('panel_cuenta_desvincular', { p_barbero: b.id }), ctx.notificar, 'Acceso quitado')) { cerrar(); recargar(); }
-    });
+    cuerpo.querySelector('[data-acceso]')?.addEventListener('click', e => accionCuenta(e.currentTarget, async () => {
+        const activar = e.currentTarget.dataset.acceso === '1';
+        let motivo = null;
+        if (!activar) {
+            motivo = window.prompt(`Motivo para desactivar el acceso de ${b.nombre} (sus citas e historial se conservan):`, '');
+            if (motivo === null) return null;
+            if (motivo.trim().length < 3) throw new Error('Escribe el motivo (mínimo 3 caracteres).');
+        }
+        await api('panel_cuenta_acceso', { p_barbero: b.id, p_activo: activar, p_motivo: motivo });
+        ctx.notificar(activar ? 'Acceso reactivado' : 'Acceso desactivado: ya no puede entrar al panel');
+    }, 'Guardando…'));
     form.addEventListener('submit', async e => {
         e.preventDefault();
         const boton = e.submitter;
@@ -175,24 +250,29 @@ async function abrirBarbero(ctx, b, servicios, cuenta, recargar) {
         if (!d.get('nombre').trim()) { ctx.notificar('Escribe el nombre.', 'error'); return; }
         const especialidades = String(d.get('especialidades') || '').split(',').map(x => x.trim()).filter(Boolean);
         if (especialidades.length > 8 || especialidades.some(x => x.length > 40)) { ctx.notificar('Máximo 8 especialidades de 40 caracteres.', 'error'); return; }
-        const email = String(d.get('email') || '').trim();
-        if (!b && email && (!CORREO.test(email) || String(d.get('clave') || '').length < 8)) {
-            ctx.notificar('Para crear el acceso escribe un correo válido y una contraseña temporal de al menos 8 caracteres.', 'error'); return;
+        const email = !b ? String(d.get('email') || '').trim() : '';
+        if (email) {
+            if (!CORREO.test(email)) { ctx.notificar('Escribe un correo de acceso válido.', 'error'); return; }
+            const problema = problemaClave(d.get('clave') || '', d.get('clave2') || '');
+            if (problema) { ctx.notificar(problema, 'error'); return; }
         }
         const datos = { nombre: d.get('nombre').trim(), especialidad: d.get('especialidad').trim(), foto_url: foto,
             activo: form.elements.activo.checked, servicios: d.getAll('servicios') };
         boton.disabled = true;
+        boton.textContent = 'Guardando…';
         let id = b?.id;
         try {
             id = (await api('panel_guardar_barbero', { p_id: b?.id || null, p_datos: datos })).id || id;
             await api('panel_barbero_perfil_guardar', { p_barbero: String(id), p_datos: { presentacion: d.get('presentacion').trim(), especialidades } });
-        } catch (err) { ctx.notificar(err.message, 'error'); boton.disabled = false; return; }
-        if (!b && email) {
+        } catch (err) { ctx.notificar(err.message, 'error'); boton.disabled = false; boton.textContent = 'Guardar'; return; }
+        if (email) {
+            boton.textContent = 'Creando acceso…';
             try {
-                const r = await habilitarAcceso(id, { email, clave: d.get('clave'), permisos: permisosMarcados() });
-                ctx.notificar(r ? mensajeAlta(r) : 'Barbero agregado sin acceso', r?.pendienteConfirmar ? 'info' : 'success');
+                const r = await crearAcceso(ctx, seccion, id);
+                ctx.notificar(r ? mensajeAlta(r) : 'Barbero agregado sin cuenta de acceso', r && !r.verificado ? 'info' : 'success');
             } catch (err) {
-                // El perfil ya existe: el acceso se puede reintentar sin duplicar nada
+                // El perfil ya existe: el acceso se reintenta desde «Habilitar acceso» sin duplicar nada
+                limpiarCamposClave(seccion);
                 ctx.notificar(`Barbero agregado, pero el acceso no se completó: ${err.message} Usa «Habilitar acceso» para reintentar.`, 'error');
             }
         } else ctx.notificar(b ? 'Barbero actualizado' : 'Barbero agregado');

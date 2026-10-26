@@ -77,3 +77,13 @@ select c.relname as tabla_en_public
   from pg_class c join pg_namespace n on n.oid = c.relnamespace
  where n.nspname = 'public' and c.relkind = 'r'
    and c.relname in (select tablename from pg_tables where schemaname = 'barberia');
+
+-- 9) Cuentas de barberos: todos deben ser true (solo lectura).
+select
+ to_regprocedure('barberia.panel_cuenta_consultar(text)') is not null as consulta_cuenta,
+ to_regprocedure('barberia.panel_cuenta_vincular(jsonb)') is not null as vincular_cuenta,
+ to_regprocedure('barberia.panel_cuenta_acceso(text,boolean,text)') is not null as activar_desactivar,
+ to_regprocedure('barberia.panel_confirmar_cambio_clave()') is not null as cambio_clave,
+ to_regprocedure('barberia._clave_panel_lista()') is not null as bloqueo_clave_temporal,
+ exists(select 1 from information_schema.columns where table_schema = 'barberia'
+   and table_name = 'barbero_usuarios' and column_name = 'acceso_activo') as columna_acceso;

@@ -41,7 +41,7 @@ const SECCIONES = [
     { id: 'reclamaciones', titulo: 'Reclamaciones', titulos: { barbero: 'Casos asignados' }, icono: 'flag', roles: ['admin', 'barbero'], render: renderReclamaciones, grupo: 'Barbería' },
     { id: 'horarios', titulo: 'Horarios', icono: 'clock', roles: ['admin'], render: renderHorarios, grupo: 'Barbería' },
     { id: 'servicios', titulo: 'Servicios', icono: 'scissors', roles: ['admin'], render: renderServicios, grupo: 'Barbería' },
-    { id: 'barberos', titulo: 'Barberos', icono: 'users', roles: ['admin'], render: renderBarberos, grupo: 'Barbería' },
+    { id: 'barberos', titulo: 'Barberos', icono: 'users', roles: ['admin'], render: renderBarberos, grupo: 'Configuración' },
     { id: 'solicitudes', titulo: 'Solicitudes', icono: 'inbox', roles: ['admin'], render: renderSolicitudes, grupo: 'Barbería' },
     { id: 'portafolio', titulo: 'Portafolio', titulos: { barbero: 'Mi portafolio' }, icono: 'images', roles: ['admin', 'barbero'], render: renderPortafolio, grupo: 'Barbería' },
     { id: 'ingresos', titulo: 'Ingresos por barbero', titulos: { barbero: 'Mis ingresos' }, icono: 'wallet', roles: ['admin', 'barbero'], render: renderIngresos, grupo: 'Barbería' },

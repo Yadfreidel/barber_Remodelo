@@ -48,3 +48,11 @@
 /* Acceso: registro profesional, solicitud y contraseña temporal */
 .login-admin-nota { margin: 0 0 12px; color: var(--gris-texto, #a0a0a0); font-size: .88rem; line-height: 1.5; }
 .login-admin-caja form input { width: 100%; }
+
+/* Cuenta de acceso del barbero (panel › Barberos) */
+.clave-fila input { flex: 1 1 160px; min-width: 0; }
+.panel-fila-wrap { flex-wrap: wrap; }
+.cuenta-cambiar-correo { margin-top: 10px; }
+.cuenta-cambiar-correo summary { cursor: pointer; color: var(--dorado-brillante); }
+.cuenta-cambiar-correo[open] { display: grid; gap: 8px; }
+.barbero-info .estado-chip { margin-left: 4px; }

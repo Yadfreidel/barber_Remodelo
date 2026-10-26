@@ -18,12 +18,16 @@ import { spawn, execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const DIR_DATOS = path.join(RAIZ, 'local', '.datos-pg');
+// BARBERIA_DATOS y BARBERIA_PUERTOS (web,api,postgres,postgrest) permiten una segunda instancia (p. ej. para pruebas)
+const DIR_DATOS = process.env.BARBERIA_DATOS ? path.resolve(process.env.BARBERIA_DATOS) : path.join(RAIZ, 'local', '.datos-pg');
 const DIR_BIN = path.join(RAIZ, 'local', '.bin');
 const BASE_BARBERIA = path.join(RAIZ, 'supabase', 'base_completa.sql');
 const MIGRAR_DESDE_PUBLIC = path.join(RAIZ, 'supabase', 'barberia_migrar_desde_public.sql');
 
-const PUERTOS = { web: 8080, api: 54321, postgres: 54322, postgrest: 54323 };
+const [PW, PA, PP, PR] = (process.env.BARBERIA_PUERTOS || '8080,54321,54322,54323').split(',').map(Number);
+const PUERTOS = { web: PW, api: PA, postgres: PP, postgrest: PR };
+// Edge Functions locales (supabase/functions/*) servidas con Deno: npm run local:funciones
+const FUNCIONES = process.env.BARBERIA_FUNCIONES || 'http://127.0.0.1:54329';
 const VERSION_POSTGREST = 'v16.4';
 const CLAVE_POSTGRES = 'postgres-local';
 const CLAVE_AUTHENTICATOR = 'authenticator-local';
@@ -51,6 +55,8 @@ function verificarJWT(token) {
 }
 
 export const ANON_KEY = firmarJWT({ iss: 'barberia-local', role: 'anon', iat: 1760000000, exp: 4102444800 });
+// Solo para las Edge Functions locales (nunca en el navegador)
+export const SERVICE_KEY = firmarJWT({ iss: 'barberia-local', role: 'service_role', iat: 1760000000, exp: 4102444800 });
 
 function hashClave(clave) {
     const sal = crypto.randomBytes(16).toString('hex');
@@ -107,6 +113,7 @@ async function prepararEsquemaSupabase(db) {
         -- Columnas de Supabase Auth que usa barbería (verificación, último acceso, huella del hash)
         alter table auth.users add column if not exists email_confirmed_at timestamptz default now();
         alter table auth.users add column if not exists last_sign_in_at timestamptz;
+        alter table auth.users add column if not exists raw_app_meta_data jsonb default '{}'::jsonb;
         alter table auth.users add column if not exists encrypted_password text generated always as (password_hash) stored;
         create or replace function auth.uid() returns uuid language sql stable as $f$
             select nullif(coalesce(nullif(current_setting('request.jwt.claim.sub', true), ''),
@@ -304,6 +311,27 @@ async function manejarAuth(req, res, url, db) {
         return u ? responderJSON(res, req, 200, usuarioPublico(u)) : responderJSON(res, req, 404, { code: 404, msg: 'User not found' });
     }
 
+    if (url.pathname.startsWith('/auth/v1/admin/users')) {
+        const payload = verificarJWT(String(req.headers.authorization || '').replace(/^Bearer /i, ''));
+        if (payload?.role !== 'service_role') return responderJSON(res, req, 403, { code: 403, error_code: 'not_admin', msg: 'User not allowed' });
+        if (req.method === 'POST' && url.pathname === '/auth/v1/admin/users') {
+            const cuerpo = JSON.parse((await leerCuerpo(req)).toString() || '{}');
+            const email = String(cuerpo.email || '').trim().toLowerCase();
+            const clave = String(cuerpo.password || '');
+            if (clave.length < 6) return responderJSON(res, req, 422, { code: 422, error_code: 'weak_password', msg: 'Password should be at least 6 characters' });
+            const { rows: [u] } = await db.query(`insert into auth.users (email, password_hash, email_confirmed_at, raw_app_meta_data) values ($1, $2, case when $3 then now() end, $4::jsonb)
+                                                   on conflict (email) do nothing returning *`, [email, hashClave(clave), Boolean(cuerpo.email_confirm), JSON.stringify(cuerpo.app_metadata || {})]);
+            if (!u) return responderJSON(res, req, 422, { code: 422, error_code: 'email_exists', msg: 'A user with this email address has already been registered' });
+            return responderJSON(res, req, 200, usuarioPublico(u));
+        }
+        const id = url.pathname.split('/').pop();
+        if (req.method === 'DELETE' && /^[0-9a-f-]{36}$/.test(id)) {
+            await db.query('delete from auth.users where id = $1', [id]);
+            return responderJSON(res, req, 200, {});
+        }
+        return responderJSON(res, req, 404, { code: 404, msg: 'No disponible en el entorno local' });
+    }
+
     // Sin servidor de correo en local: se informa en vez de simular el envío
     if (url.pathname === '/auth/v1/recover') {
         return responderJSON(res, req, 501, { code: 501, error_code: 'not_implemented',
@@ -335,6 +363,23 @@ async function reenviarAPostgrest(req, res, url) {
     res.end(Buffer.from(await respuesta.arrayBuffer()));
 }
 
+// /functions/v1/<nombre> -> Deno local. Sin Deno en marcha responde 404, como una función no desplegada.
+async function reenviarAFunciones(req, res, url) {
+    const cabeceras = {};
+    for (const nombre of ['authorization', 'content-type', 'apikey', 'x-client-info']) {
+        if (req.headers[nombre]) cabeceras[nombre] = req.headers[nombre];
+    }
+    let respuesta;
+    try {
+        respuesta = await fetch(`${FUNCIONES}${url.pathname.replace(/^\/functions\/v1/, '')}`, { method: req.method, headers: cabeceras,
+            body: ['GET', 'HEAD'].includes(req.method) ? undefined : await leerCuerpo(req) });
+    } catch {
+        return responderJSON(res, req, 404, { code: 404, msg: 'Función no desplegada en local (npm run local:funciones)' });
+    }
+    res.writeHead(respuesta.status, { ...cabecerasCors(req), 'content-type': respuesta.headers.get('content-type') || 'application/json' });
+    res.end(Buffer.from(await respuesta.arrayBuffer()));
+}
+
 function iniciarApi(db) {
     const servidor = http.createServer(async (req, res) => {
         try {
@@ -345,6 +390,7 @@ function iniciarApi(db) {
             const url = new URL(req.url, `http://localhost:${PUERTOS.api}`);
             if (url.pathname.startsWith('/rest/v1')) return await reenviarAPostgrest(req, res, url);
             if (url.pathname.startsWith('/auth/v1')) return await manejarAuth(req, res, url, db);
+            if (url.pathname.startsWith('/functions/v1/')) return await reenviarAFunciones(req, res, url);
             responderJSON(res, req, 404, { msg: 'Ruta no encontrada' });
         } catch (e) {
             console.error('[api]', e);
@@ -361,9 +407,9 @@ function iniciarApi(db) {
 const TIPOS = {
     '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
     '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.svg': 'image/svg+xml',
-    '.ico': 'image/x-icon', '.json': 'application/json'
+    '.ico': 'image/x-icon', '.json': 'application/json', '.webmanifest': 'application/manifest+json'
 };
-const PUBLICOS = ['index.html', 'assets', 'controllers', 'models', 'imagenes'];
+const PUBLICOS = ['index.html', 'sw.js', 'manifest.webmanifest', 'assets', 'controllers', 'models', 'imagenes'];
 
 function iniciarWeb() {
     const servidor = http.createServer((req, res) => {
@@ -375,6 +421,9 @@ function iniciarWeb() {
             return res.end('No encontrado');
         }
         res.writeHead(200, { 'Content-Type': TIPOS[path.extname(archivo).toLowerCase()] || 'application/octet-stream', 'Cache-Control': 'no-store' });
+        if (relativa === path.join('assets', 'config.js') && PUERTOS.api !== 54321) {
+            return res.end(fs.readFileSync(archivo, 'utf8').replace(/:54321\b/g, `:${PUERTOS.api}`));
+        }
         fs.createReadStream(archivo).pipe(res);
     });
     return new Promise((ok, error) => {
@@ -401,7 +450,7 @@ async function principal() {
 
     const { servidor: servidorPg, db, primeraVez } = await iniciarPostgres();
     console.log(`  PostgreSQL en el puerto ${PUERTOS.postgres}${primeraVez ? ' (base nueva)' : ''}`);
-    let postgrest, api, web;
+    let postgrest, api, web, funciones;
     try {
         await prepararEsquemaSupabase(db);
         await instalarBarberia(db);
@@ -409,6 +458,12 @@ async function principal() {
         postgrest = await iniciarPostgrest();
         api = await iniciarApi(db);
         web = await iniciarWeb();
+        if (process.env.BARBERIA_FUNCIONES_AUTO !== '0') try {
+            await fetch(`${FUNCIONES}/barbero-cuenta`, { method: 'OPTIONS', signal: AbortSignal.timeout(1000) });
+        } catch {
+            funciones = spawn(process.execPath, [path.join(RAIZ, 'local', 'funciones-local.mjs')], { stdio: 'inherit', windowsHide: true });
+            funciones.on('error', e => console.error('[funciones]', e.message));
+        }
     } catch (e) {
         // Cierre ordenado: evita dejar PostgreSQL abierto o la base sin cerrar correctamente
         if (postgrest) postgrest.kill();
@@ -436,6 +491,10 @@ Ctrl+C para detener (los datos quedan en local/.datos-pg).`);
         cerrando = true;
         console.log('\nDeteniendo...');
         clearInterval(tareas);
+        if (funciones) {
+            if (process.platform === 'win32') { try { execFileSync('taskkill', ['/PID', String(funciones.pid), '/T', '/F'], { windowsHide: true, stdio: 'ignore' }); } catch {} }
+            else funciones.kill();
+        }
         web.close();
         api.close();
         postgrest.kill();

@@ -52,14 +52,17 @@ after(() => db?.cerrar());
 test('alta: cuenta nueva con contraseña temporal; el servidor exige cambiarla antes de trabajar', async () => {
     // La cuenta acaba de crearse en Auth (registro desde el panel): aún sin iniciar sesión
     await A.query(`insert into auth.users (id, email, encrypted_password) values ($1, 'dani@x.com', 'h-temporal')`, [DANI]);
+    await A.query(`update auth.users set raw_app_meta_data = $2::jsonb where id = $1`, [DANI, j({ barberia_alta_admin: ADMIN, barberia_alta_perfil: ids.dani })]);
     const estado = await rpc(admin, 'panel_cuenta_consultar', 'DANI@x.com');
-    assert.deepEqual({ existe: estado.existe, reciente: estado.reciente, barbero: estado.barbero }, { existe: true, reciente: true, barbero: null });
+    assert.deepEqual({ existe: estado.existe, reciente: estado.alta_panel, barbero: estado.barbero }, { existe: true, reciente: true, barbero: null });
     const datos = j({ barbero_id: ids.dani, email: 'dani@x.com', clave_temporal: true, permisos: [] });
     const r = await rpc(admin, 'panel_cuenta_vincular', datos);
     assert.equal(r.clave_temporal, true);
     assert.equal((await rpc(admin, 'panel_cuenta_vincular', datos)).repetida, true, 'reintento o doble clic: sin duplicar');
     assert.equal((await A.query('select count(*)::int n from barbero_usuarios where barbero_id = $1', [ids.dani])).rows[0].n, 1);
 
+    await reservar('Dani', manana, '14:00', '8095550991');
+    assert.equal((await dani.query('select * from citas')).rowCount, 0, 'RLS bloquea lectura con clave temporal');
     const rol = await rpc(dani, 'rol_panel');
     assert.equal(rol.rol, 'barbero');
     assert.equal(rol.debe_cambiar_clave, true);
@@ -68,7 +71,7 @@ test('alta: cuenta nueva con contraseña temporal; el servidor exige cambiarla a
     await A.query(`update auth.users set encrypted_password = 'h-nueva' where id = $1`, [DANI]); // cambio real en Auth
     await rpc(dani, 'panel_confirmar_cambio_clave');
     assert.equal((await rpc(dani, 'rol_panel')).debe_cambiar_clave, false);
-    assert.deepEqual(await rpc(dani, 'panel_atencion', manana, null), []);
+    assert.equal((await rpc(dani, 'panel_atencion', manana, null)).length, 1);
     const fila = (await A.query('select * from barbero_usuarios where user_id = $1', [DANI])).rows[0];
     assert.equal(fila.huella_clave, null);
     assert.doesNotMatch(JSON.stringify((await A.query(`select detalle from auditoria where entidad in ('barbero', 'cuenta')`)).rows), /h-temporal|h-nueva|clave":/,
@@ -264,4 +267,52 @@ test('desactivar un barbero bloquea su panel y sus avisos; conserva el historial
     const ultima = (await avisos(ADMIN, 'cita_nueva')).at(-1);
     assert.match(ultima.cuerpo, /Cliente Inactivo/, 'el aviso va a administración');
     await A.query('update barberos set activo = true where id::text = $1', [ids.caro]);
+});
+
+// ---------------- Desactivar / reactivar el acceso y cambio de correo ----------------
+test('desactivar el acceso bloquea el rol en el servidor sin perder historial; reactivar lo devuelve', async () => {
+    const citasAntes = (await A.query('select count(*)::int n from citas where barbero_id::text = $1', [ids.beto])).rows[0].n;
+    assert.equal(await errorDe(rpc(admin, 'panel_cuenta_acceso', ids.beto, false, null)), 'motivo_requerido');
+    assert.equal(await errorDe(rpc(beto, 'panel_cuenta_acceso', ids.beto, false, 'Intento propio')), 'no_autorizado');
+    await rpc(admin, 'panel_cuenta_acceso', ids.beto, false, 'Baja temporal');
+    assert.equal((await rpc(beto, 'rol_panel')).rol, null, 'sin rol barbero');
+    assert.equal(await errorDe(rpc(beto, 'panel_atencion', manana, null)), 'no_autorizado');
+    const c = (await rpc(admin, 'panel_cuentas_barberos')).find(x => x.barbero_id === ids.beto);
+    assert.deepEqual([c.acceso_activo, c.desactivado_por, c.motivo_desactivacion], [false, 'admin@x.com', 'Baja temporal']);
+    // Sus nuevas citas avisan a administración, no a la cuenta desactivada
+    const antes = (await avisos(BETO)).length;
+    await reservar('Beto', manana, '17:00', '8095550330');
+    assert.equal((await avisos(BETO)).length, antes);
+    assert.match((await avisos(ADMIN, 'cita_nueva')).at(-1).cuerpo, /Cliente Aviso/);
+    // La misma cuenta no puede vincularse a otro perfil mientras está desactivada
+    assert.equal(await errorDe(rpc(admin, 'panel_cuenta_vincular', j({ barbero_id: ids.ana, email: 'beto@x.com', confirmar_existente: true }))), 'cuenta_vinculada_otro');
+    await rpc(admin, 'panel_cuenta_acceso', ids.beto, true, null);
+    assert.equal((await rpc(beto, 'rol_panel')).rol, 'barbero');
+    assert.equal((await A.query('select count(*)::int n from citas where barbero_id::text = $1', [ids.beto])).rows[0].n, citasAntes + 1, 'citas conservadas');
+    assert.ok((await A.query(`select count(*)::int n from auditoria where accion in ('acceso_desactivado', 'acceso_reactivado')`)).rows[0].n >= 2);
+});
+
+test('cambiar el correo de acceso: reemplazo explícito y atómico; la cuenta anterior no se borra', async () => {
+    const OTRA = '12121212-1212-1212-1212-121212121212';
+    await A.query(`insert into auth.users (id, email, encrypted_password) values ($1, 'beto.nuevo@x.com', 'h-nueva-cuenta')`, [OTRA]);
+    assert.equal(await errorDe(rpc(admin, 'panel_cuenta_vincular', j({ barbero_id: ids.beto, email: 'beto.nuevo@x.com', clave_temporal: true }))),
+        'barbero_con_cuenta', 'sin reemplazar explícitamente no cambia');
+    await A.query(`update auth.users set raw_app_meta_data = $2::jsonb where id = $1`, [OTRA, j({ barberia_alta_admin: ADMIN, barberia_alta_perfil: ids.beto })]);
+    const r = await rpc(admin, 'panel_cuenta_vincular', j({ barbero_id: ids.beto, email: 'beto.nuevo@x.com', clave_temporal: true, reemplazar: true }));
+    assert.equal(r.clave_temporal, true);
+    assert.equal((await rpc(beto, 'rol_panel')).rol, null, 'la cuenta anterior deja de ser barbero');
+    assert.equal((await A.query('select count(*)::int n from auth.users where id = $1', [BETO])).rows[0].n, 1, 'y sigue existiendo en Auth');
+    assert.equal((await A.query('select user_id from barbero_usuarios where barbero_id = $1', [ids.beto])).rows[0].user_id, OTRA);
+    // Se deja como estaba para el resto de pruebas
+    await rpc(admin, 'panel_cuenta_vincular', j({ barbero_id: ids.beto, email: 'beto@x.com', confirmar_existente: true, reemplazar: true }));
+    assert.equal((await rpc(beto, 'rol_panel')).rol, 'barbero');
+});
+
+test('reintentar vinculo conserva permisos; cuenta reciente ajena requiere confirmacion', async () => {
+    await rpc(admin, 'panel_cuenta_permisos', ids.beto, j(['cajero']));
+    await rpc(admin, 'panel_cuenta_vincular', j({ barbero_id: ids.beto, email: 'beto@x.com', permisos: [] }));
+    assert.deepEqual((await rpc(beto, 'rol_panel')).permisos, ['cajero']);
+    await rpc(admin, 'panel_cuenta_permisos', ids.beto, j([]));
+    await A.query(`insert into auth.users (id,email,encrypted_password) values ('13131313-1313-1313-1313-131313131313','reciente@x.com','h')`);
+    assert.equal(await errorDe(rpc(admin, 'panel_cuenta_vincular', j({barbero_id: ids.ana, email:'reciente@x.com', clave_temporal:true}))), 'cuenta_existente');
 });

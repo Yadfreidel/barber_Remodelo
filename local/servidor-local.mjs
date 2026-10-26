@@ -104,6 +104,10 @@ async function prepararEsquemaSupabase(db) {
             password_hash text not null,
             created_at timestamptz not null default now()
         );
+        -- Columnas de Supabase Auth que usa barbería (verificación, último acceso, huella del hash)
+        alter table auth.users add column if not exists email_confirmed_at timestamptz default now();
+        alter table auth.users add column if not exists last_sign_in_at timestamptz;
+        alter table auth.users add column if not exists encrypted_password text generated always as (password_hash) stored;
         create or replace function auth.uid() returns uuid language sql stable as $f$
             select nullif(coalesce(nullif(current_setting('request.jwt.claim.sub', true), ''),
                                    nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'sub'), '')::uuid
@@ -254,6 +258,7 @@ async function manejarAuth(req, res, url, db) {
         if (url.searchParams.get('grant_type') === 'password') {
             const { rows: [u] } = await db.query('select * from auth.users where email = lower($1)', [String(cuerpo.email || '').trim()]);
             if (!u || !claveValida(String(cuerpo.password || ''), u.password_hash)) return credencialesInvalidas();
+            await db.query('update auth.users set last_sign_in_at = now() where id = $1', [u.id]);
             return responderJSON(res, req, 200, crearSesion(u));
         }
         if (url.searchParams.get('grant_type') === 'refresh_token') {
@@ -283,6 +288,19 @@ async function manejarAuth(req, res, url, db) {
         const payload = verificarJWT(String(req.headers.authorization || '').replace(/^Bearer /i, ''));
         if (!payload || payload.role !== 'authenticated') return responderJSON(res, req, 401, { code: 401, msg: 'invalid JWT' });
         const { rows: [u] } = await db.query('select * from auth.users where id = $1', [payload.sub]);
+        return u ? responderJSON(res, req, 200, usuarioPublico(u)) : responderJSON(res, req, 404, { code: 404, msg: 'User not found' });
+    }
+
+    // Cambio de contraseña de la sesión actual (supabase.auth.updateUser). El cambio de correo necesita
+    // confirmación por correo: en local no se simula.
+    if (url.pathname === '/auth/v1/user' && req.method === 'PUT') {
+        const payload = verificarJWT(String(req.headers.authorization || '').replace(/^Bearer /i, ''));
+        if (!payload || payload.role !== 'authenticated') return responderJSON(res, req, 401, { code: 401, msg: 'invalid JWT' });
+        const cuerpo = JSON.parse((await leerCuerpo(req)).toString() || '{}');
+        if (cuerpo.email) return responderJSON(res, req, 501, { code: 501, error_code: 'not_implemented', msg: 'El cambio de correo requiere confirmación por correo: no disponible en local' });
+        const clave = String(cuerpo.password || '');
+        if (clave.length < 6) return responderJSON(res, req, 422, { code: 422, error_code: 'weak_password', msg: 'Password should be at least 6 characters' });
+        const { rows: [u] } = await db.query('update auth.users set password_hash = $2 where id = $1 returning *', [payload.sub, hashClave(clave)]);
         return u ? responderJSON(res, req, 200, usuarioPublico(u)) : responderJSON(res, req, 404, { code: 404, msg: 'User not found' });
     }
 

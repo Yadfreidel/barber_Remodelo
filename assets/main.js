@@ -3,7 +3,7 @@ import { cargarCatalogoServidor } from '../controllers/catalogoController.js';
 import { obtenerServicios, formatoPrecioServicio } from '../models/serviceModel.js';
 import { obtenerBarberos } from '../models/barberModel.js';
 import { procesarCita } from '../controllers/appointmentController.js';
-import { verificarAccesoAdmin, cerrarDashboard } from '../controllers/adminController.js';
+import { verificarAccesoAdmin, cerrarDashboard, abrirPanelDesdeEnlace } from '../controllers/adminController.js';
 import { estaSupabaseListo } from './supabaseClient.js';
 import { inicializarUbicacionCliente } from '../controllers/ubicacionController.js';
 import { cargarBarberosServidor, aplicarNegocioPublico } from '../controllers/publicoController.js';
@@ -456,6 +456,9 @@ function configurarAccesoAdmin() {
     }
 
     if (btnCerrarDash) btnCerrarDash.addEventListener('click', cerrarDashboard);
+
+    // Enlace de un aviso (?panel=agenda&fecha=…): pide iniciar sesión y abre esa sección
+    abrirPanelDesdeEnlace(new URLSearchParams(location.search));
 }
 
 // ==========================================

@@ -21,3 +21,7 @@ const LOCAL = {
 export const SUPABASE_URL = ES_RED_LOCAL ? LOCAL.url : PRODUCCION.url;
 export const SUPABASE_ANON_KEY = ES_RED_LOCAL ? LOCAL.clavePublica : PRODUCCION.clavePublica;
 export const SUPABASE_SCHEMA = 'barberia';
+
+// Web Push (avisos con la app cerrada): clave pública VAPID. Vacía = no configurado
+// (la clave privada va SOLO en los secretos de la Edge Function push-enviar). Ver supabase/README.md.
+export const VAPID_PUBLIC_KEY = '';

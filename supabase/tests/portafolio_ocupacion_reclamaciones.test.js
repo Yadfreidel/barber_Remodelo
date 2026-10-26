@@ -158,7 +158,8 @@ test('ocupación: descansos, bloqueos, cancelaciones, solapes, jornadas vacías 
     // La disponibilidad pública coincide: las horas libres de 30 min están en los huecos
     const libres = (await rpc(anon, 'horarios_dia_publico', 'Corte 30', 'Ana', f)).horas.filter(h => h.estado === 'libre').map(h => h.inicio);
     assert.deepEqual(libres, ['10:30', '11:30', '12:00']);
-    assert.equal(await errorDe(rpc(barbero, 'panel_ocupacion', f, f, null)), 'no_autorizado');
+    assert.deepEqual([...new Set((await rpc(barbero, 'panel_ocupacion', f, f, null)).dias.map(d => d.barbero_id))], [ids.beto], 'el barbero solo ve su ocupación');
+    assert.equal(await errorDe(rpc(cliente, 'panel_ocupacion', f, f, null)), 'no_autorizado');
     assert.equal(await errorDe(rpc(admin, 'panel_ocupacion', f, await fechaLocal(A, 120), null)), 'rango_invalido');
 });
 

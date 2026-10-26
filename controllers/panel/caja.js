@@ -91,6 +91,8 @@ export async function renderCaja(cont, ctx) {
         if (fondo === null || fondo < 0) { ctx.notificar('Indica el fondo inicial (puede ser 0).', 'error'); return; }
         if (await operar(e.submitter, 'panel_caja_abrir', { fondo_inicial: fondo }, ctx, 'Caja abierta')) recargar();
     });
+    // Entradas y retiros de efectivo: solo administración (el permiso de cajero cubre abrir, cobrar y cerrar)
+    if (ctx.rol !== 'admin') cont.querySelector('[data-movimiento]')?.closest('.panel-caja')?.remove();
     cont.querySelector('[data-movimiento]')?.addEventListener('submit', async e => {
         e.preventDefault();
         const f = e.target.elements;
@@ -133,7 +135,8 @@ function verCierre(c, ctx, recargar) {
                 <label>Motivo de la corrección<input name="motivo" maxlength="500" required></label>
                 <p class="panel-sub">El valor anterior queda registrado junto con quién hizo el cambio.</p>
                 <button type="submit" class="panel-btn panel-btn-peligro">Guardar corrección</button></form></details>` });
-    cuerpo.querySelector('[data-corregir]').addEventListener('submit', async e => {
+    if (ctx.rol !== 'admin') cuerpo.querySelector('[data-corregir]')?.closest('details')?.remove();
+    cuerpo.querySelector('[data-corregir]')?.addEventListener('submit', async e => {
         e.preventDefault();
         const contado = numero(e.target.elements.contado);
         const motivo = e.target.elements.motivo.value.trim();

@@ -39,13 +39,13 @@ export async function renderOcupacion(cont, ctx) {
     const [desde, hasta] = rango();
     const vigente = turnoDe(cont);
     cont.innerHTML = `
-        <div class="panel-encabezado"><div><h2>Ocupación y horas vacías</h2>
+        <div class="panel-encabezado"><div><h2>${ctx.rol === 'admin' ? 'Ocupación y horas vacías' : 'Mi ocupación'}</h2>
             <p class="panel-sub">Cuánto del tiempo disponible de cada barbero está reservado y qué huecos quedan libres. Solo informa: no cambia la agenda.</p></div></div>
         <div class="agenda-filtros">
             <select data-periodo aria-label="Periodo">${Object.entries(PERIODOS).map(([k, v]) => `<option value="${k}" ${estado.tipo === k ? 'selected' : ''}>${v}</option>`).join('')}</select>
             <input type="date" data-desde value="${desde}" ${estado.tipo === 'personalizado' ? '' : 'disabled'} aria-label="Desde">
             <input type="date" data-hasta value="${hasta}" ${estado.tipo === 'personalizado' ? '' : 'disabled'} aria-label="Hasta">
-            <select data-barbero aria-label="Barbero"><option value="">Todos los barberos</option></select>
+            ${ctx.rol === 'admin' ? '<select data-barbero aria-label="Barbero"><option value="">Todos los barberos</option></select>' : ''}
             <button type="button" class="panel-btn" data-csv disabled><i class="fas fa-file-csv"></i> CSV</button>
         </div>
         <div data-cuerpo><p class="panel-cargando"><span class="motion-skeleton" aria-hidden="true"></span>Calculando ocupación…</p></div>`;
@@ -57,15 +57,17 @@ export async function renderOcupacion(cont, ctx) {
         cuerpo.innerHTML = '<p class="panel-error">Elige un rango de hasta 93 días con la fecha final posterior a la inicial.</p>';
         return;
     }
-    let datos, barberos;
+    let datos, barberos, real;
     try {
-        [datos, barberos] = await Promise.all([api('panel_ocupacion', { p_desde: desde, p_hasta: hasta, p_barbero: estado.barbero || null }), api('panel_barberos')]);
+        // El barbero solo recibe su propia ocupación (lo decide el servidor)
+        [datos, barberos, real] = await Promise.all([api('panel_ocupacion', { p_desde: desde, p_hasta: hasta, p_barbero: estado.barbero || null }),
+            ctx.rol === 'admin' ? api('panel_barberos') : [], api('panel_tiempo_real', { p_desde: desde, p_hasta: hasta, p_barbero: estado.barbero || null })]);
     } catch (e) { if (vigente()) cuerpo.innerHTML = `<p class="panel-error">${esc(e.message)}</p>`; return; }
     if (!vigente()) return;
     const selector = cont.querySelector('[data-barbero]');
-    selector.innerHTML += barberos.filter(b => b.activo || String(b.id) === estado.barbero)
+    if (selector) selector.innerHTML += barberos.filter(b => b.activo || String(b.id) === estado.barbero)
         .map(b => `<option value="${esc(b.id)}" ${String(b.id) === estado.barbero ? 'selected' : ''}>${esc(b.nombre)}</option>`).join('');
-    selector.addEventListener('change', e => { estado.barbero = e.target.value; recargar(); });
+    selector?.addEventListener('change', e => { estado.barbero = e.target.value; recargar(); });
 
     const suma = k => datos.barberos.reduce((s, b) => s + Number(b[k] || 0), 0);
     const total = { programados: suma('programados'), no_disponibles: suma('no_disponibles'), disponibles: suma('disponibles'), reservados: suma('reservados'),
@@ -81,7 +83,8 @@ export async function renderOcupacion(cont, ctx) {
             ${tarjeta('Servicios completados', String(total.completadas), 'Citas marcadas como completadas en el periodo y la suma de la duración reservada de esas citas.', { icono: 'circle-check', nota: `${horas(total.minutos_completados)} reservadas en citas completadas` })}
             ${tarjeta('Cancelaciones', String(total.canceladas), 'Citas canceladas con fecha en el periodo. No ocupan tiempo.', { icono: 'ban' })}
             ${tarjeta('Ausencias', String(total.ausencias), 'Citas marcadas como «no asistió». Ocupaban el horario, por eso cuentan como tiempo reservado.', { icono: 'user-xmark' })}
-            ${tarjeta('Tiempo real de atención', 'No disponible', 'El sistema no registra la hora real de inicio y fin de cada servicio, así que no se calcula. Las cifras de arriba usan la duración reservada.', { icono: 'stopwatch' })}
+            ${Number(real.servicios) ? tarjeta('Tiempo real de atención', horas(real.minutos), 'Suma del tiempo entre «Iniciar» y «Terminar» (sección Atención), solo de los servicios con ambos registrados. Es distinto del tiempo programado.', { icono: 'stopwatch', nota: `${real.servicios} servicio(s) registrados · reservado ${horas(real.minutos_reservados)}` })
+                : tarjeta('Tiempo real de atención', 'No disponible', 'Aún no hay servicios con inicio y fin registrados en Atención en este periodo. Las cifras de arriba usan la duración reservada.', { icono: 'stopwatch' })}
         </div>
         ${datos.conflictos.length ? `<div class="panel-aviso"><strong>Conflictos en la agenda (${datos.conflictos.length})</strong><ul>${datos.conflictos.slice(0, 20).map(c =>
             `<li>${esc(fechaCorta(c.fecha))} · ${esc(c.barbero)}: ${c.tipo === 'solape' ? `citas que se solapan (${esc(c.horas)})` : `${horas(c.minutos)} de citas fuera del tiempo disponible`}

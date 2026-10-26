@@ -336,8 +336,8 @@ export async function abrirVenta(id, ctx, alCambiar) {
             <li>${esc(fechaHora(d.creado_en))} · ${dinero(d.importe)}${Number(d.cantidad) > 0 ? ` · ${esc(cantidad(d.cantidad))} u.` : ''} · ${d.repuesto ? 'repuesto al inventario' : 'no repuesto'} · ${esc(d.motivo)} <small>(${esc(d.usuario || '')})</small></li>`).join('')}</ul></details>` : ''}
         <div class="panel-acciones panel-acciones-izq">
             ${v.estado !== 'anulada' && Number(v.saldo) > 0 ? '<button type="button" class="panel-btn panel-btn-principal" data-saldo><i class="fas fa-cash-register"></i> Cobrar saldo</button>' : ''}
-            ${v.estado !== 'anulada' && (neto > 0 || devolvibles.length) ? '<button type="button" class="panel-btn" data-mostrar-devolucion><i class="fas fa-rotate-left"></i> Devolución o reembolso</button>' : ''}
-            ${v.estado !== 'anulada' && neto === 0 ? '<button type="button" class="panel-btn panel-btn-peligro" data-anular><i class="fas fa-ban"></i> Anular venta</button>' : ''}
+            ${ctx.rol === 'admin' && v.estado !== 'anulada' && (neto > 0 || devolvibles.length) ? '<button type="button" class="panel-btn" data-mostrar-devolucion><i class="fas fa-rotate-left"></i> Devolución o reembolso</button>' : ''}
+            ${ctx.rol === 'admin' && v.estado !== 'anulada' && neto === 0 ? '<button type="button" class="panel-btn panel-btn-peligro" data-anular><i class="fas fa-ban"></i> Anular venta</button>' : ''}
             <button type="button" class="panel-btn" data-imprimir><i class="fas fa-print"></i> Imprimir</button></div>
         <form class="panel-form detalle-sub" data-devolucion hidden novalidate>
             <p class="panel-sub">Indica lo que se devuelve. Marca "reponer" solo si el producto regresó y está apto para venderse.</p>

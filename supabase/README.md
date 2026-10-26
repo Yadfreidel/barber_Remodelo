@@ -156,3 +156,27 @@ Solo para administradores; el servidor rechaza a barberos, clientes y visitantes
 - Las ventas, pagos y cierres confirmados no se editan ni se borran. Se corrigen con devoluciones, reembolsos o anulaciones, que quedan en el historial.
 - Valoración del inventario: costo promedio ponderado. El margen estimado es ventas netas menos el costo de lo vendido y de los insumos consumidos. **No** es la ganancia neta, porque no incluye gastos.
 - No hay impuestos ni comisiones configurados en el sistema, así que no se aplican.
+
+## Cuentas de barberos y avisos (migración 20261028000000)
+
+**Cuentas.** Las contraseñas viven solo en Supabase Auth. Panel › Barberos › «Agregar barbero» o «Habilitar acceso»
+crea la cuenta con una contraseña temporal y la vincula con el perfil (`panel_cuenta_vincular`, validada en la base).
+Al entrar, el barbero debe cambiarla: el servidor lo comprueba con la huella del hash de Auth.
+
+- Con la Edge Function `barbero-cuenta` desplegada, la cuenta se crea ya confirmada (sin enviar correos):
+  `supabase functions deploy barbero-cuenta` (usa los secretos automáticos SUPABASE_URL, SUPABASE_ANON_KEY y SUPABASE_SERVICE_ROLE_KEY).
+- Sin ella, se usa el registro normal de Auth: el barbero recibe un correo de confirmación.
+- «Enviar enlace para restablecer contraseña», el registro profesional y el cambio de correo usan el envío de correos de Supabase Auth.
+  El servicio de correo por defecto de Supabase está muy limitado (pocos envíos por hora y solo a miembros del equipo del proyecto):
+  para correos reales configura un SMTP propio en Authentication › Emails › SMTP. Es configuración compartida con las otras
+  aplicaciones del proyecto: decídelo antes de cambiarla.
+
+**Avisos.** Cada cita nueva, cancelada, reprogramada o reasignada genera un aviso interno para la cuenta del barbero
+(o para administración si no tiene cuenta), uno por evento y destinatario. Con la app abierta se ve y suena en el panel.
+
+**Avisos con la app cerrada (Web Push).** Opcional; la cita y su aviso interno se guardan aunque esto falle.
+1. Genera claves VAPID: `npx web-push generate-vapid-keys`.
+2. Pon la pública en `assets/config.js` (`VAPID_PUBLIC_KEY`).
+3. Secretos de la función: `supabase secrets set VAPID_PUBLIC_KEY=… VAPID_PRIVATE_KEY=… VAPID_SUBJECT=mailto:tu@correo.com CRON_SECRET=…`
+4. `supabase functions deploy push-enviar --no-verify-jwt` y programa el envío cada minuto (ver `cron.example.sql`, requiere pg_cron y pg_net).
+5. En iPhone/iPad: iOS 16.4 o posterior y abrir la web desde el ícono agregado a la pantalla de inicio.

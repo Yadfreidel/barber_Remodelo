@@ -17,3 +17,13 @@ $$);
 -- Para desactivar:
 -- select cron.unschedule('barberia-tareas');
 -- select cron.unschedule('barberia-whatsapp-envio');
+
+-- Avisos push de citas a los barberos (la función no envía nada sin las claves VAPID)
+select cron.schedule('barberia-push-envio', '* * * * *', $$
+    select net.http_post(
+        url := 'https://<PROYECTO>.supabase.co/functions/v1/push-enviar',
+        headers := jsonb_build_object('Authorization', 'Bearer <CRON_SECRET>', 'Content-Type', 'application/json'),
+        body := '{}'::jsonb
+    )
+$$);
+-- select cron.unschedule('barberia-push-envio');

@@ -1,0 +1,50 @@
+/* ==========================================
+   Cuentas de barberos, atención, disponibilidad, ingresos y avisos
+   ========================================== */
+
+/* Campana del panel */
+.panel-campana { position: relative; }
+.panel-campana .panel-aviso-numero { position: absolute; top: -6px; right: -6px; margin: 0; }
+
+/* Centro de avisos */
+.avisos-lista { display: grid; gap: 8px; margin-bottom: 14px; }
+.aviso-item { display: grid; grid-template-columns: 28px 1fr auto; gap: 10px; align-items: start; width: 100%; padding: 12px 14px; border: 1px solid var(--gris-borde);
+    border-radius: 12px; background: var(--negro-tarjeta); color: var(--blanco); text-align: left; font: inherit; cursor: pointer; }
+.aviso-item > i { color: var(--dorado); margin-top: 3px; }
+.aviso-item span span { display: block; color: #ddd6c8; font-size: .88rem; overflow-wrap: anywhere; }
+.aviso-item small { display: block; color: var(--gris-texto); font-size: .74rem; margin-top: 2px; }
+.aviso-item.no-leido { border-color: #75633e; background: #17140c; }
+.aviso-item:hover { border-color: var(--dorado); }
+.aviso-punto { width: 10px; height: 10px; border-radius: 50%; background: var(--dorado); margin-top: 6px; }
+.avisos-preferencias { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; }
+.avisos-volumen { display: inline-flex; align-items: center; gap: 8px; color: var(--gris-texto); font-size: .85rem; }
+.avisos-volumen input { accent-color: var(--dorado); width: 140px; }
+
+/* Atención */
+.atencion-dia { margin: 4px 0 12px; color: var(--dorado-brillante); text-transform: capitalize; }
+.atencion-lista { display: grid; gap: 10px; }
+.atencion-cita { display: grid; grid-template-columns: 70px 1fr auto; gap: 12px; align-items: center; padding: 12px 14px; border: 1px solid var(--gris-borde);
+    border-radius: 12px; background: var(--negro-tarjeta); min-width: 0; }
+.atencion-hora strong { display: block; font-size: 1.15rem; color: var(--dorado-brillante); }
+.atencion-hora small, .atencion-info small { display: block; color: var(--gris-texto); font-size: .76rem; }
+.atencion-info { display: grid; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
+.atencion-acciones { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+@media (max-width: 640px) {
+    .atencion-cita { grid-template-columns: 60px 1fr; }
+    .atencion-acciones { grid-column: 1 / -1; justify-content: stretch; }
+    .atencion-acciones .panel-btn { flex: 1; }
+}
+
+/* Solicitudes y disponibilidad */
+.disp-lista { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.disp-lista li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 12px; padding: 12px 14px; border: 1px solid var(--gris-borde); border-radius: 12px; background: var(--negro-tarjeta); }
+.disp-lista li > span:first-child { flex: 1 1 260px; min-width: 0; overflow-wrap: anywhere; }
+.disp-lista li > span:last-child { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.disp-lista small { display: block; color: var(--gris-texto); font-size: .78rem; margin-top: 2px; }
+
+/* Mi perfil */
+.perfil-propio-foto { display: flex; align-items: center; gap: 12px; }
+
+/* Acceso: registro profesional, solicitud y contraseña temporal */
+.login-admin-nota { margin: 0 0 12px; color: var(--gris-texto, #a0a0a0); font-size: .88rem; line-height: 1.5; }
+.login-admin-caja form input { width: 100%; }

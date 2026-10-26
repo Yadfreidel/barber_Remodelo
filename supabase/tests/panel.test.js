@@ -51,7 +51,7 @@ test('permisos: anon y usuarios sin rol no acceden; barbero solo a su agenda', a
     assert.match(await errorDe(rpc(anon, 'panel_resumen')), /permission denied/);
     assert.equal(await errorDe(rpc(otro, 'panel_resumen')), 'no_autorizado');
     assert.equal(await errorDe(rpc(otro, 'panel_citas', '2026-01-01', '2026-01-31', null, null, null)), 'no_autorizado');
-    assert.deepEqual(await rpc(barbero, 'rol_panel'), { rol: 'barbero', barbero_id: ids.beto, barbero_nombre: 'Beto Barbero' });
+    assert.deepEqual(await rpc(barbero, 'rol_panel'), { rol: 'barbero', barbero_id: ids.beto, barbero_nombre: 'Beto Barbero', debe_cambiar_clave: false, permisos: [] });
     assert.equal((await rpc(admin, 'rol_panel')).rol, 'admin');
     assert.equal((await rpc(otro, 'rol_panel')).rol, null);
 

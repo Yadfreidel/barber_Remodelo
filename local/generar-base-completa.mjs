@@ -12,7 +12,7 @@ const DIR = path.join(RAIZ, 'supabase', 'migrations');
 const SALIDA = path.join(RAIZ, 'supabase', 'base_completa.sql');
 // Actualización para un proyecto que ya ejecutó base_completa.sql hasta INSTALADO_HASTA (incluida)
 const SALIDA_ACTUALIZACION = path.join(RAIZ, 'supabase', 'barberia_actualizacion.sql');
-const INSTALADO_HASTA = '20261028000000_cuentas_permisos_notificaciones.sql';
+const INSTALADO_HASTA = '20261030000000_cuentas_barberos_seguras.sql';
 const ESQUEMA = 'barberia';
 const PRIVADO = 'barberia_private';
 const URL_PUBLICA = 'https://yadfreidel.github.io/barberia-master/';

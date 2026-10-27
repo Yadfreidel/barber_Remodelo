@@ -117,8 +117,8 @@ test('citas desde administración: sin cruces, duración real, servicio y barber
 });
 
 test('horarios: por día y barbero, descansos, bloqueos, margen, anticipación y límite de días', async () => {
-    const domingo = await diaSemana(3, 0);
-    const lunes = await diaSemana(3, 1);
+    const domingo = await diaSemana(13, 0);
+    const lunes = await diaSemana(13, 1);  // lejos de las fechas que usan las pruebas anteriores (hoy + 5 y + 6)
     const dias = [0, 1, 2, 3, 4, 5, 6].map(dia => ({ dia, activo: dia !== 0, abre: '09:00', cierra: dia === 6 ? '14:00' : '19:00',
         descansos: dia === 1 ? [{ desde: '13:00', hasta: '14:00' }] : [] }));
     await rpc(admin, 'panel_guardar_semana', null, JSON.stringify(dias));

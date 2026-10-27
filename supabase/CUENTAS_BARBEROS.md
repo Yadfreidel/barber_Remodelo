@@ -21,7 +21,7 @@ El proyecto configurado en `assets/config.js` es `gopuiuzvfysrkvaoppkh`. No apli
    ```
 
    La función necesita `SUPABASE_URL`, `SUPABASE_ANON_KEY` y `SUPABASE_SERVICE_ROLE_KEY` en el servidor. No copiar claves privilegiadas al frontend. La función valida al administrador y la base vuelve a comprobar su autorización.
-4. Publicar los cambios del frontend en el repositorio que sirve la web y recargarla. La URL pública configurada actualmente es `https://yadfreidel.github.io/barberia-master/`.
+4. Publicar los cambios del frontend en el repositorio que sirve la web y recargarla. La web publicada se sirve desde el repositorio `barber_Remodelo`: `https://yadfreidel.github.io/barber_Remodelo/` (sube los cambios también a `barberia-master`).
 5. Para restablecimientos: configurar el correo de Auth y añadir la URL de la barbería a las Redirect URLs, conservando las URLs de las otras aplicaciones del proyecto compartido.
 6. Ejecutar `barberia_verificacion.sql` para comprobar los objetos instalados. Esto no acredita el despliegue de la Edge Function ni el envío de correo.
 

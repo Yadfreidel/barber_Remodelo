@@ -13,7 +13,8 @@ if (!email || !clave || clave.length < 6) {
 
 const sal = crypto.randomBytes(16).toString('hex');
 const hash = `scrypt$${sal}$${crypto.scryptSync(clave, sal, 32).toString('hex')}`;
-const db = new pg.Client({ host: '127.0.0.1', port: 54322, user: 'postgres', password: 'postgres-local', database: 'postgres' });
+const [, , puertoPg] = (process.env.BARBERIA_PUERTOS || '8080,54321,54322').split(',');
+const db = new pg.Client({ host: '127.0.0.1', port: Number(puertoPg), user: 'postgres', password: 'postgres-local', database: 'postgres' });
 
 try {
     await db.connect();

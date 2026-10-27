@@ -162,7 +162,7 @@ function pintarDia(cuerpo, citas, ctx, barberos, abrir) {
     const visibles = citas.filter(c => c.estado_visual !== 'cancelada');
     const inicio = Math.min(8 * 60, ...visibles.map(c => aMin(c.hora)));
     const fin = Math.max(20 * 60, ...visibles.map(c => aMin(c.fin)));
-    const ppm = 1.1;
+    const ppm = 1.6; // píxeles por minuto: una cita de 30 min muestra hora, cliente y servicio
     const horas = [];
     for (let m = Math.floor(inicio / 60) * 60; m <= fin; m += 60) horas.push(m);
     const canceladas = citas.filter(c => c.estado_visual === 'cancelada');
@@ -176,7 +176,7 @@ function pintarDia(cuerpo, citas, ctx, barberos, abrir) {
                     <div class="agenda-dia-pista">
                         ${horas.map(m => `<i class="agenda-linea" style="top:${Math.round((m - inicio) * ppm)}px"></i>`).join('')}
                         ${visibles.filter(c => c.barbero_id === b.id).map(c => `
-                            <div class="agenda-bloque" style="top:${Math.round((aMin(c.hora) - inicio) * ppm)}px;height:${Math.max(26, Math.round(c.duracion * ppm) - 2)}px">
+                            <div class="agenda-bloque" style="top:${Math.round((aMin(c.hora) - inicio) * ppm)}px;height:${Math.max(34, Math.round(c.duracion * ppm) - 3)}px">
                                 ${tarjetaCita(c)}
                             </div>`).join('')}
                     </div>

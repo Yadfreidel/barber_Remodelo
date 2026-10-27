@@ -35,22 +35,21 @@ import { iniciarAvisos, desbloquearSonido, fijarPreferencias, comprobarDispositi
 // Inventario, ventas y caja: solo administradores (el servidor lo vuelve a comprobar). Un barbero con el permiso
 // explícito «cajero» ve también Ventas y Caja. «titulos.barbero» es el nombre de la sección en el menú del barbero.
 const SECCIONES = [
-    { id: 'resumen', titulo: 'Resumen', titulos: { barbero: 'Inicio' }, icono: 'gauge-high', roles: ['admin', 'barbero'], render: renderResumen, grupo: 'Barbería' },
-    { id: 'agenda', titulo: 'Agenda', titulos: { barbero: 'Mi agenda' }, icono: 'calendar-days', roles: ['admin', 'barbero'], render: renderAgenda, grupo: 'Barbería' },
-    { id: 'atencion', titulo: 'Atención', icono: 'play', roles: ['admin', 'barbero'], render: renderAtencion, grupo: 'Barbería' },
-    { id: 'reclamaciones', titulo: 'Reclamaciones', titulos: { barbero: 'Casos asignados' }, icono: 'flag', roles: ['admin', 'barbero'], render: renderReclamaciones, grupo: 'Barbería' },
-    { id: 'horarios', titulo: 'Horarios', icono: 'clock', roles: ['admin'], render: renderHorarios, grupo: 'Barbería' },
-    { id: 'servicios', titulo: 'Servicios', icono: 'scissors', roles: ['admin'], render: renderServicios, grupo: 'Barbería' },
-    { id: 'barberos', titulo: 'Barberos', icono: 'users', roles: ['admin'], render: renderBarberos, grupo: 'Configuración' },
-    { id: 'solicitudes', titulo: 'Solicitudes', icono: 'inbox', roles: ['admin'], render: renderSolicitudes, grupo: 'Barbería' },
-    { id: 'portafolio', titulo: 'Portafolio', titulos: { barbero: 'Mi portafolio' }, icono: 'images', roles: ['admin', 'barbero'], render: renderPortafolio, grupo: 'Barbería' },
-    { id: 'ingresos', titulo: 'Ingresos por barbero', titulos: { barbero: 'Mis ingresos' }, icono: 'wallet', roles: ['admin', 'barbero'], render: renderIngresos, grupo: 'Barbería' },
-    { id: 'disponibilidad', titulo: 'Mi disponibilidad', icono: 'business-time', roles: ['barbero'], render: renderDisponibilidad, grupo: 'Barbería' },
-    { id: 'clientes', titulo: 'Clientes', icono: 'address-book', roles: ['admin'], render: renderClientes, grupo: 'Barbería' },
-    { id: 'reportes', titulo: 'Reportes de citas', icono: 'chart-column', roles: ['admin'], render: renderReportes, grupo: 'Barbería' },
-    { id: 'ocupacion', titulo: 'Ocupación y horas vacías', titulos: { barbero: 'Mi ocupación' }, icono: 'chart-area', roles: ['admin', 'barbero'], render: renderOcupacion, grupo: 'Barbería' },
-    { id: 'notificaciones', titulo: 'Notificaciones', icono: 'bell', roles: ['admin', 'barbero'], render: renderNotificaciones, grupo: 'Barbería' },
-    { id: 'perfil', titulo: 'Mi perfil', icono: 'id-badge', roles: ['admin', 'barbero'], render: renderPerfil, grupo: 'Barbería' },
+    { id: 'resumen', titulo: 'Resumen', titulos: { barbero: 'Inicio' }, icono: 'gauge-high', roles: ['admin', 'barbero'], render: renderResumen, grupo: 'Día a día' },
+    { id: 'agenda', titulo: 'Agenda', titulos: { barbero: 'Mi agenda' }, icono: 'calendar-days', roles: ['admin', 'barbero'], render: renderAgenda, grupo: 'Día a día' },
+    { id: 'atencion', titulo: 'Atención', icono: 'play', roles: ['admin', 'barbero'], render: renderAtencion, grupo: 'Día a día' },
+    { id: 'solicitudes', titulo: 'Solicitudes', icono: 'inbox', roles: ['admin'], render: renderSolicitudes, grupo: 'Día a día' },
+    { id: 'reclamaciones', titulo: 'Reclamaciones', titulos: { barbero: 'Casos asignados' }, icono: 'flag', roles: ['admin', 'barbero'], render: renderReclamaciones, grupo: 'Día a día' },
+    { id: 'notificaciones', titulo: 'Notificaciones', icono: 'bell', roles: ['admin', 'barbero'], render: renderNotificaciones, grupo: 'Día a día' },
+    { id: 'horarios', titulo: 'Horarios', icono: 'clock', roles: ['admin'], render: renderHorarios, grupo: 'Catálogo y equipo' },
+    { id: 'servicios', titulo: 'Servicios', icono: 'scissors', roles: ['admin'], render: renderServicios, grupo: 'Catálogo y equipo' },
+    { id: 'barberos', titulo: 'Barberos', icono: 'users', roles: ['admin'], render: renderBarberos, grupo: 'Catálogo y equipo' },
+    { id: 'portafolio', titulo: 'Portafolio', titulos: { barbero: 'Mi portafolio' }, icono: 'images', roles: ['admin', 'barbero'], render: renderPortafolio, grupo: 'Catálogo y equipo' },
+    { id: 'disponibilidad', titulo: 'Mi disponibilidad', icono: 'business-time', roles: ['barbero'], render: renderDisponibilidad, grupo: 'Catálogo y equipo' },
+    { id: 'clientes', titulo: 'Clientes', icono: 'address-book', roles: ['admin'], render: renderClientes, grupo: 'Clientes y análisis' },
+    { id: 'ingresos', titulo: 'Ingresos por barbero', titulos: { barbero: 'Mis ingresos' }, icono: 'wallet', roles: ['admin', 'barbero'], render: renderIngresos, grupo: 'Clientes y análisis' },
+    { id: 'reportes', titulo: 'Reportes de citas', icono: 'chart-column', roles: ['admin'], render: renderReportes, grupo: 'Clientes y análisis' },
+    { id: 'ocupacion', titulo: 'Ocupación y horas vacías', titulos: { barbero: 'Mi ocupación' }, icono: 'chart-area', roles: ['admin', 'barbero'], render: renderOcupacion, grupo: 'Clientes y análisis' },
     { id: 'fin-resumen', titulo: 'Resumen financiero', icono: 'sack-dollar', roles: ['admin'], render: renderFinResumen, grupo: 'Finanzas' },
     { id: 'inventario', titulo: 'Inventario', icono: 'boxes-stacked', roles: ['admin'], render: renderInventario, grupo: 'Finanzas' },
     { id: 'ventas', titulo: 'Ventas y cobros', icono: 'cash-register', roles: ['admin'], permiso: 'cajero', render: renderVentas, grupo: 'Finanzas' },
@@ -61,19 +60,21 @@ const SECCIONES = [
     { id: 'ubicacion', titulo: 'Ubicación del local', icono: 'location-dot', roles: ['admin'], render: (c, ctx, o) => renderNegocio(c, ctx, { ...o, sub: 'ubicacion' }), grupo: 'Configuración' },
     { id: 'whatsapp', titulo: 'WhatsApp', icono: 'comment-dots', roles: ['admin'], render: renderWhatsApp, grupo: 'Configuración' },
     { id: 'modulos', titulo: 'Módulos', icono: 'puzzle-piece', roles: ['admin'], render: (c, ctx) => renderTabModulos(c, ctx.notificar), grupo: 'Configuración' },
-    { id: 'auditoria', titulo: 'Registro de cambios', icono: 'clipboard-list', roles: ['admin'], render: renderAuditoria, grupo: 'Configuración' }
+    { id: 'auditoria', titulo: 'Registro de cambios', icono: 'clipboard-list', roles: ['admin'], render: renderAuditoria, grupo: 'Configuración' },
+    { id: 'perfil', titulo: 'Mi perfil', icono: 'id-badge', roles: ['admin', 'barbero'], render: renderPerfil, grupo: 'Configuración' }
 ];
 
 // Orden del menú del barbero
 const ORDEN_BARBERO = ['resumen', 'agenda', 'atencion', 'portafolio', 'ingresos', 'disponibilidad', 'ocupacion', 'reclamaciones', 'notificaciones', 'perfil', 'ventas', 'caja'];
 
 function seccionesDe(sesion) {
+    // El barbero ve su menú en su propio orden, sin los grupos del administrador (solo «Finanzas» aparte)
     const lista = SECCIONES.filter(s => s.roles.includes(sesion.rol) || (s.permiso && (sesion.permisos || []).includes(s.permiso)))
-        .map(s => ({ ...s, titulo: s.titulos?.[sesion.rol] || s.titulo }));
+        .map(s => ({ ...s, titulo: s.titulos?.[sesion.rol] || s.titulo, grupo: sesion.rol === 'barbero' && s.grupo !== 'Finanzas' ? 'Mi trabajo' : s.grupo }));
     return sesion.rol === 'barbero' ? lista.sort((a, b) => ORDEN_BARBERO.indexOf(a.id) - ORDEN_BARBERO.indexOf(b.id)) : lista;
 }
 
-// Menú agrupado (lateral en PC, desplegable con grupos en el móvil)
+// Menú agrupado (lateral fijo en PC, panel deslizante en el móvil y la tablet)
 function menuAgrupado(disponibles, plantilla) {
     const grupos = [...new Set(disponibles.map(s => s.grupo))];
     return grupos.map(g => plantilla(g, disponibles.filter(s => s.grupo === g))).join('');
@@ -86,12 +87,16 @@ export function renderPanel(contenedor, { sesion, notificar, cerrar, salir, inic
     if (inicio?.seccion && disponibles.some(s => s.id === inicio.seccion)) seccionActual = inicio.seccion;
     if (!disponibles.some(s => s.id === seccionActual)) seccionActual = 'resumen';
     contenedor.classList.add('panel-shell');
+    const cuenta = `${esc(sesion.email || '')} · ${sesion.rol === 'admin' ? 'Administrador' : `Barbero (${esc(sesion.barbero_nombre || '')})`}`;
+    const marca = `<div class="panel-marca"><span class="panel-marca-icono" aria-hidden="true"><i class="fas fa-crown"></i></span><div><strong>Panel de gestión</strong>
+                <small>${cuenta}</small></div></div>`;
     contenedor.innerHTML = `
         <header class="panel-top">
-            <div class="panel-marca"><i class="fas fa-crown"></i><div><strong>Panel de gestión</strong>
-                <small>${esc(sesion.email || '')} · ${sesion.rol === 'admin' ? 'Administrador' : `Barbero (${esc(sesion.barbero_nombre || '')})`}</small></div></div>
-            <label class="panel-menu-movil"><span class="sr-only">Sección</span>
-                <select aria-label="Sección del panel">${menuAgrupado(disponibles, (g, secciones) => `<optgroup label="${esc(g)}">${secciones.map(s => `<option value="${s.id}">${esc(s.titulo)}</option>`).join('')}</optgroup>`)}</select></label>
+            <button type="button" class="panel-menu-boton" data-menu-abrir aria-expanded="false" aria-controls="panel-menu-nav">
+                <i class="fas fa-bars" aria-hidden="true"></i><span class="sr-only">Menú de secciones. Sección actual:</span>
+                <span class="panel-menu-actual"><i class="fas" data-menu-icono aria-hidden="true"></i><strong data-menu-actual></strong></span>
+            </button>
+            ${marca}
             <div class="panel-top-acciones">
                 <button type="button" class="panel-icono panel-campana" data-campana aria-label="Notificaciones"><i class="fas fa-bell"></i><span class="panel-aviso-numero" data-contador hidden></span></button>
                 <button type="button" class="panel-btn" data-salir><i class="fas fa-right-from-bracket"></i> <span>Cerrar sesión</span></button>
@@ -99,15 +104,21 @@ export function renderPanel(contenedor, { sesion, notificar, cerrar, salir, inic
             </div>
         </header>
         <div class="panel-cuerpo">
-            <nav class="panel-menu" aria-label="Secciones del panel">${menuAgrupado(disponibles, (g, secciones) => `
-                ${disponibles.length > secciones.length ? `<p class="panel-menu-grupo">${esc(g)}</p>` : ''}${secciones.map(s => `
-                <button type="button" data-seccion="${s.id}"><i class="fas fa-${s.icono}"></i><span>${esc(s.titulo)}</span></button>`).join('')}`)}
+            <div class="panel-menu-fondo" data-menu-fondo hidden></div>
+            <nav class="panel-menu" id="panel-menu-nav" aria-label="Secciones del panel">
+                <div class="panel-menu-cabecera">${marca}
+                    <button type="button" class="panel-icono" data-menu-cerrar aria-label="Cerrar menú"><i class="fas fa-times"></i></button>
+                </div>${menuAgrupado(disponibles, (g, secciones) => `
+                <div class="panel-menu-seccion">${disponibles.length > secciones.length ? `<p class="panel-menu-grupo">${esc(g)}</p>` : ''}${secciones.map(s => `
+                <button type="button" data-seccion="${s.id}"><i class="fas fa-${s.icono}" aria-hidden="true"></i><span>${esc(s.titulo)}</span></button>`).join('')}</div>`)}
             </nav>
             <main class="panel-contenido" id="admin-tab-body" tabindex="-1"></main>
         </div>`;
 
     const cuerpo = contenedor.querySelector('.panel-contenido');
-    const selector = contenedor.querySelector('.panel-menu-movil select');
+    const menu = contenedor.querySelector('.panel-menu');
+    const botonMenu = contenedor.querySelector('[data-menu-abrir]');
+    const fondoMenu = contenedor.querySelector('[data-menu-fondo]');
     const ctx = { ...sesion, notificar, irA: (id, opciones) => mostrar(id, opciones), actualizarAvisos, salir };
 
     // Aviso interno: reclamaciones que esperan al equipo (sin envíos externos)
@@ -118,14 +129,28 @@ export function renderPanel(contenedor, { sesion, notificar, cerrar, salir, inic
         if (!boton) return;
         boton.querySelector('.panel-aviso-numero')?.remove();
         if (n > 0) boton.insertAdjacentHTML('beforeend', `<span class="panel-aviso-numero" aria-label="${n} pendiente(s)">${n}</span>`);
-        const opcion = selector.querySelector('option[value="reclamaciones"]');
-        if (opcion) opcion.textContent = n > 0 ? `Reclamaciones (${n})` : 'Reclamaciones';
+    }
+
+    // Menú deslizante (móvil y tablet): se cierra con Escape, el fondo o al elegir; el foco vuelve al botón
+    function abrirMenu() {
+        menu.classList.add('abierto');
+        fondoMenu.hidden = false;
+        botonMenu.setAttribute('aria-expanded', 'true');
+        (menu.querySelector('[aria-current="page"]') || menu.querySelector('[data-seccion]'))?.focus();
+    }
+    function cerrarMenu(devolverFoco = true) {
+        if (!menu.classList.contains('abierto')) return;
+        menu.classList.remove('abierto');
+        fondoMenu.hidden = true;
+        botonMenu.setAttribute('aria-expanded', 'false');
+        if (devolverFoco) botonMenu.focus();
     }
 
     async function mostrar(id, opciones = {}) {
         const seccion = disponibles.find(s => s.id === id) || disponibles[0];
         seccionActual = seccion.id;
-        selector.value = seccion.id;
+        botonMenu.querySelector('[data-menu-actual]').textContent = seccion.titulo;
+        botonMenu.querySelector('[data-menu-icono]').className = `fas fa-${seccion.icono}`;
         contenedor.querySelectorAll('[data-seccion]').forEach(b => {
             if (b.dataset.seccion === seccion.id) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
         });
@@ -138,8 +163,25 @@ export function renderPanel(contenedor, { sesion, notificar, cerrar, salir, inic
         }
     }
 
-    contenedor.querySelectorAll('[data-seccion]').forEach(b => b.addEventListener('click', () => mostrar(b.dataset.seccion)));
-    selector.addEventListener('change', () => mostrar(selector.value));
+    contenedor.querySelectorAll('[data-seccion]').forEach(b => b.addEventListener('click', () => {
+        const desdeMenu = menu.classList.contains('abierto');
+        cerrarMenu(false);
+        mostrar(b.dataset.seccion);
+        if (desdeMenu) cuerpo.focus({ preventScroll: true });
+    }));
+    botonMenu.addEventListener('click', abrirMenu);
+    fondoMenu.addEventListener('click', () => cerrarMenu());
+    contenedor.querySelector('[data-menu-cerrar]').addEventListener('click', () => cerrarMenu());
+    menu.addEventListener('keydown', e => {
+        if (!menu.classList.contains('abierto')) return;
+        if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); cerrarMenu(); return; }
+        if (e.key !== 'Tab') return;
+        const focos = [...menu.querySelectorAll('button')];
+        if (e.shiftKey && document.activeElement === focos[0]) { e.preventDefault(); focos.at(-1).focus(); }
+        else if (!e.shiftKey && document.activeElement === focos.at(-1)) { e.preventDefault(); focos[0].focus(); }
+    });
+    // En pantalla ancha el menú es fijo: si estaba abierto como panel deslizante, se cierra
+    window.matchMedia('(max-width: 899px)').addEventListener('change', () => cerrarMenu(false));
     contenedor.querySelector('#btn-cerrar-dashboard-inner').addEventListener('click', cerrar);
     contenedor.querySelector('[data-salir]').addEventListener('click', () => salir());
     contenedor.querySelector('[data-campana]').addEventListener('click', () => mostrar('notificaciones'));

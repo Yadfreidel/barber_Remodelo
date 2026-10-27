@@ -88,7 +88,7 @@ export async function renderTabModulos(container, notificar) {
         <div id="cuerpo-modulos"></div>`;
 
     container.querySelector('#btn-salir-admin').addEventListener('click', async () => {
-        await admin.auth.signOut();
+        await admin.auth.signOut({ scope: 'local' });
         renderTabModulos(container, notificar);
     });
     container.querySelector('#seccion-modulos').addEventListener('change', e => {
@@ -120,7 +120,7 @@ function renderLogin(container, notificar) {
         }
         const { data: esAdmin } = await admin.rpc('es_admin');
         if (!esAdmin) {
-            await admin.auth.signOut();
+            await admin.auth.signOut({ scope: 'local' });
             notificar('Esta cuenta no tiene permisos de administrador', 'error');
             return;
         }

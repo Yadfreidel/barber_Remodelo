@@ -108,7 +108,7 @@ export function renderPanel(contenedor, { sesion, notificar, cerrar, salir, inic
 
     const cuerpo = contenedor.querySelector('.panel-contenido');
     const selector = contenedor.querySelector('.panel-menu-movil select');
-    const ctx = { ...sesion, notificar, irA: (id, opciones) => mostrar(id, opciones), actualizarAvisos };
+    const ctx = { ...sesion, notificar, irA: (id, opciones) => mostrar(id, opciones), actualizarAvisos, salir };
 
     // Aviso interno: reclamaciones que esperan al equipo (sin envíos externos)
     async function actualizarAvisos() {
@@ -141,7 +141,7 @@ export function renderPanel(contenedor, { sesion, notificar, cerrar, salir, inic
     contenedor.querySelectorAll('[data-seccion]').forEach(b => b.addEventListener('click', () => mostrar(b.dataset.seccion)));
     selector.addEventListener('change', () => mostrar(selector.value));
     contenedor.querySelector('#btn-cerrar-dashboard-inner').addEventListener('click', cerrar);
-    contenedor.querySelector('[data-salir]').addEventListener('click', salir);
+    contenedor.querySelector('[data-salir]').addEventListener('click', () => salir());
     contenedor.querySelector('[data-campana]').addEventListener('click', () => mostrar('notificaciones'));
     mostrar(seccionActual, seccionActual === inicio?.seccion ? inicio.opciones || {} : {});
     actualizarAvisos();

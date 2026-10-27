@@ -242,7 +242,7 @@ function manejarClic(evento) {
     } else if (objetivo.matches('[data-continuar]')) window.dispatchEvent(new Event('continuar-borrador'));
     else if (objetivo.matches('[data-salir]')) {
         objetivo.disabled = true;
-        supabase.auth.signOut(); // SIGNED_OUT actualiza la vista (onAuthStateChange)
+        supabase.auth.signOut({ scope: 'local' }); // solo este dispositivo; SIGNED_OUT actualiza la vista (onAuthStateChange)
     }
     else if (objetivo.id === 'mc-olvidar' && confirm('¿Quitar de este navegador la lista de tus citas? Las citas no se cancelan; podrás verlas con tu enlace privado o iniciando sesión.')) {
         olvidarTodo();

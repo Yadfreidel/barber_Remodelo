@@ -8,6 +8,11 @@ import { obtenerClienteAdmin } from '../assets/supabaseClient.js';
 import { obtenerSesionPanel } from '../assets/admin-session.js';
 import { renderPanel } from './panelController.js';
 import { desactivarPushDispositivo, detenerAvisos } from './panel/avisos.js';
+import { invalidarCatalogosAgenda } from './panel/agenda.js';
+
+// Cerrar sesión solo en este dispositivo: signOut() sin scope revoca TODAS las sesiones de la cuenta
+// (los demás teléfonos y PC). «Todos los dispositivos» es una acción aparte en Mi perfil.
+const cerrarSesionLocal = cliente => cliente.auth.signOut({ scope: 'local' });
 
 // Sección a abrir al entrar (enlace de un aviso: ?panel=agenda&fecha=…). El panel vuelve a comprobar permisos.
 let inicioPendiente = null;
@@ -158,13 +163,13 @@ navigator.serviceWorker?.addEventListener('message', e => {
 // este panel se cierra en vez de seguir mostrando la cuenta anterior (sus peticiones ya irían con la nueva).
 obtenerClienteAdmin()?.auth.onAuthStateChange((evento, session) => {
     if (evento === 'PASSWORD_RECOVERY') pedirNuevaContrasena();
-    if (!usuarioPanel) return;
+    // Panel oculto (cerrado con la X) y sesión cerrada en otra pestaña: también se vacía
+    if (!usuarioPanel) { if (evento === 'SIGNED_OUT') setTimeout(vaciarPanel, 0); return; }
     const correo = session?.user?.email || null;
     if (correo === usuarioPanel) return;
     // Diferido: llamar a Auth dentro de este callback bloquea el cliente (supabase-js)
     setTimeout(() => {
-        detenerAvisos();
-        cerrarDashboard();
+        vaciarPanel();
         mostrarNotificacion(correo ? `La sesión cambió a ${correo} en otra pestaña. Vuelve a abrir el panel.` : 'La sesión se cerró en otra pestaña.', 'info');
     }, 0);
 });
@@ -239,7 +244,7 @@ function mostrarRegistroProfesional() {
 
 async function mostrarSolicitudAcceso() {
     const cliente = obtenerClienteAdmin();
-    const salir = async () => { await cliente.auth.signOut(); document.getElementById('solicitud-acceso')?.remove(); };
+    const salir = async () => { await cerrarSesionLocal(cliente); document.getElementById('solicitud-acceso')?.remove(); };
     const { data: e } = await cliente.rpc('solicitud_profesional_estado');
     const s = e?.solicitud;
     const pie = '<div class="acciones-gestion"><button type="button" class="btn-danger" data-salir-solicitud>Cerrar sesión</button></div>';
@@ -282,7 +287,7 @@ function pedirCambioTemporal() {
             <p role="alert" data-error></p>
             <div class="acciones-gestion"><button type="submit" class="btn-admin-accion">Guardar y entrar</button><button type="button" class="btn-danger" data-salir-temporal>Cerrar sesión</button></div>
         </form>`);
-    modal.querySelector('[data-salir-temporal]').addEventListener('click', async () => { await obtenerClienteAdmin().auth.signOut(); modal.remove(); });
+    modal.querySelector('[data-salir-temporal]').addEventListener('click', async () => { await cerrarSesionLocal(obtenerClienteAdmin()); modal.remove(); });
     modal.querySelector('form').addEventListener('submit', async e => {
         e.preventDefault();
         const f = e.target.elements;
@@ -319,14 +324,15 @@ async function abrirDashboard() {
         notificar: mostrarNotificacion,
         cerrar: cerrarDashboard,
         inicio,
-        salir: async () => {
+        salir: async ({ todas = false } = {}) => {
             usuarioPanel = null; // cierre pedido aquí: no es un cambio desde otra pestaña
             // Este dispositivo deja de recibir avisos de la cuenta (teléfonos compartidos)
             detenerAvisos();
             await desactivarPushDispositivo();
-            await obtenerClienteAdmin().auth.signOut();
-            cerrarDashboard();
-            mostrarNotificacion('Sesión cerrada', 'info');
+            const cliente = obtenerClienteAdmin();
+            await (todas ? cliente.auth.signOut({ scope: 'global' }) : cerrarSesionLocal(cliente));
+            vaciarPanel();
+            mostrarNotificacion(todas ? 'Sesión cerrada en todos los dispositivos' : 'Sesión cerrada', 'info');
         }
     });
     modal.style.display = 'flex';
@@ -343,4 +349,15 @@ export function cerrarDashboard() {
         modal.classList.add('ocultar-dashboard');
         document.body.style.overflow = '';
     }
+}
+
+// Sesión cerrada o cambiada: sin restos de la cuenta en la página (datos, diálogos, avisos, catálogos).
+// Al volver a entrar, todo se pide de nuevo al servidor con la sesión que haya entonces.
+function vaciarPanel() {
+    detenerAvisos();
+    cerrarDashboard();
+    const contenido = document.querySelector('#dashboard-admin .dashboard-contenido');
+    if (contenido) contenido.innerHTML = '';
+    invalidarCatalogosAgenda();
+    document.querySelectorAll('.aviso-flotante, .panel-dialogo-fondo').forEach(e => e.remove());
 }

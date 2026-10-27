@@ -37,8 +37,14 @@ export async function renderPerfil(cont, ctx) {
                 <p class="panel-sub">Recibirás un enlace de confirmación; el cambio se aplica al confirmarlo.</p>
                 <button type="submit" class="panel-btn">Cambiar correo</button></form></div>
         <div class="panel-caja"><h3>Avisos</h3><p class="panel-sub">Sonido, volumen y avisos con la app cerrada.</p>
-            <button type="button" class="panel-btn" data-avisos><i class="fas fa-bell"></i> Configurar avisos</button></div>`;
+            <button type="button" class="panel-btn" data-avisos><i class="fas fa-bell"></i> Configurar avisos</button></div>
+        <div class="panel-caja"><h3>Sesiones</h3>
+            <p class="panel-sub">«Cerrar sesión» solo cierra este dispositivo. Si perdiste un teléfono o entraste en un equipo ajeno, cierra la sesión en todos (este incluido).</p>
+            <button type="button" class="panel-btn panel-btn-peligro" data-salir-todas><i class="fas fa-right-from-bracket"></i> Cerrar sesión en todos los dispositivos</button></div>`;
     cont.querySelector('[data-avisos]').addEventListener('click', () => ctx.irA('notificaciones'));
+    cont.querySelector('[data-salir-todas]').addEventListener('click', () => {
+        if (confirm('¿Cerrar la sesión de esta cuenta en todos los dispositivos? Tendrás que volver a iniciar sesión en cada uno.')) ctx.salir({ todas: true });
+    });
     const formPerfil = cont.querySelector('[data-perfil]');
     if (formPerfil) {
         formPerfil.querySelector('[data-archivo]').addEventListener('change', async e => {

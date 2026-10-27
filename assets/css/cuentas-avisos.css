@@ -60,3 +60,19 @@
 /* Reserva: consentimiento para los avisos de la cita por WhatsApp */
 .avisos-whatsapp { display: flex; align-items: flex-start; gap: 10px; margin: 4px 0 14px; color: var(--gris-texto, #a0a0a0); font-size: .88rem; line-height: 1.4; cursor: pointer; }
 .avisos-whatsapp input { width: 20px; height: 20px; flex: 0 0 auto; margin-top: 1px; accent-color: var(--dorado, #c5a059); }
+
+/* Aviso flotante de nueva reserva en el panel */
+.aviso-flotante { position: fixed; right: 16px; bottom: 16px; z-index: 7500; /* sobre el panel (4000) y sus diálogos (7000) */ display: flex; align-items: flex-start; gap: 10px; max-width: min(420px, calc(100vw - 32px));
+    padding: 14px; border: 1px solid var(--dorado); border-radius: 14px; background: #17140c; color: var(--blanco); box-shadow: 0 12px 32px rgba(0,0,0,.5);
+    animation: aviso-entra .25s ease-out; }
+.aviso-flotante > i { color: var(--dorado); margin-top: 3px; }
+.aviso-flotante div { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.aviso-flotante span { color: #ddd6c8; font-size: .88rem; overflow-wrap: anywhere; }
+@keyframes aviso-entra { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .aviso-flotante { animation: none; } }
+@media (max-width: 640px) { .aviso-flotante { left: 16px; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); max-width: none; } }
+.avisos-estado { display: grid; gap: 6px; margin: 12px 0; }
+.avisos-estado div { display: grid; grid-template-columns: minmax(150px, 220px) 1fr; gap: 8px; }
+.avisos-estado dt { color: var(--gris-texto); font-size: .82rem; }
+.avisos-estado dd { margin: 0; font-size: .88rem; overflow-wrap: anywhere; }
+@media (max-width: 640px) { .avisos-estado div { grid-template-columns: 1fr; gap: 0; } }

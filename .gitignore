@@ -9,3 +9,6 @@ node_modules/
 # Entorno local (base de datos y binarios)
 local/.datos-pg/
 local/.bin/
+
+# Clave privada VAPID (Web Push): solo en los secretos de Supabase
+local/.vapid.json

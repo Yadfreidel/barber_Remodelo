@@ -10,11 +10,15 @@ const json = (cuerpo: unknown, status = 200) =>
     new Response(JSON.stringify(cuerpo), { status, headers: { 'Content-Type': 'application/json' } });
 
 Deno.serve(async (req) => {
-    const secreto = Deno.env.get('CRON_SECRET');
-    if (!secreto || req.headers.get('Authorization') !== `Bearer ${secreto}`) return json({ error: 'no_autorizado' }, 401);
-    const publica = Deno.env.get('VAPID_PUBLIC_KEY');
-    const privada = Deno.env.get('VAPID_PRIVATE_KEY');
-    const sujeto = Deno.env.get('VAPID_SUBJECT');
+    // Tolera espacios o saltos de línea al pegar el secreto (y un «Bearer » puesto por error en él).
+    // La respuesta dice la causa del rechazo sin revelar nunca el valor.
+    const limpiar = (v: string | null | undefined) => (v ?? '').trim().replace(/^Bearer\s+/i, '').trim();
+    const secreto = limpiar(Deno.env.get('CRON_SECRET'));
+    if (!secreto) return json({ error: 'no_autorizado', motivo: 'cron_secret_sin_configurar' }, 401);
+    if (limpiar(req.headers.get('Authorization')) !== secreto) return json({ error: 'no_autorizado', motivo: 'cron_secret_no_coincide' }, 401);
+    const publica = limpiar(Deno.env.get('VAPID_PUBLIC_KEY'));
+    const privada = limpiar(Deno.env.get('VAPID_PRIVATE_KEY'));
+    const sujeto = limpiar(Deno.env.get('VAPID_SUBJECT'));
     if (!publica || !privada || !sujeto) return json({ enviados: 0, motivo: 'sin_claves_vapid' });
     webpush.setVapidDetails(sujeto, publica, privada);
 

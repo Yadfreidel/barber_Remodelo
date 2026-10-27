@@ -30,7 +30,7 @@ import { renderDisponibilidad } from './panel/disponibilidad.js';
 import { renderPerfil } from './panel/perfil.js';
 import { renderSolicitudes } from './panel/solicitudes.js';
 import { renderNotificaciones, abrirAviso } from './panel/notificaciones.js';
-import { iniciarAvisos, desbloquearSonido, fijarPreferencias } from './panel/avisos.js';
+import { iniciarAvisos, desbloquearSonido, fijarPreferencias, comprobarDispositivo } from './panel/avisos.js';
 
 // Inventario, ventas y caja: solo administradores (el servidor lo vuelve a comprobar). Un barbero con el permiso
 // explícito «cajero» ve también Ventas y Caja. «titulos.barbero» es el nombre de la sección en el menú del barbero.
@@ -149,6 +149,8 @@ export function renderPanel(contenedor, { sesion, notificar, cerrar, salir, inic
     // Avisos internos: contador, aviso visual y sonido (el navegador exige una acción del usuario para sonar)
     contenedor.addEventListener('pointerdown', () => desbloquearSonido(), { once: true });
     api('panel_notificaciones', { p_limite: 1, p_antes: null }).then(r => fijarPreferencias(r.preferencias)).catch(() => {});
+    // Un dispositivo que estaba registrado con otra cuenta deja de recibir sus avisos
+    comprobarDispositivo();
     iniciarAvisos({
         usuario: sesion.email,
         vivo: () => contenedor.isConnected && contenedor.querySelector('.panel-contenido') === cuerpo,
@@ -162,14 +164,42 @@ export function renderPanel(contenedor, { sesion, notificar, cerrar, salir, inic
         },
         alAviso: nuevas => {
             const n = nuevas.at(-1);
-            notificar(nuevas.length > 1 ? `${nuevas.length} avisos nuevos. ${n.titulo}` : `${n.titulo}: ${n.cuerpo || ''}`, 'info');
-            if (seccionActual === 'notificaciones') mostrar('notificaciones');
+            mostrarAvisoFlotante(n, nuevas.length);
+            // La agenda, la atención, el resumen y la lista de avisos se actualizan sin recargar
+            if (seccionActual === 'notificaciones' || (['agenda', 'atencion', 'resumen'].includes(seccionActual) && nuevas.some(x => String(x.tipo).startsWith('cita_')))) {
+                mostrar(seccionActual);
+            }
         }
     });
+    // Aviso visible y accionable (el aviso normal desaparece solo y no se puede pulsar)
+    function mostrarAvisoFlotante(n, total) {
+        document.querySelector('.aviso-flotante')?.remove();
+        const caja = document.createElement('div');
+        caja.className = 'aviso-flotante';
+        caja.setAttribute('role', 'alert');
+        caja.innerHTML = '<i class="fas fa-bell" aria-hidden="true"></i><div><strong></strong><span></span></div>'
+            + (n.datos?.seccion ? '<button type="button" class="panel-btn panel-btn-mini panel-btn-principal" data-ver></button>' : '')
+            + '<button type="button" class="panel-icono" data-cerrar-aviso aria-label="Cerrar aviso"><i class="fas fa-times"></i></button>';
+        caja.querySelector('strong').textContent = n.titulo + (total > 1 ? ` (+${total - 1})` : '');
+        caja.querySelector('span').textContent = n.cuerpo || '';
+        const ver = caja.querySelector('[data-ver]');
+        if (ver) ver.textContent = n.datos?.cita ? 'Ver reserva' : 'Ver';
+        document.body.append(caja);
+        const quitar = () => caja.remove();
+        const temporizador = setTimeout(quitar, 20000);
+        caja.querySelector('[data-cerrar-aviso]').addEventListener('click', () => { clearTimeout(temporizador); quitar(); });
+        ver?.addEventListener('click', () => {
+            clearTimeout(temporizador);
+            quitar();
+            api('panel_notificaciones_leer', { p_ids: [n.id] }).catch(() => {});
+            abrirAviso(ctx, n);
+        });
+    }
+
     // Clic en un aviso push con la app ya abierta
     navigator.serviceWorker?.addEventListener('message', e => {
-        if (e.data?.tipo !== 'abrir-aviso' || !contenedor.isConnected) return;
+        if (e.data?.tipo !== 'abrir-aviso' || !contenedor.isConnected || contenedor.closest('#dashboard-admin')?.style.display === 'none') return;
         const params = new URL(e.data.url).searchParams;
-        abrirAviso(ctx, { datos: { seccion: params.get('panel'), fecha: params.get('fecha') } });
+        abrirAviso(ctx, { datos: { seccion: params.get('panel'), fecha: params.get('fecha'), cita: params.get('cita') } });
     });
 }

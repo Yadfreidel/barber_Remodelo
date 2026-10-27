@@ -78,7 +78,9 @@ export function iniciarAvisos({ usuario, alContar, alAviso, vivo }) {
             } else if (r.nuevas.length) {
                 alAviso(r.nuevas);
                 const mayor = Math.max(...r.nuevas.map(n => Number(n.id)));
-                if (preferencias.sonido && reclamarSonido(usuario, mayor)) reproducirSonido();
+                // Con la pestaña oculta y push activo en este dispositivo, avisa el sistema (sin doble sonido)
+                const avisaElSistema = document.visibilityState === 'hidden' && pushLocalActivo;
+                if (preferencias.sonido && !avisaElSistema && reclamarSonido(usuario, mayor)) reproducirSonido();
             }
             yo.ultimo = Math.max(ultimo, yo.ultimo || 0);
         } catch { /* sin conexión: se reintenta en la próxima vuelta */ }
@@ -135,6 +137,21 @@ export async function activarPush() {
         || await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: base64AUint8(VAPID_PUBLIC_KEY) });
     await api('push_suscribir', { p_datos: { ...claves(sub), dispositivo: navigator.userAgent.slice(0, 200) } });
     preferencias.push = true;
+    pushLocalActivo = true;
+}
+
+// Al abrir el panel: si este dispositivo estaba suscrito a OTRA cuenta (teléfono compartido), el servidor
+// desactiva esa suscripción y aquí se anula, para no recibir avisos de la cuenta anterior.
+let pushLocalActivo = false;
+export async function comprobarDispositivo() {
+    try {
+        const reg = await navigator.serviceWorker?.getRegistration();
+        const sub = await reg?.pushManager?.getSubscription();
+        const estado = await api('panel_push_estado', { p_endpoint: sub?.endpoint || null });
+        if (sub && estado.dispositivo === 'otra_cuenta') { await sub.unsubscribe(); estado.dispositivo = 'sin_suscripcion'; }
+        pushLocalActivo = Boolean(sub) && estado.dispositivo === 'activa';
+        return { ...estado, suscrito_localmente: Boolean(sub) && estado.dispositivo !== 'sin_suscripcion' };
+    } catch { return null; }
 }
 
 export async function pushActivoEnEsteDispositivo() {
@@ -150,6 +167,7 @@ export async function desactivarPushDispositivo() {
         const reg = await navigator.serviceWorker.getRegistration();
         const sub = await reg?.pushManager?.getSubscription();
         if (!sub) return;
+        pushLocalActivo = false;
         await obtenerClienteAdmin()?.rpc('push_desuscribir', { p_endpoint: sub.endpoint });
         await sub.unsubscribe();
     } catch { /* sin conexión: el servidor la descarta cuando caduque */ }

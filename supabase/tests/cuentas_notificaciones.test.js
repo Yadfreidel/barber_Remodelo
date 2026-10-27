@@ -186,7 +186,7 @@ test('push: cola por suscripción, mensaje discreto, dispositivo compartido y su
     assert.equal(pendientes.length, 1);
     const lote = await rpc(A, 'push_reclamar', 10);
     assert.equal(lote.length, 1);
-    assert.equal(lote[0].cuerpo, 'Abre la app para ver el detalle.');
+    assert.equal(lote[0].cuerpo, 'Toca para ver los detalles.');
     assert.doesNotMatch(JSON.stringify(lote), /Cliente Aviso|8095550303/, 'sin datos del cliente en la pantalla bloqueada');
     assert.match(lote[0].url, /^\?panel=agenda&fecha=/);
     assert.deepEqual(await rpc(A, 'push_reclamar', 10), [], 'no se reenvía');

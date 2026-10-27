@@ -201,9 +201,20 @@ Al entrar, el barbero debe cambiarla: el servidor lo comprueba con la huella del
 **Avisos.** Cada cita nueva, cancelada, reprogramada o reasignada genera un aviso interno para la cuenta del barbero
 (o para administración si no tiene cuenta), uno por evento y destinatario. Con la app abierta se ve y suena en el panel.
 
-**Avisos con la app cerrada (Web Push).** Opcional; la cita y su aviso interno se guardan aunque esto falle.
-1. Genera claves VAPID: `npx web-push generate-vapid-keys`.
-2. Pon la pública en `assets/config.js` (`VAPID_PUBLIC_KEY`).
-3. Secretos de la función: `supabase secrets set VAPID_PUBLIC_KEY=… VAPID_PRIVATE_KEY=… VAPID_SUBJECT=mailto:tu@correo.com CRON_SECRET=…`
-4. `supabase functions deploy push-enviar --no-verify-jwt` y programa el envío cada minuto (ver `cron.example.sql`, requiere pg_cron y pg_net).
-5. En iPhone/iPad: iOS 16.4 o posterior y abrir la web desde el ícono agregado a la pantalla de inicio.
+**Avisos con la app cerrada (Web Push) — migración 20261101000000.** La cita y su aviso interno se guardan aunque esto falle.
+El push solo dice «Nueva reserva. Toca para ver los detalles.»; al tocarlo abre esa cita en el panel (pide iniciar sesión
+si hace falta y el servidor comprueba que la cita sea de esa cuenta).
+
+1. Claves VAPID: ya generadas con `node local/generar-vapid.mjs`. La pública está en `assets/config.js`; la privada
+   SOLO en `local/.vapid.json` (fuera de Git). No las regeneres: invalidaría los dispositivos registrados.
+2. Secretos de la función (Supabase › Edge Functions › Secrets, o por terminal):
+   `npx supabase secrets set --project-ref <PROYECTO> VAPID_PUBLIC_KEY=<pública> VAPID_PRIVATE_KEY=<privada de local/.vapid.json> VAPID_SUBJECT=mailto:tu@correo.com CRON_SECRET=<secreto largo>`
+3. Despliega `push-enviar` **sin verificación JWT** (la protege `CRON_SECRET`): `npx supabase functions deploy push-enviar --no-verify-jwt --project-ref <PROYECTO>`.
+4. Disparo inmediato (recomendado): Supabase › Database › Webhooks › *Create a new hook* sobre la tabla `barberia.push_envios`,
+   evento **Insert**, tipo *HTTP Request*, método POST a `https://<PROYECTO>.supabase.co/functions/v1/push-enviar` con la cabecera
+   `Authorization: Bearer <CRON_SECRET>`. Así el aviso sale en segundos.
+5. Reintentos: programa además la llamada cada minuto con `cron.example.sql` (requiere pg_cron y pg_net). Sin el paso 4, el aviso tarda hasta un minuto.
+6. Activación en cada teléfono: Panel › Notificaciones › «Activar avisos y sonido» y «Probar notificación».
+   - Android: Chrome (funciona sin instalar; opcional ⋮ › Instalar app).
+   - iPhone/iPad: iOS 16.4 o posterior, Safari › Compartir › Agregar a inicio, abrir desde ese ícono y activar ahí.
+   El sonido con la app cerrada lo pone el sistema; en silencio o «No molestar» puede no sonar.

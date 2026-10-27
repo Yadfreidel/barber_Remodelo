@@ -15,7 +15,9 @@ export function abrirPanelDesdeEnlace(params) {
     const seccion = params.get('panel');
     if (!/^[a-z-]{3,30}$/.test(seccion || '')) return false;
     const fecha = /^\d{4}-\d{2}-\d{2}$/.test(params.get('fecha') || '') ? params.get('fecha') : null;
-    inicioPendiente = { seccion, opciones: fecha ? { fecha, vista: 'dia' } : {} };
+    // Cita concreta (aviso de nueva reserva): la agenda abre su detalle; el servidor comprueba que sea de esta cuenta
+    const cita = /^[\w-]{1,40}$/.test(params.get('cita') || '') ? params.get('cita') : null;
+    inicioPendiente = { seccion, opciones: fecha ? { fecha, vista: 'dia', ...(cita ? { abrirCita: cita } : {}) } : {} };
     history.replaceState(null, '', location.pathname + location.hash);
     verificarAccesoAdmin();
     return true;
@@ -143,6 +145,13 @@ function pedirNuevaContrasena() {
 
 // Cuenta con la que se abrió el panel en esta pestaña
 let usuarioPanel = null;
+
+// Clic en un aviso push con la web abierta pero el panel cerrado: pide sesión si hace falta y abre ese destino
+// (con el panel abierto lo atiende el propio panel)
+navigator.serviceWorker?.addEventListener('message', e => {
+    if (e.data?.tipo !== 'abrir-aviso' || usuarioPanel) return;
+    try { abrirPanelDesdeEnlace(new URL(e.data.url).searchParams); } catch { /* enlace no válido */ }
+});
 
 // Enlace de recuperación de Supabase: la sesión llega en la URL (cliente de administración).
 // La sesión se comparte entre pestañas: si en otra se entra con otra cuenta o se cierra la sesión,

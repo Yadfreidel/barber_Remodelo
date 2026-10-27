@@ -24,4 +24,4 @@ export const SUPABASE_SCHEMA = 'barberia';
 
 // Web Push (avisos con la app cerrada): clave pública VAPID. Vacía = no configurado
 // (la clave privada va SOLO en los secretos de la Edge Function push-enviar). Ver supabase/README.md.
-export const VAPID_PUBLIC_KEY = '';
+export const VAPID_PUBLIC_KEY = 'BDiWThESMacDvcaZMwkEZSIdX9N93_pnxv6khe-6Ko4WvYno4cPz2F544tffArJS6cymgUBF-giRPgdknfupi94';

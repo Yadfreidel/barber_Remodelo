@@ -2,7 +2,7 @@
 -- ACTUALIZACIÓN DE BARBERÍA (esquema `barberia`)
 -- (generado con: npm run base:completa — no editar a mano)
 --
--- Para un proyecto que YA ejecutó supabase/base_completa.sql (hasta 20261031000000_reserva_app_whatsapp.sql).
+-- Para un proyecto que YA ejecutó supabase/base_completa.sql (hasta 20261101000000_avisos_reservas.sql).
 -- Aplica solo estas migraciones nuevas, trasladadas a barberia:
 --   (ninguna)
 -- y vuelve a aplicar los permisos mínimos. No toca `public`, `private` ni Auth.

@@ -30,10 +30,12 @@ export function crearVistaMisCitas() {
         <section class="mc-grupo" aria-labelledby="mc-historial-titulo"><h2 id="mc-historial-titulo">Historial</h2><div id="mc-historial" class="mc-lista"></div></section>
         <section class="mc-grupo mc-reclamaciones" aria-labelledby="mc-reclamaciones-titulo" hidden><h2 id="mc-reclamaciones-titulo">Mis reclamaciones</h2><div id="mc-reclamaciones" class="mc-lista"></div></section>
         <section class="mc-cuenta" id="mc-cuenta" aria-label="Cuenta"></section>
-        <p class="mc-privacidad"><i class="fas fa-lock" aria-hidden="true"></i> Tus citas se guardan de forma privada en este navegador.
+        <footer class="mc-pie">
+            <p class="mc-privacidad"><i class="fas fa-lock" aria-hidden="true"></i><span>Tus citas se guardan de forma privada en este navegador.
             Para verlas en otro dispositivo o si borras los datos del navegador, inicia sesión o abre tu enlace privado
-            «Gestionar mi cita». Por seguridad, no se pueden buscar citas con un teléfono o un correo.
-            <button type="button" class="mc-enlace" id="mc-olvidar">Quitar mis citas de este navegador</button></p>`;
+            «Gestionar mi cita». Por seguridad, no se pueden buscar citas con un teléfono o un correo.</span></p>
+            <button type="button" class="mc-enlace" id="mc-olvidar">Quitar mis citas de este navegador</button>
+        </footer>`;
     vista.addEventListener('click', manejarClic);
     vista.querySelector('#mc-cuenta').addEventListener('submit', manejarCuenta);
     supabase?.auth.onAuthStateChange(evento => {
@@ -71,21 +73,39 @@ function badge(c) {
     return ['Pendiente de confirmación', 'badge-pendiente'];
 }
 
+// Día, mes y año de la fecha de la cita (AAAA-MM-DD, día local de la barbería): se leen del propio texto
+// y se formatean en UTC, igual que fechaLarga, para que separarlos no cambie el día mostrado
+function partesFecha(fecha) {
+    const [a, m, d] = String(fecha).split('-').map(Number);
+    const dia = new Date(Date.UTC(a, m - 1, d));
+    const formato = opciones => new Intl.DateTimeFormat('es-DO', { ...opciones, timeZone: 'UTC' }).format(dia);
+    return { dia: d, mes: formato({ month: 'short' }).replace('.', ''), anio: a, semana: formato({ weekday: 'long' }) };
+}
+
 function tarjeta(c) {
     const [texto, clase] = badge(c);
+    const f = partesFecha(c.fecha);
     return `<article class="mc-cita" data-estado="${esc(c.estado)}">
-        <header><h3>${esc(c.servicio || 'Servicio')}</h3><span class="badge-estado ${clase}">${texto}</span></header>
-        <dl>
-            <div><dt>Barbero</dt><dd>${esc(c.barbero || '—')}</dd></div>
-            <div><dt>Fecha</dt><dd>${esc(fechaLarga(c.fecha))}</dd></div>
-            <div><dt>Hora</dt><dd>${esc(rango12h(c.hora, c.hora_fin))}</dd></div>
-            <div><dt>Precio</dt><dd>${esc(formatoPrecio(c.precio))}</dd></div>
+        <span class="badge-estado mc-insignia ${clase}">${texto}</span>
+        <div class="mc-cita-cabecera">
+            <div class="mc-fecha" aria-hidden="true"><span class="mc-fecha-dia">${f.dia}</span><span class="mc-fecha-mes">${esc(f.mes)}</span><span class="mc-fecha-anio">${f.anio}</span></div>
+            <div class="mc-cita-titulo">
+                <h3>${esc(c.servicio || 'Servicio')}</h3>
+                <p class="mc-cuando"><i class="fa-regular fa-calendar" aria-hidden="true"></i><span class="mc-semana">${esc(f.semana)}</span><span class="sr-only">, ${esc(fechaLarga(c.fecha))}</span></p>
+                <p class="mc-cuando"><i class="fa-regular fa-clock" aria-hidden="true"></i><span>${esc(rango12h(c.hora, c.hora_fin))}</span></p>
+            </div>
+        </div>
+        <dl class="mc-datos">
+            <div><dt><i class="fa-regular fa-user" aria-hidden="true"></i>Barbero</dt><dd>${esc(c.barbero || '—')}</dd></div>
+            <div><dt><i class="fa-regular fa-money-bill-1" aria-hidden="true"></i>Precio</dt><dd class="mc-precio">${esc(formatoPrecio(c.precio))}</dd></div>
         </dl>
         ${c.cliente_confirmo && c.estado !== 'cancelada' ? '<p class="mc-nota"><i class="fas fa-check" aria-hidden="true"></i> Confirmaste tu asistencia</p>' : ''}
         <div class="mc-acciones">
-            <a class="mc-boton" href="?cita=${encodeURIComponent(c.token)}#contacto">${c.modificable ? 'Gestionar (confirmar, cambiar o cancelar)' : 'Ver detalle'}</a>
-            <button type="button" class="mc-boton mc-secundario" data-copiar="${esc(c.token)}">Copiar enlace privado</button>
-            <button type="button" class="mc-boton mc-secundario" data-reclamar="${esc(c.token)}" data-descripcion="${esc(`${c.servicio || 'Cita'} · ${fechaLarga(c.fecha)}`)}">Reportar un inconveniente</button>
+            <a class="mc-boton mc-principal" href="?cita=${encodeURIComponent(c.token)}#contacto"><span>${c.modificable ? 'Gestionar (confirmar, cambiar o cancelar)' : 'Ver detalle'}</span><i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+            <div class="mc-acciones-sec">
+                <button type="button" class="mc-boton mc-secundario" data-copiar="${esc(c.token)}"><i class="fas fa-link" aria-hidden="true"></i> Copiar enlace privado</button>
+                <button type="button" class="mc-boton mc-secundario" data-reclamar="${esc(c.token)}" data-descripcion="${esc(`${c.servicio || 'Cita'} · ${fechaLarga(c.fecha)}`)}"><i class="fa-regular fa-flag" aria-hidden="true"></i> Reportar un inconveniente</button>
+            </div>
         </div>
     </article>`;
 }
@@ -109,7 +129,8 @@ function pintarBorrador() {
 function pintarCitas(citas) {
     const { proximas, historial } = clasificar(citas);
     vista.querySelector('#mc-proximas').innerHTML = proximas.length ? proximas.map(tarjeta).join('')
-        : '<p class="mc-vacio">No tienes próximas citas. <a href="#contacto">Reserva una</a>.</p>';
+        : `<div class="mc-vacio-tarjeta"><span class="mc-vacio-icono" aria-hidden="true"><i class="fa-regular fa-calendar"></i></span>
+            <p>No tienes próximas citas</p><a class="mc-boton mc-principal" href="#contacto">Reservar cita <i class="fas fa-arrow-right" aria-hidden="true"></i></a></div>`;
     vista.querySelector('#mc-historial').innerHTML = historial.length ? historial.map(tarjeta).join('')
         : '<p class="mc-vacio">Aún no hay citas anteriores.</p>';
 }
@@ -138,10 +159,11 @@ async function pintarCuenta(miTurno) {
     if (caja.dataset.cuenta === clave) return;
     caja.dataset.cuenta = clave;
     caja.innerHTML = sesion
-        ? `<p><i class="fas fa-user-check" aria-hidden="true"></i> Sesión iniciada como <strong>${esc(sesion.user.email)}</strong>.
-              Tus reservas de este navegador se guardan en tu cuenta.</p>
+        ? `<p class="mc-cuenta-sesion"><span class="mc-cuenta-icono" aria-hidden="true"><i class="fas fa-user-check"></i></span><span>Sesión iniciada como <strong>${esc(sesion.user.email)}</strong>.
+              Tus reservas de este navegador se guardan en tu cuenta.</span></p>
            <button type="button" class="mc-boton mc-secundario" data-salir>Cerrar sesión</button>`
-        : `<details><summary>Ver mis citas en cualquier dispositivo</summary>
+        : `<details><summary><span class="mc-cuenta-icono" aria-hidden="true"><i class="fas fa-mobile-screen-button"></i></span>
+              <span class="mc-cuenta-texto">Ver mis citas en cualquier dispositivo</span><i class="fas fa-chevron-down mc-chevron" aria-hidden="true"></i></summary>
               <form class="mc-form" novalidate>
                 <p>Inicia sesión para guardar tus reservas en tu cuenta. Es opcional: puedes reservar sin cuenta.</p>
                 <label>Correo<input type="email" name="email" autocomplete="email" required></label>

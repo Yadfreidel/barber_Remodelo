@@ -1,55 +1,140 @@
 /* «Mis citas» y horas agrupadas por franja. Reutiliza la paleta de la app (--gold, --app-card). */
-#mis-citas { max-width: 760px; width: 100%; margin: 0 auto !important; padding: 32px 0 !important; display: grid; gap: 16px; }
+#mis-citas {
+    --mc-fondo-tarjeta: #161618; --mc-superficie: #1d1d20; --mc-linea: #ffffff12; --mc-linea-fuerte: #ffffff24;
+    --mc-texto: #f3eee5; --mc-texto-2: #aea99f; --mc-oro: var(--gold, #d2b16d); --mc-oro-claro: #e6cd97; --mc-oro-suave: #d2b16d1a;
+    max-width: 720px; width: 100%; margin: 0 auto !important; padding: 32px 0 !important; display: grid; gap: 20px;
+}
 body #mis-citas[hidden] { display: none !important; }
-#mis-citas .view-heading { margin-bottom: 4px; }
 /* Las secciones internas no usan el estilo general de <section> (padding de 80px y centrado) */
 #mis-citas .mc-grupo, #mis-citas .mc-cuenta { display: block; padding: 0; align-items: initial; text-align: left; }
-#mis-citas .mc-cuenta { padding: 16px 18px; }
 #mis-citas .mc-grupo[hidden] { display: none; }
-#mis-citas h2 { font: 600 13px/1.4 Inter, sans-serif; letter-spacing: 1.5px; text-transform: uppercase; color: #aaa69e; margin: 8px 0 10px; text-align: left; }
-#mis-citas h2::after { display: none; }
-.mc-lista { display: grid; gap: 12px; }
-.mc-cita { background: var(--app-card, #19191b); border: 1px solid #ffffff14; border-radius: 14px; padding: 18px; min-width: 0; }
-.mc-cita[data-estado="cancelada"] { opacity: .78; }
-.mc-cita header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
-.mc-cita h3 { font: 600 16px/1.35 Inter, sans-serif; margin: 0; color: #f2ede4; overflow-wrap: anywhere; }
-.mc-cita dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; margin: 0; }
-.mc-cita dt { font-size: 11px; color: #9c978d; letter-spacing: .4px; }
-.mc-cita dd { margin: 2px 0 0; font-size: 14px; color: #ece6da; overflow-wrap: anywhere; }
-.mc-borrador { border-style: dashed; border-color: #d2b16d66; }
-.badge-borrador { background: #d2b16d1f; color: var(--gold); border: 1px dashed #d2b16d80; white-space: nowrap; }
-.mc-cita .badge-estado { white-space: nowrap; flex: 0 0 auto; }
-.mc-nota { font-size: 12px; line-height: 1.5; color: #c9c2b4; margin: 12px 0 0; }
-.mc-nota i { color: var(--gold); }
-.mc-acciones { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
-.mc-boton { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 10px 16px; border-radius: 10px;
-    background: var(--gold); color: #16130e; border: 1px solid var(--gold); font: 600 13px/1.3 Inter, sans-serif; text-decoration: none; cursor: pointer; }
-.mc-boton.mc-secundario { background: transparent; color: #eee8dc; border-color: #ffffff2e; }
+
+/* ---------- Encabezado ---------- */
+#mis-citas .view-heading { margin-bottom: 0; }
+#mis-citas .view-heading .editorial-eyebrow { color: var(--mc-oro); font: 600 11px/1.4 Inter, sans-serif; letter-spacing: 2.4px; }
+#mis-citas .view-heading h1 { margin: 8px 0 8px; color: var(--mc-texto); }
+#mis-citas .view-heading > p:last-child { max-width: 46ch; color: var(--mc-texto-2); font-size: 14px; line-height: 1.6; }
+
+/* ---------- Títulos de grupo ---------- */
+#mis-citas h2 { display: flex; align-items: center; gap: 10px; margin: 4px 0 12px; color: var(--mc-texto-2); font: 600 12px/1.4 Inter, sans-serif; letter-spacing: 1.6px; text-transform: uppercase; text-align: left; }
+#mis-citas h2::after { content: ""; display: block; flex: 1; height: 1px; background: var(--mc-linea); }
+.mc-lista { display: grid; gap: 14px; }
+
+/* ---------- Tarjeta de cita ---------- */
+.mc-cita { position: relative; min-width: 0; padding: 18px; border: 1px solid var(--mc-linea); border-radius: 16px; background: var(--mc-fondo-tarjeta);
+    box-shadow: 0 1px 0 #ffffff08 inset, 0 10px 26px #00000038; transition: border-color 180ms ease; }
+.mc-cita:hover { border-color: var(--mc-linea-fuerte); }
+.mc-cita[data-estado="cancelada"] { opacity: .8; }
+.mc-cita .mc-insignia { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 14px; white-space: nowrap; }
+.mc-cita .mc-insignia::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.mc-cita-cabecera { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 16px; align-items: center; }
+.mc-fecha { display: grid; justify-items: center; align-content: center; gap: 1px; min-height: 92px; padding: 10px 6px; border: 1px solid #d2b16d55; border-radius: 14px;
+    background: linear-gradient(180deg, #d2b16d26, #d2b16d0d); color: var(--mc-oro-claro); text-align: center; }
+.mc-fecha-dia { font: 700 30px/1 'Playfair Display', Georgia, serif; color: var(--mc-oro-claro); }
+.mc-fecha-mes { font: 700 12px/1.3 Inter, sans-serif; letter-spacing: 1.6px; text-transform: uppercase; color: var(--mc-oro); }
+.mc-fecha-anio { font: 500 11px/1.3 Inter, sans-serif; color: var(--mc-texto-2); }
+.mc-cita-titulo { min-width: 0; }
+.mc-cita h3 { margin: 0 0 8px; color: var(--mc-texto); font: 600 18px/1.3 Inter, sans-serif; overflow-wrap: anywhere; }
+.mc-cuando { display: flex; align-items: baseline; gap: 8px; margin: 4px 0 0; color: #e4ded3; font-size: 14px; line-height: 1.45; }
+.mc-cuando i { flex: 0 0 14px; color: var(--mc-oro); font-size: 13px; text-align: center; }
+.mc-semana { text-transform: capitalize; }
+.mc-datos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 18px; margin: 16px 0 0; padding-top: 16px; border-top: 1px solid var(--mc-linea); }
+.mc-datos dt { display: flex; align-items: center; gap: 7px; color: var(--mc-texto-2); font-size: 12px; letter-spacing: .3px; }
+.mc-datos dt i { color: var(--mc-oro); font-size: 12px; }
+.mc-datos dd { margin: 4px 0 0; color: var(--mc-texto); font-size: 15px; font-weight: 500; overflow-wrap: anywhere; }
+.mc-datos .mc-precio { color: var(--mc-oro-claro); font-weight: 600; font-variant-numeric: tabular-nums; }
+.mc-nota { display: flex; align-items: center; gap: 8px; margin: 14px 0 0; padding: 9px 12px; border-radius: 10px; background: #2ecc7114; color: #bfe9cf; font-size: 13px; line-height: 1.5; }
+.mc-nota i { color: #7fe0a8; }
+
+/* ---------- Acciones ---------- */
+.mc-acciones { display: grid; gap: 10px; margin-top: 16px; }
+.mc-acciones-sec { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.mc-boton { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 46px; padding: 10px 16px; border: 1px solid var(--mc-oro, #d2b16d); border-radius: 12px;
+    background: var(--gold); color: #16130e; font: 600 14px/1.3 Inter, sans-serif; text-align: center; text-decoration: none; cursor: pointer;
+    transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease; }
+.mc-boton:hover { background: #e2c68b; border-color: #e2c68b; }
+.mc-boton.mc-principal { width: 100%; justify-content: space-between; padding-inline: 18px; }
+.mc-boton.mc-principal i { transition: transform 180ms ease; }
+.mc-boton.mc-principal:hover i { transform: translateX(3px); }
+.mc-boton.mc-secundario { background: transparent; color: #eee8dc; border-color: var(--mc-linea-fuerte, #ffffff2e); }
+.mc-boton.mc-secundario:hover { background: #ffffff0a; border-color: #ffffff40; }
+.mc-boton.mc-secundario i { color: var(--mc-oro, #d2b16d); }
 .mc-boton:disabled { opacity: .6; cursor: progress; }
-.mc-boton:focus-visible, .mc-enlace:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
-.mc-estado { border-radius: 12px; padding: 14px 16px; font-size: 14px; line-height: 1.5; display: grid; gap: 10px; justify-items: start; }
+.mc-boton:focus-visible, .mc-enlace:focus-visible, .mc-cuenta summary:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+/* ---------- Estado vacío ---------- */
+.mc-vacio-tarjeta { display: grid; justify-items: center; gap: 12px; padding: 30px 20px; border: 1px dashed #ffffff26; border-radius: 16px; background: #ffffff05; text-align: center; }
+.mc-vacio-icono { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; background: var(--mc-oro-suave); color: var(--mc-oro); font-size: 22px; }
+.mc-vacio-tarjeta p { margin: 0; color: var(--mc-texto); font-size: 16px; font-weight: 500; }
+.mc-vacio-tarjeta .mc-boton.mc-principal { width: auto; min-width: 200px; justify-content: center; gap: 10px; }
+.mc-vacio { margin: 0; padding: 16px; border: 1px dashed #ffffff1c; border-radius: 14px; color: var(--mc-texto-2, #aaa69e); font-size: 14px; text-align: center; }
+.mc-vacio a { color: var(--gold); }
+
+/* ---------- Borrador (sin reservar): misma tarjeta con datos en lista ---------- */
+.mc-borrador { border-style: dashed; border-color: #d2b16d66; }
+.mc-borrador header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.mc-borrador h3 { margin: 0; }
+.mc-borrador dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; margin: 0; }
+.mc-borrador dt { font-size: 12px; color: #9c978d; letter-spacing: .3px; }
+.mc-borrador dd { margin: 3px 0 0; font-size: 15px; color: #ece6da; overflow-wrap: anywhere; }
+.mc-borrador .mc-acciones { display: flex; flex-wrap: wrap; }
+.mc-borrador .badge-estado { flex: 0 0 auto; }
+.badge-borrador { background: #d2b16d1f; color: var(--gold); border: 1px dashed #d2b16d80; white-space: nowrap; }
+.mc-nota:not(:has(i)) { background: #d2b16d12; color: #e3d7bd; }
+
+/* ---------- Mensajes de estado ---------- */
+.mc-estado { display: grid; gap: 10px; justify-items: start; padding: 14px 16px; border-radius: 14px; font-size: 14px; line-height: 1.5; }
 .mc-estado p { margin: 0; }
 .mc-error { background: #e74c3c14; border: 1px solid #e74c3c55; color: #f3c3bc; }
 .mc-aviso { background: #d2b16d14; border: 1px solid #d2b16d44; color: #e9dcc0; }
-#mc-estado:not(.mc-estado) p { color: #c9c2b4; margin: 0; }
+#mc-estado:not(.mc-estado) p { margin: 0; color: var(--mc-texto-2, #aea99f); font-size: 14px; line-height: 1.5; }
+#mc-estado:empty { display: none; }
 .mc-cargando { display: flex; align-items: center; gap: 12px; color: #c9c2b4; }
 .mc-cargando .motion-skeleton { display: inline-block; width: 44px; height: 44px; border-radius: 10px; }
-.mc-vacio { color: #aaa69e; font-size: 14px; margin: 0; }
-.mc-vacio a { color: var(--gold); }
-.mc-cuenta { background: var(--app-card, #19191b); border: 1px solid #ffffff14; border-radius: 14px; padding: 16px 18px; font-size: 14px; color: #ddd6c8; }
+
+/* ---------- Acceso desde otros dispositivos ---------- */
+.mc-cuenta { border: 1px solid var(--mc-linea, #ffffff14); border-radius: 16px; background: var(--mc-fondo-tarjeta, #19191b); color: #ddd6c8; font-size: 14px; }
+#mis-citas .mc-cuenta { padding: 0; }
 .mc-cuenta:empty { display: none; }
-.mc-cuenta p { margin: 0 0 12px; line-height: 1.5; }
-.mc-cuenta i { color: var(--gold); }
-.mc-cuenta summary { cursor: pointer; font-weight: 600; min-height: 32px; display: flex; align-items: center; }
+.mc-cuenta-icono { display: grid; place-items: center; flex: 0 0 42px; width: 42px; height: 42px; border-radius: 12px; background: var(--mc-oro-suave, #d2b16d1a); color: var(--gold); font-size: 17px; }
+.mc-cuenta summary { display: flex; align-items: center; gap: 14px; min-height: 64px; padding: 12px 16px; list-style: none; cursor: pointer; border-radius: 16px; }
+.mc-cuenta summary::-webkit-details-marker { display: none; }
+.mc-cuenta-texto { flex: 1; min-width: 0; color: var(--mc-texto, #f3eee5); font-size: 15px; font-weight: 600; }
+.mc-chevron { color: var(--mc-texto-2, #aea99f); font-size: 13px; transition: transform 180ms ease; }
+.mc-cuenta details[open] .mc-chevron { transform: rotate(180deg); }
+.mc-cuenta details[open] summary { border-bottom: 1px solid var(--mc-linea, #ffffff14); border-radius: 16px 16px 0 0; }
+.mc-cuenta .mc-form { padding: 4px 16px 16px; }
+.mc-cuenta-sesion { display: flex; align-items: flex-start; gap: 14px; margin: 0; padding: 16px 16px 0; line-height: 1.5; }
+.mc-cuenta-sesion + .mc-boton { margin: 14px 16px 16px; }
+.mc-cuenta p { line-height: 1.5; }
 .mc-form { display: grid; gap: 12px; margin-top: 12px; }
-.mc-form label { display: grid; gap: 6px; font-size: 12px; color: #aaa69e; }
-.mc-form input { min-height: 44px; padding: 10px 12px; border-radius: 10px; border: 1px solid #ffffff26; background: #0f0f10; color: #f2ede4; font-size: 16px; }
+.mc-form p { margin: 0; color: var(--mc-texto-2, #aea99f); }
+.mc-form label { display: grid; gap: 6px; font-size: 13px; color: #c9c4ba; }
+.mc-form input { min-height: 46px; padding: 10px 12px; border-radius: 10px; border: 1px solid #ffffff26; background: #0f0f10; color: #f2ede4; font-size: 16px; }
+.mc-form input:focus { border-color: var(--gold); outline: none; box-shadow: 0 0 0 3px #d2b16d33; }
+.mc-form .mc-acciones { display: flex; flex-wrap: wrap; margin-top: 4px; }
 .mc-form-error { color: #f2b29f; font-size: 13px; margin: 0 !important; }
 .mc-form-error:empty { display: none; }
-.mc-privacidad { font-size: 12px; line-height: 1.6; color: #9c978d; margin: 4px 0 0; }
-.mc-privacidad i { color: var(--gold); }
-.mc-enlace { display: block; margin-top: 8px; padding: 6px 0; background: none; border: 0; color: #c9b88f; text-decoration: underline; font-size: 12px; cursor: pointer; }
+
+/* ---------- Pie: privacidad y quitar datos (separado y discreto) ---------- */
+.mc-pie { display: grid; gap: 6px; margin-top: 4px; padding-top: 18px; border-top: 1px solid var(--mc-linea, #ffffff14); }
+.mc-privacidad { display: flex; align-items: flex-start; gap: 10px; margin: 0; color: #a39e94; font-size: 12.5px; line-height: 1.65; }
+.mc-privacidad i { margin-top: 3px; color: var(--gold); }
+.mc-enlace { justify-self: start; min-height: 44px; padding: 8px 0; border: 0; background: none; color: #9c978d; font-size: 12.5px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.mc-enlace:hover { color: #d7cfbf; }
 .enlace-mis-citas { margin-top: 8px; }
+
+/* Al llegar con el teclado (o al desplazarse hasta un control), la barra inferior fija no lo tapa */
+#mis-citas :is(a, button, summary, input) { scroll-margin-bottom: calc(110px + env(safe-area-inset-bottom)); scroll-margin-top: 90px; }
+
+/* «Mis citas» activa en la barra inferior: marca dorada solo en esta vista */
+body[data-view="mis-citas"] .bottom-nav [aria-current=page] { position: relative; }
+body[data-view="mis-citas"] .bottom-nav [aria-current=page]::before { content: ""; position: absolute; top: -10px; left: 50%; width: 28px; height: 2px; border-radius: 0 0 2px 2px; background: var(--gold); transform: translateX(-50%); }
+
+@media (prefers-reduced-motion: reduce) {
+    .mc-cita, .mc-boton, .mc-boton.mc-principal i, .mc-chevron { transition: none; }
+    .mc-boton.mc-principal:hover i { transform: none; }
+}
 
 /* Bottom nav con cinco destinos */
 .bottom-nav a { width: min(140px, 20%); }
@@ -66,12 +151,19 @@ body #mis-citas[hidden] { display: none !important; }
 .btn-reintentar-horas { margin-top: 8px; min-height: 44px; padding: 8px 16px; border-radius: 10px; border: 1px solid var(--gold); background: transparent; color: var(--gold); cursor: pointer; }
 
 @media (max-width: 700px) {
-    #mis-citas { padding: 26px 0 !important; }
+    #mis-citas { padding: 24px 0 !important; gap: 18px; }
     .mc-cita { padding: 16px; }
-    .mc-acciones .mc-boton { flex: 1 1 100%; }
+    .mc-borrador .mc-acciones .mc-boton, .mc-form .mc-acciones .mc-boton { flex: 1 1 100%; }
     .formulario-citas .franja-horas .grid-horas { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
     .bottom-nav a { font-size: 9px; }
 }
-@media (max-width: 350px) {
-    .mc-cita dl { grid-template-columns: minmax(0, 1fr); }
+/* Teléfonos: acciones secundarias una debajo de otra si no caben con comodidad */
+@media (max-width: 479px) {
+    .mc-acciones-sec { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 359px) {
+    .mc-cita-cabecera { grid-template-columns: 64px minmax(0, 1fr); gap: 12px; }
+    .mc-fecha { min-height: 80px; }
+    .mc-fecha-dia { font-size: 26px; }
+    .mc-datos, .mc-borrador dl { grid-template-columns: minmax(0, 1fr); }
 }

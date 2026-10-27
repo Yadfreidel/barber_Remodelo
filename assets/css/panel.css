@@ -265,6 +265,86 @@
 .detalle-bloque textarea { margin-bottom: 8px; }
 .detalle-envios { font-size: 0.82rem; color: var(--gris-texto); margin-top: 8px; }
 .detalle-sub { margin-top: 12px; padding: 12px; border: 1px dashed var(--gris-borde); border-radius: 10px; }
+
+/* ---------- Detalle de cita (diálogo de la agenda) ---------- */
+.panel-dialogo-cita { --cita-superficie: #171513; --cita-linea: rgb(255 255 255 / 7%); --cita-dorado-linea: rgb(197 160 89 / 28%); background: #0f0e0d; border-color: var(--cita-linea); box-shadow: 0 24px 60px rgb(0 0 0 / 55%); overflow: hidden; }
+.panel-dialogo-cita .panel-dialogo-cabecera { align-items: flex-start; padding: 16px 16px 14px; border-bottom: 1px solid var(--cita-linea); background: linear-gradient(180deg, rgb(197 160 89 / 7%), transparent); }
+.panel-dialogo-cita .panel-dialogo-cabecera .panel-icono { flex: 0 0 auto; width: 40px; height: 40px; border-radius: 50%; border-color: var(--cita-linea); }
+.panel-dialogo-cita .panel-dialogo-cuerpo { min-height: 0; padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); overscroll-behavior: contain; }
+/* El estilo global de <section> de la web (relleno grande y flex centrado) no aplica dentro del diálogo */
+:where(.panel-dialogo-cita) section { display: block; align-items: stretch; padding: 0; }
+.cita-cab { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.cita-cab-icono { display: grid; place-items: center; flex: 0 0 44px; height: 44px; border: 1px solid var(--cita-dorado-linea); border-radius: 12px; background: var(--dorado-suave); color: var(--dorado-brillante); font-size: 1.05rem; }
+.cita-cab-texto { min-width: 0; }
+.cita-cab-titulo { display: block; color: var(--gris-texto); font-size: 0.7rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+.panel-dialogo-cita .cita-cab h3 { margin: 2px 0 6px; color: var(--blanco); font-size: 1.15rem; line-height: 1.25; overflow-wrap: anywhere; }
+.cita-cab-estados { display: flex; flex-wrap: wrap; gap: 4px; }
+.cita-cab-estados .estado-chip { margin: 0; }
+
+.cita-etiqueta { display: block; color: var(--gris-texto); font-size: 0.72rem; font-weight: 500; letter-spacing: 0.02em; }
+.cita-resumen { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 10px; margin-bottom: 12px; }
+.cita-dato-tarjeta { display: flex; align-items: flex-start; gap: 10px; min-width: 0; padding: 12px 14px; border: 1px solid var(--cita-linea); border-radius: 12px; background: var(--cita-superficie); }
+.cita-dato-tarjeta > i { margin-top: 3px; color: var(--dorado); font-size: 1rem; }
+.cita-dato-tarjeta > div { min-width: 0; }
+.cita-dato-tarjeta strong { display: block; font-size: 1rem; color: var(--blanco); overflow-wrap: anywhere; }
+.cita-hora { white-space: nowrap; }
+.cita-dato-tarjeta small { display: block; margin-top: 1px; color: var(--gris-texto); font-size: 0.76rem; }
+
+.cita-rejilla { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+@media (min-width: 700px) { .cita-rejilla { grid-template-columns: repeat(2, minmax(0, 1fr)); } .cita-cliente { grid-column: 1 / -1; } }
+.cita-seccion { min-width: 0; padding: 12px 14px; border: 1px solid var(--cita-linea); border-radius: 12px; background: var(--cita-superficie); }
+.cita-fila { display: grid; grid-template-columns: 18px minmax(0, 1fr); column-gap: 10px; align-items: baseline; padding: 6px 0; }
+.cita-fila + .cita-fila { border-top: 1px solid var(--cita-linea); }
+.cita-fila > i { grid-row: span 2; align-self: center; color: var(--dorado); font-size: 0.9rem; text-align: center; }
+.cita-fila strong { font-size: 0.95rem; color: var(--blanco); overflow-wrap: anywhere; }
+
+.cita-precio { display: flex; flex-direction: column; gap: 10px; }
+.cita-precio small { display: block; color: var(--gris-texto); font-size: 0.76rem; }
+.cita-monto { display: block; color: var(--dorado-brillante); font-size: 1.5rem; font-weight: 700; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.cita-pago { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; min-width: 0; padding-top: 10px; border-top: 1px solid var(--cita-linea); }
+.cita-pago .cita-etiqueta { flex: 0 0 auto; }
+.cita-pago-chip { display: inline-block; padding: 3px 10px; border: 1px solid transparent; border-radius: 999px; font-size: 0.74rem; font-weight: 700; white-space: nowrap; }
+.cita-pago-pagada { background: var(--dorado); color: #17140c; }
+.cita-pago-parcial { background: rgb(221 185 109 / 14%); border-color: rgb(221 185 109 / 35%); color: var(--dorado-brillante); }
+.cita-pago-pendiente { background: rgb(255 255 255 / 5%); border-color: rgb(255 255 255 / 14%); color: #d6d6d6; }
+.cita-pago small { flex: 1 1 100%; overflow-wrap: anywhere; }
+
+.cita-cliente { display: grid; grid-template-columns: 40px minmax(0, 1fr); align-items: center; gap: 10px 12px; }
+.cita-avatar { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: rgb(255 255 255 / 6%); color: var(--gris-texto); }
+.cita-cliente-datos { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.cita-cliente-datos strong { color: var(--blanco); overflow-wrap: anywhere; }
+.cita-cliente-datos a { align-self: flex-start; color: var(--dorado-brillante); text-decoration: none; font-size: 0.9rem; }
+.cita-cliente-datos a:hover { text-decoration: underline; }
+.cita-cliente-datos a i { font-size: 0.75rem; margin-right: 2px; }
+.cita-cliente-datos span { color: var(--gris-texto); font-size: 0.82rem; overflow-wrap: anywhere; }
+.cita-origen { grid-column: 1 / -1; margin: 2px 0 0; padding-top: 8px; border-top: 1px solid var(--cita-linea); color: var(--gris-texto); font-size: 0.78rem; }
+.cita-origen .cita-etiqueta { display: inline; margin-right: 4px; color: #8a8a8a; }
+
+.cita-motivo { display: flex; gap: 10px; margin: 10px 0 0; padding: 10px 14px; border: 1px solid rgb(231 76 60 / 30%); border-radius: 12px; background: rgb(231 76 60 / 8%); color: #f3c2bb; font-size: 0.9rem; overflow-wrap: anywhere; }
+.cita-motivo > i { margin-top: 3px; color: #f19a8e; }
+.cita-motivo .cita-etiqueta { color: #e8a49b; }
+
+.panel-dialogo-cita .detalle-bloque { margin-top: 14px; padding: 14px 0 0; border-top: 1px solid var(--cita-linea); }
+.panel-dialogo-cita .detalle-bloque h4, .panel-dialogo-cita .detalle-bloque summary { display: flex; align-items: center; gap: 8px; color: var(--blanco); font-size: 0.86rem; font-weight: 600; letter-spacing: 0.02em; }
+.panel-dialogo-cita .detalle-bloque h4 i, .panel-dialogo-cita .detalle-bloque summary i { color: var(--dorado); }
+.panel-dialogo-cita .cita-whatsapp { margin-top: 16px; padding: 14px; border: 1px solid var(--cita-linea); border-radius: 12px; background: var(--cita-superficie); }
+.panel-dialogo-cita .cita-whatsapp h4 i { color: #25d366; }
+.panel-dialogo-cita .cita-whatsapp .panel-fila { gap: 8px; }
+.panel-dialogo-cita .cita-whatsapp select { flex: 1 1 200px; min-height: 42px; }
+.panel-dialogo-cita .cita-whatsapp [data-wa] { flex: 1 1 220px; min-height: 42px; justify-content: center; border-color: rgb(37 211 102 / 35%); background: rgb(37 211 102 / 10%); color: #8fe8b0; }
+.panel-dialogo-cita .cita-whatsapp [data-wa]:hover { background: rgb(37 211 102 / 16%); }
+.panel-dialogo-cita .cita-whatsapp .panel-sub { margin: 8px 0 0; font-size: 0.78rem; }
+.panel-dialogo-cita :focus-visible { outline: 2px solid var(--dorado-brillante); outline-offset: 2px; }
+
+@media (min-width: 700px) {
+    .panel-dialogo-cita.panel-dialogo-lg { max-width: 760px; }
+    .panel-dialogo-cita .panel-dialogo-cabecera { padding: 18px 20px 16px; }
+    .panel-dialogo-cita .panel-dialogo-cuerpo { padding: 18px 20px 20px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+    .panel-dialogo-cita { animation: cita-entrada 0.18s ease-out; }
+    @keyframes cita-entrada { from { opacity: 0; transform: translateY(8px); } }
+}
 .panel-historial { margin: 0; padding-left: 18px; font-size: 0.85rem; }
 .panel-historial li { margin-bottom: 6px; }
 .panel-historial time { color: var(--gris-texto); }

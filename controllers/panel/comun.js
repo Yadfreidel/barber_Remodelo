@@ -218,13 +218,14 @@ export function etiquetaEstado(c) {
 }
 
 // ---------- Diálogos ----------
-export function dialogo({ titulo, html, ancho = 'md' }) {
+// cabecera: HTML propio (ya escapado) en lugar del título simple; clase: estilos de un diálogo concreto
+export function dialogo({ titulo, html, ancho = 'md', cabecera = null, clase = '' }) {
     const fondo = document.createElement('div');
     fondo.className = 'panel-dialogo-fondo';
     fondo.innerHTML = `
-        <div class="panel-dialogo panel-dialogo-${ancho}" role="dialog" aria-modal="true" aria-label="${esc(titulo)}">
+        <div class="panel-dialogo panel-dialogo-${ancho}${clase ? ` ${clase}` : ''}" role="dialog" aria-modal="true" aria-label="${esc(titulo)}">
             <header class="panel-dialogo-cabecera">
-                <h3>${esc(titulo)}</h3>
+                ${cabecera ?? `<h3>${esc(titulo)}</h3>`}
                 <button type="button" class="panel-icono" data-cerrar aria-label="Cerrar"><i class="fas fa-times"></i></button>
             </header>
             <div class="panel-dialogo-cuerpo">${html}</div>

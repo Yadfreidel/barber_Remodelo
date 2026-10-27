@@ -378,23 +378,54 @@ export async function abrirDetalle(id, ctx, recargar) {
     const esAdmin = ctx.rol === 'admin';
     const abierta = c.estado_visual === 'pendiente' || c.estado_visual === 'confirmada';
     const yaPaso = `${c.fecha} ${c.hora}` <= `${hoyLocal()} ${new Intl.DateTimeFormat('en-GB', { timeZone: 'America/Santo_Domingo', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date())}`;
-    const { cuerpo, cerrar } = dialogo({ titulo: `Cita de ${c.cliente}`, ancho: 'lg', html: `
+    // Estado de la reserva y estado del pago van por separado (una cita confirmada puede estar sin cobrar)
+    const pago = c.pagada ? { clase: 'pagada', texto: 'Pagada', detalle: `${dinero(c.monto_cobrado)} · ${esc(METODOS[c.metodo_pago] || c.metodo_pago)} · ${esc(fechaHora(c.pagada_en))}` }
+        : Number(c.monto_cobrado) > 0 ? { clase: 'parcial', texto: 'Pago parcial', detalle: `${dinero(c.monto_cobrado)} cobrado` }
+        : { clase: 'pendiente', texto: 'Pendiente de cobro', detalle: '' };
+    const cabecera = `
+        <div class="cita-cab">
+            <span class="cita-cab-icono" aria-hidden="true"><i class="fas fa-calendar-check"></i></span>
+            <div class="cita-cab-texto">
+                <span class="cita-cab-titulo">Detalle de la cita</span>
+                <h3>${esc(c.cliente)}</h3>
+                <div class="cita-cab-estados">${etiquetaEstado({ estado_visual: c.estado_visual, estado: c.estado })}${c.cliente_confirmo ? '<span class="estado-chip estado-confirmada">Cliente confirmó</span>' : ''}</div>
+            </div>
+        </div>`;
+    const { cuerpo, cerrar } = dialogo({ titulo: `Cita de ${c.cliente}`, ancho: 'lg', clase: 'panel-dialogo-cita', cabecera, html: `
         <div class="detalle-cita">
-            <div class="detalle-estado">${etiquetaEstado(c)} ${c.cliente_confirmo ? '<span class="estado-chip estado-confirmada">Cliente confirmó</span>' : ''}</div>
-            <dl class="panel-datos">
-                <div><dt>Fecha</dt><dd>${esc(fechaLarga(c.fecha))}</dd></div>
-                <div><dt>Horario</dt><dd>${esc(c.hora)}–${esc(c.fin)} (${c.duracion} min)</dd></div>
-                <div><dt>Servicio</dt><dd>${esc(c.servicio || '')}</dd></div>
-                <div><dt>Barbero</dt><dd>${esc(c.barbero || '')}</dd></div>
-                <div><dt>Precio</dt><dd>${dinero(c.precio)}${Number(c.descuento) > 0 ? ` <small>(descuento ${dinero(c.descuento)})</small>` : ''}${Number(c.total_productos) > 0 ? ` + productos ${dinero(c.total_productos)}` : ''}</dd></div>
-                <div><dt>Pago</dt><dd>${c.pagada ? `Pagada: ${dinero(c.monto_cobrado)} · ${esc(METODOS[c.metodo_pago] || c.metodo_pago)} · ${esc(fechaHora(c.pagada_en))}`
-                    : Number(c.monto_cobrado) > 0 ? `Pago parcial: ${dinero(c.monto_cobrado)} cobrado` : 'Pendiente de cobro'}</dd></div>
-                <div><dt>Cliente</dt><dd>${esc(c.cliente)}<br><a href="tel:${esc(c.telefono)}">${esc(c.telefono)}</a>${c.email ? `<br>${esc(c.email)}` : ''}</dd></div>
-                <div><dt>Origen</dt><dd>${esc({ web: 'Web', admin: 'Administración', lista_espera: 'Lista de espera' }[c.origen] || c.origen)} · ${esc(fechaHora(c.creado_en))}</dd></div>
-                ${c.motivo_cancelacion ? `<div class="ancho"><dt>Motivo de cancelación</dt><dd>${esc(c.motivo_cancelacion)}</dd></div>` : ''}
-            </dl>
+            <div class="cita-resumen">
+                <div class="cita-dato-tarjeta"><i class="fas fa-calendar-day" aria-hidden="true"></i>
+                    <div><span class="cita-etiqueta">Fecha</span><strong>${esc(fechaLarga(c.fecha))}</strong></div></div>
+                <div class="cita-dato-tarjeta"><i class="fas fa-clock" aria-hidden="true"></i>
+                    <div><span class="cita-etiqueta">Horario</span><strong class="cita-hora">${esc(c.hora)}–${esc(c.fin)}</strong><small>${c.duracion} min</small></div></div>
+            </div>
 
-            <section class="detalle-bloque">
+            <div class="cita-rejilla">
+                <section class="cita-seccion" aria-label="Servicio y barbero">
+                    <div class="cita-fila"><i class="fas fa-scissors" aria-hidden="true"></i><span class="cita-etiqueta">Servicio</span><strong>${esc(c.servicio || '')}</strong></div>
+                    <div class="cita-fila"><i class="fas fa-user-tie" aria-hidden="true"></i><span class="cita-etiqueta">Barbero</span><strong>${esc(c.barbero || '')}</strong></div>
+                </section>
+
+                <section class="cita-seccion cita-precio" aria-label="Precio y pago">
+                    <div><span class="cita-etiqueta">Precio</span>
+                        <strong class="cita-monto">${dinero(c.precio)}</strong>
+                        ${Number(c.descuento) > 0 ? `<small>Descuento ${dinero(c.descuento)}</small>` : ''}${Number(c.total_productos) > 0 ? `<small>+ productos ${dinero(c.total_productos)}</small>` : ''}</div>
+                    <div class="cita-pago"><span class="cita-etiqueta">Pago</span>
+                        <span class="cita-pago-chip cita-pago-${pago.clase}">${pago.texto}</span>
+                        ${pago.detalle ? `<small>${pago.detalle}</small>` : ''}</div>
+                </section>
+
+                <section class="cita-seccion cita-cliente" aria-label="Cliente">
+                    <span class="cita-avatar" aria-hidden="true"><i class="fas fa-user"></i></span>
+                    <div class="cita-cliente-datos"><strong>${esc(c.cliente)}</strong>
+                        <a href="tel:${esc(c.telefono)}"><i class="fas fa-phone" aria-hidden="true"></i> ${esc(c.telefono)}</a>
+                        ${c.email ? `<span>${esc(c.email)}</span>` : ''}</div>
+                    <p class="cita-origen"><span class="cita-etiqueta">Origen</span> ${esc({ web: 'Web', admin: 'Administración', lista_espera: 'Lista de espera' }[c.origen] || c.origen)} · ${esc(fechaHora(c.creado_en))}</p>
+                </section>
+            </div>
+            ${c.motivo_cancelacion ? `<p class="cita-motivo"><i class="fas fa-ban" aria-hidden="true"></i> <span><span class="cita-etiqueta">Motivo de cancelación</span>${esc(c.motivo_cancelacion)}</span></p>` : ''}
+
+            <section class="detalle-bloque cita-whatsapp">
                 <h4><i class="fab fa-whatsapp"></i> WhatsApp</h4>
                 <div class="panel-fila">
                     <select data-wa-tipo aria-label="Mensaje">
@@ -452,6 +483,10 @@ export async function abrirDetalle(id, ctx, recargar) {
                     </li>`).join('')}</ol>
             </details>
         </div>` });
+
+    // Se abre mostrando el inicio de la cita (el foco automático iría al selector de WhatsApp, a media altura)
+    cuerpo.closest('.panel-dialogo').querySelector('[data-cerrar]').focus({ preventScroll: true });
+    cuerpo.scrollTop = 0;
 
     const refrescar = async () => { cerrar(); await recargar?.(); await abrirDetalle(id, ctx, recargar); };
     const actuar = (boton, accion, datos, mensaje) => ejecutar(boton, () => api('panel_actualizar_cita', { p_cita: id, p_accion: accion, p_datos: datos }), ctx.notificar, mensaje);

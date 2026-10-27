@@ -115,6 +115,12 @@ async function pintarPreferencias(caja, ctx) {
         ${servidor?.dispositivo === 'activa' ? '<button type="button" class="panel-btn panel-btn-mini" data-desactivar-push>Desactivar en este dispositivo</button>' : ''}
         <p class="panel-sub">Con la app abierta verás el aviso y oirás el sonido. Con la app cerrada o el teléfono bloqueado, el aviso lo muestra el sistema
             con su propio sonido: si el teléfono está en silencio o en «No molestar», puede no sonar. La entrega depende del teléfono y la conexión.</p>`;
+    // Prueba aún en cola: se vuelve a consultar hasta ver el resultado real (máx. ~1 min)
+    const intentos = Number(caja.dataset.reintentos || 0);
+    if (prueba?.envios.some(e => e === 'pendiente' || e === 'enviando') && intentos < 12) {
+        caja.dataset.reintentos = String(intentos + 1);
+        setTimeout(() => { if (caja.isConnected) pintarPreferencias(caja, ctx); }, 5000);
+    } else delete caja.dataset.reintentos;
     const estadoSonido = caja.querySelector('[data-estado-sonido]');
     const mostrarEstado = () => {
         estadoSonido.textContent = sonidoBloqueado()

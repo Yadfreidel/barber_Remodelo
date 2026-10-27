@@ -96,6 +96,33 @@ Garantías del sistema:
 
 Si el cliente no puede usar los botones, el enlace del mensaje (`?cita=<token>`) permite confirmar, cancelar o reprogramar desde la web. Son tokens aleatorios por cita y nunca se exponen en las lecturas públicas de `citas`.
 
+### Avisos de la cita al cliente (migración 20261031000000)
+
+La reserva se completa en la app (`reservar_cita`) y **no abre WhatsApp**. Los avisos al cliente son un complemento que
+envía el servidor por la misma cola:
+
+| Situación | Mensaje (tipo) | Cuándo |
+|---|---|---|
+| Cita web pendiente (política actual) | `solicitud` «solicitud recibida» | al reservar |
+| La barbería la confirma | `confirmacion` | al confirmar (una sola vez) |
+| Cita creada ya confirmada (panel) | `confirmacion` | al crearla (sin «solicitud») |
+| Cancelación / reprogramación | `cancelacion` / `reprogramacion` | al cambiar |
+
+- **Consentimiento:** casilla «Quiero recibir por WhatsApp la confirmación y los avisos de esta cita» al reservar
+  (`cita_avisos_whatsapp`). Sin consentimiento no se envía ningún aviso de la cita, recordatorios incluidos. Es independiente
+  del consentimiento de marketing. Las citas creadas desde el panel no lo piden: no reciben avisos hasta que el cliente lo acepte en otra reserva.
+- **Fiabilidad:** la cita se guarda primero; si WhatsApp falla, la cita sigue guardada y visible. Cada aviso tiene una clave
+  única (`solicitud:<cita>`, `confirmacion:<cita>:<fecha>T<hora>`), así que reintentos o eventos repetidos no lo duplican.
+- **Plantillas a crear en Meta** (categoría *Utility*, idioma `es`), y su nombre en Panel › WhatsApp (campo «nombre de plantilla de Meta»).
+  Parámetros, en este orden: {{1}} cliente, {{2}} servicio, {{3}} barbero, {{4}} fecha, {{5}} hora, {{6}} barbería (nombre – dirección), {{7}} enlace a la cita.
+  - Solicitud recibida: «Hola {{1}}, recibimos tu solicitud de cita en {{6}}: {{2}} con {{3}}, {{4}} a las {{5}}. Está pendiente de confirmación. Detalles: {{7}}»
+  - Confirmación: «Hola {{1}}, tu cita en {{6}} está confirmada: {{2}} con {{3}}, {{4}} a las {{5}}. Gestiónala aquí: {{7}}»
+  Ninguno dice que la cita está pagada.
+- **Teléfono:** se guarda normalizado (10 dígitos) y la función añade el código de país configurado en el módulo (`codigo_pais`, por defecto 1 para RD).
+
+Para que se envíen de verdad faltan los pasos 1–6 de arriba (credenciales de Meta, despliegue de `whatsapp-enviar`, cron y
+activar el módulo) y crear estas dos plantillas. Para probar sin escribir a clientes, usa en Meta un número de prueba y destinatarios de prueba.
+
 ## 5. Panel de gestión
 
 Migración: `migrations/20261023000000_panel_administracion.sql` (aplicar después de las anteriores; en local la aplica `npm run local`).

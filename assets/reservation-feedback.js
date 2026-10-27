@@ -13,14 +13,15 @@ export function htmlSeguimiento(datos) {
         <div class="seguimiento-progreso" style="--progreso:${estado.paso/3}" aria-hidden="true"><span></span></div>
         <div id="contenedor-ticket-wallet">
             <div class="ticket-wallet-card"><div class="ticket-wallet-header"><span>BARBER PASS</span><span>${esc(estado.etiqueta)}</span></div>
-            <div class="ticket-wallet-body"><div class="ticket-row"><div><label>CLIENTE</label><p>${esc(datos.nombre)}</p></div><div><label>SERVICIO</label><p>${esc(datos.servicio)}</p></div></div>
+            <div class="ticket-wallet-body">${datos.referencia?`<div class="ticket-row"><div><label>REFERENCIA</label><p>${esc(datos.referencia)}</p></div></div>`:''}<div class="ticket-row"><div><label>CLIENTE</label><p>${esc(datos.nombre)}</p></div><div><label>SERVICIO</label><p>${esc(datos.servicio)}</p></div></div>
             <div class="ticket-row"><div><label>FECHA / HORA</label><p>${esc(datos.fecha)} · ${esc(datos.hora)}</p></div><div><label>PROFESIONAL</label><p>${esc(datos.barbero)}</p></div></div>
             <div class="ticket-row"><div><label>TOTAL ESTIMADO</label><p class="ticket-precio">${esc(datos.precio)}</p></div><div><label>ESTADO</label><p>${esc(estado.etiqueta)}</p></div></div></div>
             ${datos.guardada ? '<div class="ticket-wallet-qrcode-zone"><div id="qrcode-canvas"></div><p class="ticket-qr-instruction">Datos de tu solicitud. El estado indicado corresponde a la reserva guardada.</p></div>' : ''}</div>
         </div>
+        ${datos.avisosWhatsApp?'<p class="resumen-ok">Pediste recibir los avisos de esta cita por WhatsApp. La cita ya está guardada aquí, llegue o no el mensaje.</p>':''}
         ${(datos.avisos||[]).map(a=>`<p class="resumen-alerta">${esc(a)}</p>`).join('')}
         ${datos.token?`<a class="btn-regresar-form enlace-gestion" href="?cita=${encodeURIComponent(datos.token)}">Gestionar mi cita (confirmar, cancelar o reprogramar)</a>`:''}
-        ${datos.guardada?'<a class="btn-regresar-form enlace-mis-citas" href="#mis-citas">Ver en Mis citas</a>':''}
+        ${datos.guardada?'<a class="btn-regresar-form enlace-mis-citas" href="#mis-citas">Ver mis citas</a>':''}
         <button type="button" id="btn-regresar-formulario" class="btn-regresar-form">Volver / Nueva cita</button>`;
 }
 export function mostrarSeguimiento(contenedor,datos,alVolver,{enfocar=false}={}) {

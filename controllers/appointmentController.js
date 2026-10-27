@@ -9,7 +9,15 @@ import { rango12h, sumarMinutos } from '../assets/horario-utils.js';
 
 export async function procesarCita(evento) {
     evento.preventDefault();
-    return conCarga(evento.target, () => procesarCitaInterna(evento));
+    // «Reservando…» mientras se guarda; el botón queda bloqueado (conCarga evita envíos repetidos)
+    const boton = evento.target.querySelector('button[type="submit"]');
+    const textoBoton = boton?.innerHTML;
+    if (boton && !boton.disabled) boton.innerHTML = '<i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Reservando…';
+    try {
+        return await conCarga(evento.target, () => procesarCitaInterna(evento));
+    } finally {
+        if (boton && textoBoton) boton.innerHTML = textoBoton;
+    }
 }
 async function procesarCitaInterna(evento) {
     evento.preventDefault();
@@ -19,6 +27,7 @@ async function procesarCitaInterna(evento) {
     const nombre = document.getElementById('nombre').value.trim();
     const email = null; // El contrato RPC admite null; el correo administrativo no cambia.
     const notas = document.getElementById('notas')?.value.trim() || '';
+    const aceptaAvisos = Boolean(document.getElementById('avisos-whatsapp')?.checked);
     if (!nombre || telefonoClienteInvalido()) { mostrarAlerta('Revisa tu nombre y número de WhatsApp.'); return; }
     const telefonoCliente = document.getElementById('telefono').value.trim();
     const servicio = document.getElementById('servicio-select').value;
@@ -47,6 +56,8 @@ async function procesarCitaInterna(evento) {
         reservaServidor = await reservarEnServidor({ nombre, email, telefono: telefonoCliente, servicio, barbero, fecha, hora, clave: borrador?.clave }, mostrarAlerta);
         if (!reservaServidor) return;
         registrarCitaReservada(reservaServidor);
+        // La cita ya está guardada: consentimiento de avisos y notas van aparte y su fallo no la afecta
+        guardarComplementos(reservaServidor.token, { aceptaAvisos, notas });
     }
 
     const fechaFormateada = fecha.split('-').reverse().join('/');
@@ -89,20 +100,32 @@ async function procesarCitaInterna(evento) {
         guardada: Boolean(reservaServidor), estado: reservaServidor?.cita?.estado || 'pendiente',
         token: reservaServidor ? reservaServidor.token : null,
         avisos: reservaServidor ? reservaServidor.avisos : [],
-        enlaceWhatsApp: modoSolicitud ? urlWhatsApp : null
+        enlaceWhatsApp: modoSolicitud ? urlWhatsApp : null,
+        referencia: reservaServidor?.cita?.referencia || null,
+        avisosWhatsApp: Boolean(reservaServidor) && aceptaAvisos
     });
-
-    // Una reserva repetida (reintento de la misma solicitud) no vuelve a avisar por WhatsApp
-    if (!reservaServidor?.repetida) {
-        setTimeout(() => {
-            window.open(urlWhatsApp, '_blank');
-        }, 100);
-    }
 
     // Resetear form y campos hidden
     evento.target.reset();
     document.getElementById('barbero-seleccionado').value = '';
     document.getElementById('hora-seleccionada').value = '';
+}
+
+// Consentimiento para los avisos de la cita por WhatsApp (los envía el servidor) y notas para el barbero.
+// Reintento breve si falla la red; nunca muestra un error de reserva: la cita ya quedó guardada.
+async function guardarComplementos(token, { aceptaAvisos, notas }) {
+    if (!token || !estaSupabaseListo()) return;
+    const tareas = [() => supabase.rpc('cita_avisos_whatsapp', { p_token: token, p_acepta: aceptaAvisos })];
+    if (notas) tareas.push(() => supabase.rpc('cita_notas_cliente', { p_token: token, p_notas: notas }));
+    for (const tarea of tareas) {
+        for (let intento = 0; intento < 3; intento++) {
+            try {
+                const { error } = await tarea();
+                if (!error) break;
+            } catch { /* sin conexión: se reintenta */ }
+            await new Promise(r => setTimeout(r, 1500 * (intento + 1)));
+        }
+    }
 }
 
 function mostrarAlerta(mensaje) {

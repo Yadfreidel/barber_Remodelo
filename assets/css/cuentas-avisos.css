@@ -56,3 +56,7 @@
 .cuenta-cambiar-correo summary { cursor: pointer; color: var(--dorado-brillante); }
 .cuenta-cambiar-correo[open] { display: grid; gap: 8px; }
 .barbero-info .estado-chip { margin-left: 4px; }
+
+/* Reserva: consentimiento para los avisos de la cita por WhatsApp */
+.avisos-whatsapp { display: flex; align-items: flex-start; gap: 10px; margin: 4px 0 14px; color: var(--gris-texto, #a0a0a0); font-size: .88rem; line-height: 1.4; cursor: pointer; }
+.avisos-whatsapp input { width: 20px; height: 20px; flex: 0 0 auto; margin-top: 1px; accent-color: var(--dorado, #c5a059); }

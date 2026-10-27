@@ -6,7 +6,7 @@
 
 import { api, esc, ejecutar } from './comun.js';
 
-const TIPOS = { confirmacion: 'Confirmación', recordatorio: 'Recordatorio', cancelacion: 'Cancelación', reprogramacion: 'Reprogramación' };
+const TIPOS = { solicitud: 'Solicitud recibida (cita pendiente)', confirmacion: 'Confirmación', recordatorio: 'Recordatorio', cancelacion: 'Cancelación', reprogramacion: 'Reprogramación' };
 const VARIABLES = ['cliente', 'servicio', 'barbero', 'fecha', 'hora', 'ubicacion', 'mapa'];
 const EJEMPLO = { cliente: 'María Pérez', servicio: 'Degradado bajo', barbero: 'Isaac Garcia', fecha: 'viernes, 24 de octubre', hora: '10:00',
     ubicacion: 'Barbería Master - Av. Principal 10', mapa: 'https://www.google.com/maps/dir/?api=1&destination=18.48,-69.93' };

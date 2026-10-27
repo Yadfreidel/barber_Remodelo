@@ -273,6 +273,7 @@ test('WhatsApp: recordatorios sin duplicados, no a canceladas, envío y webhook 
     const b = 'Barbero Msg';
     const f = await fechaLocal(A, 2);
     const c1 = await reservar(anon, { tel: '8094440001', barbero: b, fecha: f, hora: '10:00' });
+    await rpc(anon, 'cita_avisos_whatsapp', c1.token, true); // consentimiento para los avisos de su cita (casilla al reservar)
     const c2 = await reservar(anon, { tel: '8094440002', barbero: b, fecha: f, hora: '11:00' });
     const c3 = await reservar(anon, { tel: '8094440003', barbero: b, fecha: f, hora: '12:00' });
     const mensajes = async t => (await A.query(`select m.* from mensajes_whatsapp m join cita_tokens k on k.cita_id = m.cita_id where k.token = $1 order by creado_en`, [t])).rows;

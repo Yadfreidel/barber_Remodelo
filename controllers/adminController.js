@@ -141,9 +141,23 @@ function pedirNuevaContrasena() {
     modal.querySelector('#nueva-clave').focus();
 }
 
-// Enlace de recuperación de Supabase: la sesión llega en la URL (cliente de administración)
-obtenerClienteAdmin()?.auth.onAuthStateChange(evento => {
+// Cuenta con la que se abrió el panel en esta pestaña
+let usuarioPanel = null;
+
+// Enlace de recuperación de Supabase: la sesión llega en la URL (cliente de administración).
+// La sesión se comparte entre pestañas: si en otra se entra con otra cuenta o se cierra la sesión,
+// este panel se cierra en vez de seguir mostrando la cuenta anterior (sus peticiones ya irían con la nueva).
+obtenerClienteAdmin()?.auth.onAuthStateChange((evento, session) => {
     if (evento === 'PASSWORD_RECOVERY') pedirNuevaContrasena();
+    if (!usuarioPanel) return;
+    const correo = session?.user?.email || null;
+    if (correo === usuarioPanel) return;
+    // Diferido: llamar a Auth dentro de este callback bloquea el cliente (supabase-js)
+    setTimeout(() => {
+        detenerAvisos();
+        cerrarDashboard();
+        mostrarNotificacion(correo ? `La sesión cambió a ${correo} en otra pestaña. Vuelve a abrir el panel.` : 'La sesión se cerró en otra pestaña.', 'info');
+    }, 0);
 });
 
 function mostrarNotificacion(mensaje, tipo = 'success') {
@@ -289,6 +303,7 @@ async function abrirDashboard() {
     inicioPendiente = null;
     const modal = document.getElementById('dashboard-admin');
     if (!modal) return;
+    usuarioPanel = sesion.email;
 
     renderPanel(modal.querySelector('.dashboard-contenido'), {
         sesion,
@@ -296,6 +311,7 @@ async function abrirDashboard() {
         cerrar: cerrarDashboard,
         inicio,
         salir: async () => {
+            usuarioPanel = null; // cierre pedido aquí: no es un cambio desde otra pestaña
             // Este dispositivo deja de recibir avisos de la cuenta (teléfonos compartidos)
             detenerAvisos();
             await desactivarPushDispositivo();
@@ -311,6 +327,7 @@ async function abrirDashboard() {
 }
 
 export function cerrarDashboard() {
+    usuarioPanel = null;
     const modal = document.getElementById('dashboard-admin');
     if (modal) {
         modal.style.display = 'none';

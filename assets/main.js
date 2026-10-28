@@ -11,6 +11,7 @@ import { inicializarModulosCliente, horariosDiaServidor, obtenerConfigModulos, m
 import { hoyRD, formato12h, rango12h, franja, FRANJAS, cuadricula, fechaLarga } from './horario-utils.js';
 import { leerBorrador, guardarBorrador } from './mis-citas-store.js';
 import { abrirPerfilBarbero } from '../controllers/perfilBarberoController.js';
+import { iniciarEstilos } from '../controllers/estilosController.js';
 
 // ==========================================
 // ELEMENTOS DEL DOM
@@ -51,6 +52,7 @@ async function inicializarPagina() {
     window.dispatchEvent(new Event('catalogo-listo'));
     await cargarBarberosServidor();
     renderizarStaff();
+    iniciarEstilos();
     aplicarNegocioPublico();
     configurarFiltros();
     conectarDetalles(obtenerServicios);
@@ -121,6 +123,7 @@ window.recargarPaginaPrincipal = async function () {
     window.dispatchEvent(new Event('catalogo-listo'));
     await cargarBarberosServidor();
     renderizarStaff();
+    iniciarEstilos();
 };
 
 // ==========================================

@@ -98,10 +98,16 @@ const MENSAJES = {
     autorizacion_no_encontrada: 'La autorización no existe o ya fue retirada.',
     autorizacion_invalida: 'Revisa el nombre, el alcance y la fecha de la autorización (no puede ser futura).',
     representante_requerido: 'Para un menor indica el nombre y la relación de su madre, padre o tutor.',
-    trabajo_bloqueado: 'Este trabajo ya fue publicado o archivado: solo el administrador puede modificarlo.',
+    trabajo_bloqueado: 'Esta versión ya se aplicó o se descartó: vuelve a abrir el trabajo.',
     trabajo_no_encontrado: 'El trabajo ya no existe.',
     trabajo_invalido: 'Revisa el título (máx. 80), la descripción (máx. 300) y el texto alternativo (3 a 200).',
     limite_portafolio: 'Se alcanzó el límite de 120 trabajos activos para este barbero. Archiva alguno antes.',
+    usar_revision: 'Lo publicado se edita como una nueva versión. Vuelve a abrir el trabajo y guarda de nuevo.',
+    sin_fotos: 'Añade al menos una foto (lo publicado conserva siempre una).',
+    confirmacion_requerida: 'Confirma que el cliente autorizó publicar sus fotos, o indica que no se reconoce a ninguna persona.',
+    limite_fotos: 'Cada publicación admite hasta 10 fotos.',
+    foto_no_encontrada: 'Esa foto ya no existe. Vuelve a abrir la publicación.',
+    configuracion_invalida: 'Configuración no válida.',
     transicion_invalida: 'El elemento ya cambió de estado. Actualiza la lista.',
     perfil_invalido: 'La presentación admite 500 caracteres y hasta 8 especialidades de 40 caracteres.',
     // Reclamaciones
@@ -240,9 +246,12 @@ export function dialogo({ titulo, html, ancho = 'md', cabecera = null, clase = '
         anterior?.focus?.();
     };
     const tecla = e => {
-        if (e.key === 'Escape') { cerrar(); return; }
+        // Con diálogos apilados (p. ej. el editor de fotos sobre un formulario) solo responde el de arriba
+        const arriba = fondo === [...document.querySelectorAll('.panel-dialogo-fondo')].at(-1);
+        if (e.key === 'Escape') { if (arriba && !document.querySelector('dialog[open]')) cerrar(); return; }
         // Tab circula dentro del diálogo (el contenido de detrás no recibe foco)
-        if (e.key !== 'Tab' || !fondo.isConnected || fondo !== [...document.querySelectorAll('.panel-dialogo-fondo')].at(-1)) return;
+        // Un <dialog> nativo abierto encima (p. ej. la vista previa pública) gestiona su propio foco
+        if (e.key !== 'Tab' || !fondo.isConnected || !arriba || document.querySelector('dialog[open]')) return;
         const enfocables = [...fondo.querySelectorAll('a[href],button:not([disabled]),input:not([disabled]):not([type=hidden]),select:not([disabled]),textarea:not([disabled]),summary,[tabindex]:not([tabindex="-1"])')]
             .filter(el => el.getClientRects().length);
         if (!enfocables.length) return;
@@ -277,6 +286,31 @@ export function confirmar(mensaje, { textoOk = 'Confirmar', peligro = false } = 
         cuerpo.querySelector('[data-no]').addEventListener('click', () => responder(false));
         const observador = new MutationObserver(() => {
             if (!cuerpo.isConnected) { observador.disconnect(); if (!respondido) resolver(false); }
+        });
+        observador.observe(document.body, { childList: true });
+    });
+}
+
+// Pide un motivo obligatorio (p. ej. al rechazar una publicación). Devuelve el texto o null si se cancela.
+export function pedirMotivo({ titulo, etiqueta, textoOk = 'Confirmar', minimo = 3, maximo = 300 }) {
+    return new Promise(resolver => {
+        let respondido = false;
+        const { cuerpo, cerrar } = dialogo({ titulo, ancho: 'sm', html: `<form class="panel-form" novalidate>
+            <label>${esc(etiqueta)}<textarea name="motivo" rows="3" maxlength="${maximo}" required aria-describedby="motivo-error"></textarea></label>
+            <p class="campo-error" id="motivo-error" role="alert"></p>
+            <div class="panel-acciones"><button type="button" class="panel-btn" data-no>Volver</button>
+                <button type="submit" class="panel-btn panel-btn-principal">${esc(textoOk)}</button></div></form>` });
+        const form = cuerpo.querySelector('form');
+        const responder = valor => { respondido = true; cerrar(); resolver(valor); };
+        cuerpo.querySelector('[data-no]').addEventListener('click', () => responder(null));
+        form.addEventListener('submit', e => {
+            e.preventDefault();
+            const texto = form.elements.motivo.value.trim();
+            if (texto.length < minimo) { form.querySelector('#motivo-error').textContent = `Escribe el motivo (mínimo ${minimo} caracteres).`; form.elements.motivo.focus(); return; }
+            responder(texto);
+        });
+        const observador = new MutationObserver(() => {
+            if (!cuerpo.isConnected) { observador.disconnect(); if (!respondido) resolver(null); }
         });
         observador.observe(document.body, { childList: true });
     });

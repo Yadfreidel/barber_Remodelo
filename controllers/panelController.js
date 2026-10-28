@@ -22,6 +22,7 @@ import { renderCaja } from './panel/caja.js';
 import { renderGastos } from './panel/gastos.js';
 import { renderInventario } from './panel/inventario.js';
 import { renderPortafolio } from './panel/portafolio.js';
+import { renderGaleria } from './panel/galeria.js';
 import { renderOcupacion } from './panel/ocupacion.js';
 import { renderReclamaciones } from './panel/reclamaciones.js';
 import { renderAtencion } from './panel/atencion.js';
@@ -45,6 +46,7 @@ const SECCIONES = [
     { id: 'servicios', titulo: 'Servicios', icono: 'scissors', roles: ['admin'], render: renderServicios, grupo: 'Catálogo y equipo' },
     { id: 'barberos', titulo: 'Barberos', icono: 'users', roles: ['admin'], render: renderBarberos, grupo: 'Catálogo y equipo' },
     { id: 'portafolio', titulo: 'Portafolio', titulos: { barbero: 'Mi portafolio' }, icono: 'images', roles: ['admin', 'barbero'], render: renderPortafolio, grupo: 'Catálogo y equipo' },
+    { id: 'galeria', titulo: 'Contenido y galería', icono: 'photo-film', roles: ['admin'], render: renderGaleria, grupo: 'Catálogo y equipo' },
     { id: 'disponibilidad', titulo: 'Mi disponibilidad', icono: 'business-time', roles: ['barbero'], render: renderDisponibilidad, grupo: 'Catálogo y equipo' },
     { id: 'clientes', titulo: 'Clientes', icono: 'address-book', roles: ['admin'], render: renderClientes, grupo: 'Clientes y análisis' },
     { id: 'ingresos', titulo: 'Ingresos por barbero', titulos: { barbero: 'Mis ingresos' }, icono: 'wallet', roles: ['admin', 'barbero'], render: renderIngresos, grupo: 'Clientes y análisis' },

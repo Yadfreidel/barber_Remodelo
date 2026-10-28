@@ -2,6 +2,7 @@ import { inicializarInicioInmersivo } from './home-view.js';
 import { crearVistaMas } from './more-view.js';
 import { inicializarPasosReserva } from './booking-wizard.js';
 import './ayuda.js';
+import { crearSeccionEstilos } from '../controllers/estilosController.js';
 import { obtenerServicios } from '../models/serviceModel.js';
 import { escapar } from './catalogue-ui.js';
 import { obtenerConfigModulos } from '../controllers/modulosController.js';
@@ -16,6 +17,9 @@ header.append(hero.querySelector('.navbar'));
 document.body.prepend(header);
 const misCitas = crearVistaMisCitas();
 const more = crearVistaMas();
+// «Estilos de la casa»: parte del inicio, justo debajo de la portada
+const estilos = crearSeccionEstilos();
+hero.after(estilos);
 document.querySelector('main').append(misCitas, more);
 const nav = document.createElement('nav');
 nav.className = 'bottom-nav'; nav.setAttribute('aria-label', 'Navegación principal');
@@ -31,6 +35,7 @@ function activeRoute() {
 function showRoute() {
     const route = activeRoute();
     views.forEach(view=>view.hidden=view.id!==route);
+    estilos.hidden = route !== 'inicio' || estilos.dataset.sinServidor === 'true';
     document.body.dataset.view = route;
     nav.querySelectorAll('a').forEach(a=>{
         if(a.dataset.view===route) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current');

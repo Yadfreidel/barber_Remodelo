@@ -1,0 +1,275 @@
+/* «Estilos de la casa»: sección del inicio (un barbero a la vez, sus trabajos de uno en uno) y detalle del trabajo.
+   Paleta del inicio: carbón y dorado champagne (--home-champagne / --dorado, que respeta la identidad publicada). */
+.estilos-casa, .estilos-dialogo {
+    --ec-fondo: #0b0b0c; --ec-tarjeta: #151517; --ec-elevado: #1c1c1f; --ec-linea: #ffffff14; --ec-linea-fuerte: #ffffff2b;
+    --ec-texto: #f1ede4; --ec-texto-2: #b9b4aa; --ec-oro: var(--home-champagne, var(--dorado, #d9c39a)); --ec-radio: 16px;
+    --ec-curva: cubic-bezier(.22, .61, .36, 1);
+}
+
+/* La portada deja asomar la sección (sin deformar la foto: sigue en «cover» con el mismo encuadre) */
+body[data-view="inicio"] #inicio { min-height: max(520px, calc(100svh - var(--home-nav-height) - env(safe-area-inset-bottom) - 112px)) !important; }
+
+.estilos-casa {
+    display: block; width: 100%; margin: 0 !important; padding: 26px 0 30px !important; min-height: 0 !important;
+    background: var(--ec-fondo); color: var(--ec-texto); text-align: left; border-top: 1px solid var(--ec-linea);
+    /* Al desplazarse hasta la sección, la cabecera fija no tapa el título */
+    scroll-margin-top: calc(var(--home-nav-height, 72px) + env(safe-area-inset-top));
+}
+.estilos-casa[hidden] { display: none; }
+.estilos-contenido { width: 100%; max-width: 680px; margin: 0 auto; padding: 0 20px; box-sizing: border-box; }
+.estilos-cabecera { margin-bottom: 14px; }
+.estilos-eyebrow { margin: 0 0 6px; font: 700 10px/1.5 Inter, sans-serif; letter-spacing: 1.7px; text-transform: uppercase; color: var(--ec-oro); }
+.estilos-casa h2, .estilos-dialogo h2 {
+    margin: 0 !important; font-family: 'Playfair Display', serif !important; font-size: clamp(26px, 7vw, 36px) !important;
+    line-height: 1.15; color: var(--ec-texto); text-align: left !important; letter-spacing: 0;
+}
+.estilos-casa h2::after, .estilos-dialogo h2::after { display: none !important; }
+.estilos-sub { margin: 6px 0 0; font-size: 15px; line-height: 1.4; color: var(--ec-texto-2); }
+
+/* ---------- Selector compacto de barberos: una fila deslizable ---------- */
+.estilos-selector { position: relative; margin: 0 -20px; padding: 0 0 14px; border-bottom: 1px solid var(--ec-linea); }
+.estilos-barberos {
+    position: relative; display: flex; gap: 6px; padding: 4px 20px 2px; overflow-x: auto; overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity; scroll-padding-inline: 20px; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+}
+.estilos-barberos::-webkit-scrollbar { display: none; }
+.estilo-barbero {
+    position: relative; flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 6px; width: 76px; min-height: 44px;
+    padding: 4px 0 10px; border: 0; background: none; color: var(--ec-texto-2); font: 500 13px/1.2 Inter, sans-serif; cursor: pointer;
+    scroll-snap-align: start; transition: color 200ms ease, transform 150ms ease;
+}
+.estilo-barbero-foto {
+    display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; overflow: hidden; background: var(--ec-elevado);
+    box-shadow: 0 0 0 2px var(--ec-linea-fuerte); transition: box-shadow 220ms ease;
+}
+.estilo-barbero-foto img { width: 100%; height: 100%; object-fit: cover; }
+.estilo-barbero-nombre { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.estilo-barbero[aria-pressed="true"] { color: var(--ec-oro); }
+.estilo-barbero[aria-pressed="true"] .estilo-barbero-foto { box-shadow: 0 0 0 2px var(--ec-fondo), 0 0 0 4px var(--ec-oro); }
+.estilo-barbero::after {
+    content: ''; position: absolute; left: 12px; right: 12px; bottom: 0; height: 2px; border-radius: 2px; background: var(--ec-oro);
+    transform: scaleX(0); transition: transform 220ms var(--ec-curva);
+}
+.estilo-barbero[aria-pressed="true"]::after { transform: scaleX(1); }
+.estilo-barbero:active { transform: scale(.96); }
+.selector-flecha {
+    position: absolute; top: 18px; z-index: 1; display: grid; place-items: center; width: 44px; height: 44px; padding: 0;
+    border: 1px solid var(--ec-linea-fuerte); border-radius: 50%; background: #111113f0; color: var(--ec-texto); cursor: pointer;
+    box-shadow: 0 4px 14px #0009; transition: transform 150ms ease;
+}
+.selector-flecha.anterior { left: 6px; }
+.selector-flecha.siguiente { right: 6px; }
+.selector-flecha:active { transform: scale(.94); }
+.selector-flecha[hidden] { display: none; }
+.estilo-avatar-vacio { display: grid; place-items: center; width: 100%; height: 100%; color: var(--ec-oro); font-weight: 700; font-size: 15px; }
+.estilo-avatar { width: 32px; height: 32px; flex: 0 0 32px; border-radius: 50%; object-fit: cover; background: var(--ec-elevado); }
+.estilo-avatar.estilo-avatar-vacio { display: inline-grid; font-size: 12px; }
+.estilo-avatar.grande { width: 48px; height: 48px; flex-basis: 48px; }
+
+/* ---------- Trabajos del barbero elegido: una tarjeta visible ---------- */
+.estilos-trabajos { padding-top: 16px; }
+.estilos-trabajos-cabecera { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.estilos-trabajos-cabecera h3 {
+    margin: 0; min-width: 0; font: 700 clamp(18px, 4.8vw, 22px)/1.25 'Playfair Display', serif; color: var(--ec-texto);
+    overflow-wrap: anywhere; text-align: left;
+}
+.estilos-contador { flex: 0 0 auto; font: 500 16px/1 Inter, sans-serif; color: var(--ec-texto-2); font-variant-numeric: tabular-nums; }
+.estilos-carrusel { position: relative; container-type: inline-size; }
+.estilos-pista {
+    position: relative; display: flex; margin: 0; padding: 0; list-style: none; overflow-x: auto; overflow-y: hidden;
+    scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: none; border-radius: var(--ec-radio);
+}
+.estilos-pista::-webkit-scrollbar { display: none; }
+.estilos-pista.estilos-cambio { animation: estilos-cambio 220ms ease both; }
+@keyframes estilos-cambio { from { opacity: 0; } to { opacity: 1; } }
+.estilo-slide { flex: 0 0 100%; min-width: 0; scroll-snap-align: start; scroll-snap-stop: always; }
+.estilo-tarjeta {
+    position: relative; display: flex; flex-direction: column; height: 100%; overflow: hidden; box-sizing: border-box;
+    border: 1px solid var(--ec-linea-fuerte); border-radius: var(--ec-radio); background: var(--ec-tarjeta);
+}
+/* Foto protagonista apaisada: el punto focal guardado decide el encuadre (sin deformar) */
+.estilo-media { position: relative; aspect-ratio: 3 / 2; overflow: hidden; background: var(--ec-elevado); cursor: pointer; }
+.estilo-media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 260ms ease, transform 300ms var(--ec-curva); }
+.estilo-media.cargada img { opacity: 1; }
+.estilo-media.sin-foto::after { content: 'Foto no disponible'; position: absolute; inset: 0; display: grid; place-items: center; color: var(--ec-texto-2); font-size: 13px; }
+.estilo-cantidad { position: absolute; top: 10px; left: 10px; padding: 4px 8px; border-radius: 999px; background: #000000b3; color: #fff; font: 600 12px/1.2 Inter, sans-serif; }
+.estilo-pie { display: flex; flex-direction: column; gap: 8px; padding: 14px 16px 14px; border-top: 1px solid var(--ec-linea); }
+.estilo-pie h4 { margin: 0; font: 700 clamp(18px, 5vw, 22px)/1.25 'Playfair Display', serif; color: var(--ec-texto); overflow-wrap: anywhere; text-align: left; }
+.estilo-pie-fila { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.estilo-autor { display: flex; align-items: center; gap: 10px; flex: 1 1 auto; margin: 0; min-width: 0; font-size: 14px; line-height: 1.35; color: var(--ec-texto-2); }
+.estilo-autor span { overflow-wrap: anywhere; }
+.estilo-ver {
+    display: inline-flex; align-items: center; gap: 8px; flex: 0 0 auto; min-height: 44px; margin-left: auto; padding: 0 4px; white-space: nowrap;
+    border: 0; background: none; color: var(--ec-oro); font: 600 15px/1 Inter, sans-serif; cursor: pointer; transition: transform 150ms ease;
+}
+.estilo-ver i { font-size: 12px; transition: transform 200ms ease; }
+.estilo-ver:active, .estilos-boton:active, .carrusel-flecha:active { transform: scale(.96); }
+/* Flechas circulares sobre la foto, centradas en su altura (3:2 → mitad = 33,3 % del ancho) */
+.estilos-carrusel .carrusel-flecha { top: 30%; top: 33.33cqw; z-index: 2; background: #0b0b0cd9; border-color: #ffffff59; box-shadow: 0 4px 14px #0008; }
+.estilos-carrusel .carrusel-flecha[hidden] { display: none; }
+.estilos-puntos { display: flex; justify-content: center; align-items: center; gap: 2px; min-height: 28px; margin-top: 10px; }
+.estilos-puntos button { width: 26px; height: 28px; padding: 0; border: 0; background: none; cursor: pointer; display: grid; place-items: center; }
+.estilos-puntos button::before { content: ''; width: 9px; height: 9px; border-radius: 50%; background: #ffffff59; transition: background-color 200ms ease, transform 200ms ease; }
+.estilos-puntos button[aria-current="true"]::before { background: var(--ec-oro); transform: scale(1.15); }
+.estilos-puntos button.punto-borde::before { transform: scale(.6); }
+.estilos-ayuda { margin: 4px 0 0; text-align: center; font-size: 14px; color: var(--ec-texto-2); }
+@media (hover: hover) and (pointer: fine) {
+    .estilo-tarjeta:hover .estilo-media.cargada img { transform: scale(1.025); }
+    .estilo-ver:hover i { transform: translateX(3px); }
+    .estilo-barbero:hover { color: var(--ec-texto); }
+    .estilo-barbero:hover .estilo-barbero-foto { box-shadow: 0 0 0 2px color-mix(in srgb, var(--ec-oro) 55%, transparent); }
+    .estilo-barbero[aria-pressed="true"]:hover .estilo-barbero-foto { box-shadow: 0 0 0 2px var(--ec-fondo), 0 0 0 4px var(--ec-oro); }
+}
+.estilo-barbero:focus-visible, .estilo-ver:focus-visible, .estilos-boton:focus-visible, .estilos-cerrar:focus-visible,
+.carrusel-flecha:focus-visible, .selector-flecha:focus-visible, .estilos-puntos button:focus-visible, .carrusel-puntos button:focus-visible, .carrusel-pista:focus-visible {
+    outline: 2px solid var(--ec-oro); outline-offset: 2px;
+}
+/* Skeleton con las dimensiones finales */
+.estilo-esqueleto .estilo-tarjeta { border-color: var(--ec-linea); }
+.esq-linea { display: block; height: 16px; border-radius: 6px; }
+.esq-linea.corta { width: 55%; height: 12px; }
+.estilos-estado {
+    flex: 0 0 100%; box-sizing: border-box; display: grid; place-content: center; gap: 12px; min-height: 220px; padding: 22px 20px;
+    border: 1px dashed var(--ec-linea-fuerte); border-radius: var(--ec-radio); color: var(--ec-texto-2); text-align: center;
+}
+.estilos-estado p { margin: 0; line-height: 1.5; }
+.estilos-boton {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; padding: 0 18px; justify-self: center;
+    border: 1px solid var(--ec-oro); border-radius: 999px; background: transparent; color: var(--ec-oro);
+    font: 600 14px/1 Inter, sans-serif; text-decoration: none; cursor: pointer; transition: background-color 200ms ease, transform 150ms ease;
+}
+.estilos-boton.secundario { border-color: var(--ec-linea-fuerte); color: var(--ec-texto); }
+
+/* Entrada suave al aparecer en pantalla */
+@keyframes estilo-entrada { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+.estilos-casa:not(.estilos-visible) .estilos-contenido { opacity: 0; }
+.estilos-visible .estilos-contenido { animation: estilo-entrada 300ms var(--ec-curva) both; }
+
+/* Teléfonos estrechos: el crédito y «Ver trabajo» siguen en una fila legible */
+@media (max-width: 380px) {
+    .estilo-autor { gap: 8px; font-size: 13px; }
+    .estilo-autor .estilo-avatar { width: 28px; height: 28px; flex-basis: 28px; }
+    .estilo-ver { gap: 6px; font-size: 14px; }
+    .estilo-pie { padding-inline: 14px; }
+}
+@media (min-width: 768px) {
+    .estilos-casa { padding: 40px 0 48px !important; }
+    .estilos-contenido { padding: 0 32px; }
+    .estilos-selector { margin: 0 -32px; }
+    .estilos-barberos { padding-inline: 32px; scroll-padding-inline: 32px; }
+    .estilo-barbero { width: 84px; }
+    .estilo-barbero-foto { width: 64px; height: 64px; }
+    .selector-flecha { top: 22px; }
+    .estilos-eyebrow { font-size: 12px; letter-spacing: 2.3px; }
+}
+
+/* ---------- Diálogo del detalle ---------- */
+.estilos-dialogo {
+    box-sizing: border-box; width: 100%; max-width: 100%; height: 100dvh; max-height: 100dvh; margin: 0; padding: 0;
+    border: 0; background: var(--ec-fondo); color: var(--ec-texto); overflow: hidden auto; overscroll-behavior: contain;
+}
+.estilos-dialogo::backdrop { background: #000000b8; }
+.estilos-dialogo[open] { animation: dialogo-entrada 240ms var(--ec-curva); }
+.estilos-dialogo.cerrando { animation: dialogo-salida 180ms ease forwards; }
+@keyframes dialogo-entrada { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+@keyframes dialogo-salida { to { opacity: 0; transform: translateY(12px); } }
+.estilos-dialogo-barra {
+    position: sticky; top: 0; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: calc(10px + env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 10px max(20px, env(safe-area-inset-left));
+    background: #0b0b0cf2; border-bottom: 1px solid var(--ec-linea);
+}
+.estilos-dialogo-barra .estilos-eyebrow { margin: 0; }
+.estilos-cerrar { display: inline-grid; place-items: center; width: 44px; height: 44px; border: 1px solid var(--ec-linea-fuerte); border-radius: 50%; background: var(--ec-tarjeta); color: var(--ec-texto); font-size: 18px; cursor: pointer; }
+.estilos-dialogo-cuerpo { padding: 16px 0 calc(28px + env(safe-area-inset-bottom)); }
+@media (min-width: 768px) {
+    .estilos-dialogo { width: min(1180px, 94vw); height: auto; max-height: 92dvh; margin: auto; border: 1px solid var(--ec-linea); border-radius: 20px; }
+    .estilos-dialogo-barra { padding: 12px 16px 12px 24px; }
+}
+
+/* Detalle */
+.estilo-detalle .estilos-dialogo-cuerpo { padding-top: 0; }
+.estilo-detalle-cargando { padding: 16px 20px; }
+.carrusel { position: relative; background: #050506; }
+.carrusel-pista {
+    display: flex; aspect-ratio: 4 / 5; max-height: 68dvh; width: 100%; overflow-x: auto; scroll-snap-type: x mandatory;
+    scrollbar-width: none; overscroll-behavior-x: contain;
+}
+.carrusel-pista::-webkit-scrollbar { display: none; }
+.carrusel-diapositiva { flex: 0 0 100%; height: 100%; aspect-ratio: auto !important; margin: 0; scroll-snap-align: start; position: relative; background: #050506; }
+.carrusel-diapositiva img { width: 100%; height: 100%; object-fit: contain; opacity: 0; transition: opacity 260ms ease; }
+.carrusel-diapositiva.cargada img { opacity: 1; }
+.estilo-detalle-cargando .carrusel-diapositiva { height: auto; max-height: 60dvh; border-radius: var(--ec-radio); }
+.carrusel-flecha {
+    position: absolute; top: 50%; translate: 0 -50%; display: grid; place-items: center; width: 44px; height: 44px;
+    border: 1px solid #ffffff33; border-radius: 50%; background: #000000a6; color: #fff; cursor: pointer; transition: opacity 200ms ease, transform 150ms ease;
+}
+.carrusel-flecha.anterior { left: 10px; }
+.carrusel-flecha.siguiente { right: 10px; }
+.carrusel-flecha:disabled { opacity: .3; cursor: default; }
+.carrusel-puntos { position: absolute; left: 0; right: 0; bottom: 8px; display: flex; justify-content: center; gap: 2px; }
+.carrusel-puntos button { width: 28px; height: 28px; padding: 0; border: 0; background: none; cursor: pointer; display: grid; place-items: center; }
+.carrusel-puntos button::before { content: ''; width: 8px; height: 8px; border-radius: 999px; background: #ffffff80; transition: width 200ms ease, background-color 200ms ease; }
+.carrusel-puntos button[aria-current="true"]::before { width: 20px; background: var(--ec-oro); }
+.estilo-detalle-info { display: flex; flex-direction: column; gap: 14px; padding: 20px 20px 0; }
+.estilo-detalle-info h2 { font-size: clamp(24px, 6vw, 32px) !important; }
+.estilo-descripcion { margin: 0; line-height: 1.6; color: #ddd8ce; overflow-wrap: anywhere; }
+.estilo-servicio { margin: 0; color: var(--ec-texto-2); }
+.estilo-servicio i { color: var(--ec-oro); margin-right: 6px; }
+.estilo-autor-bloque { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--ec-linea); border-radius: 14px; background: var(--ec-tarjeta); }
+.estilo-autor-bloque p { display: flex; flex-direction: column; gap: 2px; margin: 0; flex: 1; font-size: 13px; color: var(--ec-texto-2); }
+.estilo-autor-bloque strong { color: var(--ec-texto); font-size: 15px; }
+.estilo-reservar { width: 100%; min-height: 50px; justify-content: center; }
+.estilo-nota, .estilo-nota-vista { margin: -4px 0 0; font-size: 13px; color: var(--ec-texto-2); line-height: 1.5; }
+.estilo-nota-vista { padding: 10px 12px; border: 1px dashed var(--ec-linea-fuerte); border-radius: 12px; }
+@media (min-width: 900px) {
+    .estilo-detalle .estilos-dialogo-cuerpo { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(300px, 1fr); gap: 28px; padding: 24px; align-items: start; }
+    .carrusel { border-radius: 16px; overflow: hidden; }
+    .carrusel-pista { max-height: 74dvh; }
+    .estilo-detalle-info { padding: 0; }
+}
+
+body.detalle-abierto:has(.estilos-dialogo[open]) { overflow: hidden; }
+
+@media (prefers-reduced-motion: reduce) {
+    .estilos-casa *, .estilos-dialogo, .estilos-dialogo * { animation: none !important; transition: none !important; }
+    .estilos-casa:not(.estilos-visible) .estilos-contenido { opacity: 1; }
+    .estilo-tarjeta:hover, .estilo-tarjeta:hover .estilo-media.cargada img { transform: none !important; }
+    .estilo-media img, .carrusel-diapositiva img { opacity: 1; }
+}
+
+/* ---------- Panel: publicación con varias fotos, editor y destacados ---------- */
+.pub-fotos { list-style: none; margin: 10px 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.pub-foto { display: flex; flex-direction: column; gap: 6px; padding: 8px; border: 1px solid var(--gris-borde); border-radius: 12px; background: var(--negro-elevado); }
+.pub-foto img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border-radius: 8px; background: #000; }
+.pub-foto.con-error { border-color: var(--p-error, #f3907f); }
+.pub-foto-estado { font-size: 0.8rem; color: var(--gris-texto); overflow-wrap: anywhere; }
+.pub-foto.con-error .pub-foto-estado { color: var(--p-error, #f3907f); }
+.pub-portada { min-height: 36px; font-size: 0.85rem; }
+.pub-foto-acciones { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.pub-foto-acciones .panel-icono { min-width: 40px; min-height: 40px; }
+.pub-fotos-estado:empty { display: none; }
+.publicacion-acciones { flex-wrap: wrap; }
+.negocio-subir input:disabled + * , .negocio-subir:has(input:disabled) { opacity: .55; cursor: not-allowed; }
+
+.editor-foto { display: grid; gap: 16px; }
+@media (min-width: 900px) { .editor-foto { grid-template-columns: minmax(0, 1.2fr) minmax(280px, 1fr); align-items: start; } .editor-vista { position: sticky; top: 0; } }
+.editor-lienzo { position: relative; display: grid; place-items: center; background: #050506; border-radius: 12px; overflow: hidden; touch-action: none; cursor: grab; user-select: none; }
+.editor-lienzo:active { cursor: grabbing; }
+.editor-lienzo canvas { display: block; max-width: 100%; max-height: 62dvh; width: auto; height: auto; }
+.editor-foco { position: absolute; width: 22px; height: 22px; margin: -11px 0 0 -11px; border: 2px solid #fff; border-radius: 50%; box-shadow: 0 0 0 2px #000a; pointer-events: none; }
+.editor-lienzo canvas + .editor-foco { left: 50%; top: 50%; }
+.editor-controles .panel-fieldset { margin-top: 0; margin-bottom: 10px; }
+.editor-rango { display: grid !important; grid-template-columns: 1fr auto; align-items: center; gap: 4px 10px; }
+.editor-rango input { grid-column: 1 / -1; width: 100%; min-height: 32px; accent-color: var(--dorado); }
+.editor-rango output { font-variant-numeric: tabular-nums; color: var(--gris-texto); font-size: 0.85rem; grid-row: 1; grid-column: 2; }
+.editor-botones { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+/* El lienzo del editor se posiciona respecto a la imagen, no al contenedor */
+.editor-lienzo { width: fit-content; max-width: 100%; margin: 0 auto; }
+
+.galeria-destacados { margin: 0 0 12px; padding-left: 22px; display: grid; gap: 6px; }
+.galeria-destacados li { display: flex; align-items: center; gap: 8px; }
+.galeria-destacados li span { flex: 1; overflow-wrap: anywhere; }
+
+/* Los textos solo para lectores de pantalla (position: absolute) quedan dentro de su carrusel:
+   sin un contenedor posicionado escapan del recorte y ensanchan la página en móvil */
+.estilos-barberos, .estilos-pista, .estilo-tarjeta, .estilo-barbero, .carrusel-pista { position: relative; }

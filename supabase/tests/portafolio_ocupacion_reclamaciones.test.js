@@ -50,6 +50,10 @@ test('portafolio: el barbero gestiona solo lo suyo y no publica; sin autorizaci�
     assert.equal(await errorDe(rpc(otroBarbero, 'panel_portafolio_estado', t.id, 'archivar', null)), 'no_autorizado', 'no toca trabajos ajenos');
     assert.equal(await errorDe(rpc(barbero, 'panel_portafolio_estado', t.id, 'publicar', null)), 'no_autorizado', 'publicar es del administrador');
     assert.equal(await errorDe(trabajo(barbero, { barbero_id: ids.beto, imagen: 'data:image/svg+xml;base64,PHN2Zz4=' })), 'imagen_invalida');
+    // Con una persona identificable, el barbero confirma la autorización del cliente antes de enviarlo
+    assert.equal(await errorDe(rpc(barbero, 'panel_portafolio_estado', t.id, 'enviar_revision', null)), 'confirmacion_requerida');
+    await rpc(barbero, 'panel_estilo_guardar', t.id, j({ titulo: 'Degradado', texto_alternativo: 'Corte degradado visto de lado', servicio_id: ids.s60,
+        especialidad: 'Degradados', muestra_persona: true, autorizacion_confirmada: true }));
     await rpc(barbero, 'panel_portafolio_estado', t.id, 'enviar_revision', null);
     assert.equal(await errorDe(rpc(admin, 'panel_portafolio_estado', t.id, 'publicar', null)), 'autorizacion_requerida');
     assert.equal(await errorDe(A.query(`update portafolio_trabajos set estado = 'publicado' where id = $1`, [t.id])), 'autorizacion_requerida', 'regla también en la base');

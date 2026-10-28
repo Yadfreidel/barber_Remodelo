@@ -5,6 +5,19 @@ export const normalizarBusqueda = texto => String(texto || '').normalize('NFD').
 export function coincideCorte(servicio, categoria, busqueda) {
     return (categoria === 'todos' || categoria === servicio.categoria) && normalizarBusqueda(`${servicio.nombre} ${servicio.descripcion} ${servicio.categoria}`).includes(normalizarBusqueda(busqueda).trim());
 }
+// Al cargar cada foto: aparición suave y, si es muy apaisada o muy vertical, se muestra completa
+// (contain sobre fondo integrado) antes que recortar el peinado. Se registra al importar el módulo,
+// antes de pintar tarjetas, para no perder las imágenes que llegan desde la caché.
+if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
+    document.addEventListener('load', evento => {
+        const imagen = evento.target;
+        const marco = imagen?.tagName === 'IMG' && imagen.closest?.('.foto-corte');
+        if (!marco || !imagen.naturalWidth) return;
+        const proporcion = imagen.naturalWidth / imagen.naturalHeight;
+        marco.classList.toggle('foto-contener', proporcion > 1.5 || proporcion < 0.75);
+        marco.classList.add('cargada');
+    }, true);
+}
 export function fotoCorte(servicio, ampliada = false) {
     return `<div class="foto-corte ${servicio.imagen ? '' : 'foto-ausente'}">
         ${servicio.imagen ? `<img src="${escapar(servicio.imagen)}" alt="${escapar(servicio.alt || servicio.nombre)}" width="1024" height="1024" loading="${ampliada ? 'eager' : 'lazy'}" decoding="async">` : ''}

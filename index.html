@@ -41,6 +41,7 @@
 <link rel="stylesheet" href="assets/css/panel-tema.css">
 <link rel="stylesheet" href="assets/css/accesibilidad-ayuda.css">
 <link rel="stylesheet" href="assets/css/estilos-casa.css">
+<link rel="stylesheet" href="assets/css/catalogo.css">
 </head>
 <body>
 
@@ -119,8 +120,8 @@
     <main class="booking-layout">
     <div class="booking-main">
     <section id="catalogo-seccion">
-        <h2 class="seccion-titulo animate-on-scroll">Encuentra tu estilo</h2>
-        <p class="seccion-subtitulo animate-on-scroll">Explora los estilos y encuentra tu siguiente corte.</p>
+        <h2 class="seccion-titulo animate-on-scroll">Catálogo</h2>
+        <p class="seccion-subtitulo animate-on-scroll">Encuentra tu próximo estilo</p>
 
         <p class="nota-espera">Precios solo del corte, sin barba, lavado ni extras. Las imagenes son simulaciones con IA.</p>
         <p id="catalogo-aviso" class="catalogo-estado" role="alert" hidden>No pudimos actualizar el catalogo. Recarga la pagina para comprobar las tarifas y la disponibilidad.</p>
@@ -128,16 +129,7 @@
             <label for="buscar-corte" class="buscador-cortes"><span aria-hidden="true">&#9906;</span><input type="search" id="buscar-corte" placeholder="Busca tu corte" autocomplete="off"><span class="sr-only">Buscar por nombre, descripcion o categoria</span></label>
             <p id="catalogo-resultados" class="catalogo-resultados" role="status" aria-live="polite">Cargando cortes...</p>
         </div>
-        <div class="filtros-contenedor" aria-label="Filtrar cortes por categoria">
-            <button class="btn-filtro activo" data-categoria="todos">Ver Todo</button>
-            <button class="btn-filtro" data-categoria="degradados">Degradados</button>
-            <button class="btn-filtro" data-categoria="tapers">Tapers</button>
-            <button class="btn-filtro" data-categoria="cortos">Cortos</button>
-            <button class="btn-filtro" data-categoria="afros">Afros</button>
-            <button class="btn-filtro" data-categoria="creativos">Creativos</button>
-            <button class="btn-filtro" data-categoria="rizos">Rizos</button>
-            <button class="btn-filtro" data-categoria="diseños">Diseños</button>
-        </div>
+        <div class="filtros-contenedor categorias-chips" id="categorias-chips" role="group" aria-label="Filtrar cortes por categoría"></div>
 
         <div id="grid-dinamico-servicios" class="grid-servicios" aria-busy="true"><p class="sr-only" role="status">Cargando el catalogo de cortes...</p><div class="motion-skeleton skeleton-corte" aria-hidden="true"></div><div class="motion-skeleton skeleton-corte" aria-hidden="true"></div><div class="motion-skeleton skeleton-corte" aria-hidden="true"></div></div>
         <p id="catalogo-vacio" class="catalogo-estado" hidden>No encontramos cortes con esa busqueda. Prueba otro nombre o categoria.</p>

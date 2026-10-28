@@ -1,0 +1,200 @@
+/* Catálogo: retratos grandes y bien encuadrados, fondo negro y detalles dorados.
+   Solo presentación y limitado a #catalogo-seccion (el detalle, la reserva y otras vistas no cambian).
+   Encuadre: las fotos actuales son cuadradas con el peinado cerca del borde superior y la capa abajo;
+   anclarlas arriba en 6:5 conserva todo el cabello y el mentón y solo recorta la capa. */
+#catalogo-seccion {
+    --cat-fondo: #0b0b0c; --cat-tarjeta: #141416; --cat-elevado: #1b1b1e; --cat-linea: #ffffff17; --cat-linea-fuerte: #ffffff2e;
+    --cat-texto: #f1ede4; --cat-texto-2: #b9b4aa; --cat-oro: var(--home-champagne, var(--dorado, #d9c39a));
+    --cat-curva: cubic-bezier(.22, .61, .36, 1);
+    box-sizing: border-box; width: 100%; max-width: 1240px; margin: 0 auto !important;
+    padding: 24px max(20px, env(safe-area-inset-right)) calc(28px + env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left)) !important;
+    background: var(--cat-fondo); color: var(--cat-texto); text-align: left;
+}
+
+/* ---------- Cabecera ---------- */
+#catalogo-seccion .seccion-titulo {
+    margin: 0 !important; padding: 0; text-align: left !important; color: var(--cat-texto);
+    font: 700 clamp(30px, 8.5vw, 44px)/1.1 'Playfair Display', serif !important; letter-spacing: 0;
+}
+#catalogo-seccion .seccion-titulo::after, #catalogo-seccion .seccion-titulo::before { display: none !important; }
+#catalogo-seccion .seccion-subtitulo { margin: 6px 0 0 !important; max-width: none; text-align: left !important; color: var(--cat-texto-2); font-size: 16px; line-height: 1.4; }
+#catalogo-seccion .nota-espera { margin: 12px 0 0 !important; text-align: left; color: var(--cat-texto-2); font-size: 13px; line-height: 1.5; }
+
+/* El selector sigue existiendo (es la fuente del filtro), pero se elige con los botones de categoría */
+#catalogo-seccion .category-picker { display: none !important; }
+
+/* ---------- Buscador ---------- */
+#catalogo-seccion .catalogo-herramientas { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin: 18px 0 12px; padding: 0; max-width: none; }
+#catalogo-seccion .buscador-cortes {
+    flex: 1 1 100%; display: flex; align-items: center; gap: 10px; box-sizing: border-box; min-height: 50px; margin: 0; padding: 0 18px;
+    border: 1px solid var(--cat-linea-fuerte); border-radius: 999px; background: var(--cat-tarjeta); color: var(--cat-oro); max-width: none; width: 100%;
+    transition: border-color 200ms ease;
+}
+#catalogo-seccion .buscador-cortes:focus-within { border-color: var(--cat-oro); outline: 2px solid color-mix(in srgb, var(--cat-oro) 45%, transparent); outline-offset: 2px; }
+#catalogo-seccion .buscador-cortes input {
+    flex: 1; min-width: 0; min-height: 48px; margin: 0; padding: 0; border: 0 !important; background: none !important; box-shadow: none !important;
+    color: var(--cat-texto); font: 400 16px/1.2 Inter, sans-serif; outline: none;
+}
+#catalogo-seccion .buscador-cortes input::placeholder { color: #9d978c; }
+#catalogo-seccion .catalogo-resultados { margin: 0; color: var(--cat-texto-2); font-size: 13px; }
+
+/* ---------- Categorías reales: fila deslizable ---------- */
+#catalogo-seccion .categorias-chips {
+    display: flex; flex-wrap: nowrap; gap: 8px; margin: 0 calc(-1 * max(20px, env(safe-area-inset-left))) 18px; padding: 2px max(20px, env(safe-area-inset-left));
+    overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity; scroll-padding-inline: 20px; scrollbar-width: none; justify-content: flex-start;
+}
+#catalogo-seccion .categorias-chips::-webkit-scrollbar { display: none; }
+#catalogo-seccion .categorias-chips::after { display: none !important; } /* sin el indicador animado antiguo */
+#catalogo-seccion .chip-categoria {
+    flex: 0 0 auto; min-height: 44px; padding: 0 18px; border: 1px solid var(--cat-linea-fuerte); border-radius: 999px;
+    background: transparent; color: var(--cat-texto-2); font: 600 14px/1 Inter, sans-serif; text-transform: capitalize; cursor: pointer;
+    scroll-snap-align: start; transition: background-color 200ms ease, border-color 200ms ease, color 200ms ease, transform 150ms ease;
+}
+#catalogo-seccion .chip-categoria[aria-pressed="true"] { background: var(--cat-oro); border-color: var(--cat-oro); color: #15130f; }
+#catalogo-seccion .chip-categoria:active { transform: scale(.96); }
+
+/* ---------- Rejilla ---------- */
+#catalogo-seccion .grid-servicios {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 0; padding: 0; width: 100%; max-width: none;
+}
+@media (max-width: 359px) { #catalogo-seccion .grid-servicios { grid-template-columns: minmax(0, 1fr); } }
+@media (min-width: 640px) { #catalogo-seccion .grid-servicios { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 18px; } }
+@media (min-width: 1100px) { #catalogo-seccion .grid-servicios { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 22px; } }
+
+/* ---------- Tarjeta ---------- */
+#catalogo-seccion .card-servicio {
+    position: relative; display: flex; flex-direction: column; box-sizing: border-box; min-width: 0; height: auto; min-height: 0; margin: 0; padding: 0 !important;
+    overflow: hidden; border: 1px solid var(--cat-linea); border-radius: 16px; background: var(--cat-tarjeta); box-shadow: none; text-align: left;
+    transition: transform 250ms var(--cat-curva), border-color 250ms ease, box-shadow 250ms ease;
+}
+#catalogo-seccion .card-servicio.ocultar-card { display: none !important; }
+#catalogo-seccion .card-servicio .foto-corte {
+    position: relative; aspect-ratio: 6 / 5; width: 100%; height: auto; min-height: 0; margin: 0; overflow: hidden; border: 0; border-radius: 0; background: #1a1a1d;
+}
+#catalogo-seccion .card-servicio .foto-corte img {
+    display: block; width: 100%; height: 100%; max-width: none; object-fit: cover; object-position: 50% 0%;
+    opacity: 0; filter: none !important; transform: none; transform-origin: 50% 0%;
+    transition: opacity 260ms ease, transform 300ms var(--cat-curva);
+}
+#catalogo-seccion .card-servicio .foto-corte.cargada img { opacity: 1; }
+/* Fotos con otra proporción: completas sobre fondo integrado, sin cortar el peinado */
+#catalogo-seccion .card-servicio .foto-corte.foto-contener img { object-fit: contain; object-position: 50% 50%; }
+#catalogo-seccion .card-servicio .foto-placeholder {
+    position: absolute; inset: 0; display: grid; place-items: center; padding: 12px; color: var(--cat-texto-2); font-size: 13px; text-align: center;
+}
+#catalogo-seccion .card-servicio .foto-placeholder[hidden] { display: none; }
+#catalogo-seccion .card-servicio .card-info {
+    display: flex; flex-direction: column; gap: 6px; flex: 1 1 auto; min-width: 0; margin: 0; padding: 12px 12px 12px !important;
+    background: none; text-align: left;
+}
+#catalogo-seccion .card-servicio .editorial-eyebrow {
+    margin: 0; color: var(--cat-oro); font: 700 10px/1.3 Inter, sans-serif; letter-spacing: 1.4px; text-transform: uppercase;
+}
+#catalogo-seccion .card-servicio h3 {
+    margin: 0; color: var(--cat-texto); font: 600 15px/1.3 Inter, sans-serif !important; letter-spacing: 0; text-align: left; overflow-wrap: anywhere;
+}
+/* La descripción completa está en «Ver detalles» */
+#catalogo-seccion .card-servicio .corte-descripcion {
+    margin: 0; color: var(--cat-texto-2); font-size: 12.5px; line-height: 1.45;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+#catalogo-seccion .card-servicio .corte-tarifa {
+    display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 10px; margin: auto 0 0; padding: 6px 0 0; border: 0;
+}
+#catalogo-seccion .card-servicio .precio-tag {
+    margin: 0; padding: 0; border: 0; background: none; color: var(--cat-oro); font: 700 17px/1.2 Inter, sans-serif; letter-spacing: 0; white-space: nowrap;
+}
+#catalogo-seccion .card-servicio .duracion-servicio {
+    display: inline-flex; align-items: center; gap: 5px; margin: 0; padding: 0; border: 0; background: none;
+    color: var(--cat-texto-2); font: 500 12.5px/1.2 Inter, sans-serif; white-space: nowrap;
+}
+#catalogo-seccion .card-servicio .duracion-servicio i { color: var(--cat-oro); font-size: 12px; }
+#catalogo-seccion .card-servicio .corte-acciones { display: flex; flex-direction: column; gap: 2px; margin: 8px 0 0; padding: 0; border: 0; }
+#catalogo-seccion .card-servicio .btn-card-reserva {
+    order: -1; display: inline-flex; align-items: center; justify-content: center; width: 100%; min-height: 44px; margin: 0; padding: 0 12px;
+    border: 1px solid transparent; border-radius: 10px; background: linear-gradient(135deg, var(--cat-oro), color-mix(in srgb, var(--cat-oro) 78%, #8a6c3c));
+    color: #15130f; font: 700 14px/1 Inter, sans-serif; letter-spacing: 0; text-transform: none; box-shadow: none; cursor: pointer;
+    transition: transform 150ms ease, filter 150ms ease, background-color 200ms ease;
+}
+#catalogo-seccion .card-servicio .btn-card-reserva:active { transform: scale(.97); }
+#catalogo-seccion .card-servicio .btn-card-reserva[aria-pressed="true"] { background: transparent; border-color: var(--cat-oro); color: var(--cat-oro); }
+#catalogo-seccion .card-servicio .btn-ver-detalle {
+    align-self: center; min-height: 40px; margin: 0; padding: 0 8px; border: 0; background: none; color: var(--cat-texto-2);
+    font: 500 13px/1 Inter, sans-serif; text-decoration: underline; text-underline-offset: 3px; cursor: pointer;
+}
+#catalogo-seccion :is(.chip-categoria, .btn-card-reserva, .btn-ver-detalle):focus-visible { outline: 2px solid var(--cat-oro); outline-offset: 2px; }
+#catalogo-seccion .btn-card-reserva:focus-visible { outline-color: #fff; }
+@media (hover: hover) and (pointer: fine) {
+    #catalogo-seccion .card-servicio:hover { transform: translateY(-3px); border-color: var(--cat-linea-fuerte); box-shadow: 0 14px 30px #00000066; }
+    /* Zoom mínimo anclado arriba: no recorta el peinado */
+    #catalogo-seccion .card-servicio:hover .foto-corte.cargada:not(.foto-contener) img { transform: scale(1.02); }
+    #catalogo-seccion .card-servicio .btn-card-reserva:hover { filter: brightness(1.06); }
+    #catalogo-seccion .card-servicio .btn-ver-detalle:hover { color: var(--cat-texto); }
+    #catalogo-seccion .chip-categoria:not([aria-pressed="true"]):hover { border-color: color-mix(in srgb, var(--cat-oro) 60%, transparent); color: var(--cat-texto); }
+}
+
+/* Tarjetas más amplias desde tableta */
+@media (min-width: 640px) {
+    #catalogo-seccion { padding-top: 36px !important; }
+    #catalogo-seccion .card-servicio .card-info { padding: 14px 16px 16px !important; gap: 7px; }
+    #catalogo-seccion .card-servicio h3 { font-size: 16px !important; }
+    #catalogo-seccion .card-servicio .precio-tag { font-size: 18px; }
+    #catalogo-seccion .card-servicio .corte-acciones { flex-direction: row; align-items: center; justify-content: space-between; gap: 8px; }
+    #catalogo-seccion .card-servicio .btn-card-reserva { order: 1; width: auto; flex: 0 0 auto; min-width: 104px; padding: 0 20px; }
+    #catalogo-seccion .card-servicio .btn-ver-detalle { align-self: auto; padding: 0; }
+    #catalogo-seccion .buscador-cortes { flex: 0 1 420px; }
+    #catalogo-seccion .categorias-chips { margin-inline: 0; padding-inline: 0; flex-wrap: wrap; overflow: visible; }
+}
+
+/* ---------- Estados ---------- */
+#catalogo-seccion .grid-servicios .skeleton-corte { aspect-ratio: 6 / 8.4; width: 100%; height: auto; min-height: 0; margin: 0; border-radius: 16px; }
+#catalogo-seccion .catalogo-estado { margin: 12px 0; padding: 18px; border: 1px dashed var(--cat-linea-fuerte); border-radius: 14px; color: var(--cat-texto-2); text-align: center; }
+
+/* Cambio suave al buscar o filtrar (sin bloquear clics) */
+@keyframes catalogo-refresco { from { opacity: .35; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+#catalogo-seccion .catalogo-refresco .card-servicio:not(.ocultar-card) { animation: catalogo-refresco 220ms var(--cat-curva) both; }
+
+@media (prefers-reduced-motion: reduce) {
+    #catalogo-seccion *, #catalogo-seccion { animation: none !important; transition: none !important; }
+    #catalogo-seccion .card-servicio .foto-corte img { opacity: 1; }
+    #catalogo-seccion .card-servicio:hover, #catalogo-seccion .card-servicio:hover .foto-corte img { transform: none !important; }
+}
+
+/* ---------- Prioridad sobre las capas anteriores (app-shell.css usa !important en el catálogo) ---------- */
+#catalogo-seccion { display: block !important; padding-inline: 0 !important; }   /* el margen lateral lo pone .booking-layout */
+#catalogo-seccion > * { max-width: none; }
+#catalogo-seccion .categorias-chips { display: flex !important; }
+#catalogo-seccion .catalogo-herramientas { display: flex !important; }
+#catalogo-seccion .catalogo-resultados { font-size: 13px !important; }
+#catalogo-seccion .grid-servicios { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 12px !important; }
+@media (max-width: 359px) { #catalogo-seccion .grid-servicios { grid-template-columns: minmax(0, 1fr) !important; } }
+@media (min-width: 640px) { #catalogo-seccion .grid-servicios { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)) !important; gap: 18px !important; } }
+@media (min-width: 1100px) { #catalogo-seccion .grid-servicios { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)) !important; gap: 22px !important; } }
+#catalogo-seccion .card-servicio { background: var(--cat-tarjeta) !important; border: 1px solid var(--cat-linea) !important; border-radius: 16px !important; box-shadow: none !important; transform: none !important; }
+/* La foto ocupa su marco 6:5 (antes la propia imagen se recortaba a 1.18 centrada y perdía la parte alta del peinado) */
+#catalogo-seccion .card-servicio .foto-corte img { aspect-ratio: auto !important; width: 100% !important; height: 100% !important; object-fit: cover !important; object-position: 50% 0% !important; }
+#catalogo-seccion .card-servicio .foto-corte.foto-contener img { object-fit: contain !important; object-position: 50% 50% !important; }
+#catalogo-seccion .card-servicio .card-info { padding: 12px !important; }
+#catalogo-seccion .card-servicio .card-info h3 { font-size: 15px !important; margin: 0 !important; }
+#catalogo-seccion .card-servicio .corte-descripcion { font-size: 12.5px !important; line-height: 1.45 !important; min-height: 0; }
+#catalogo-seccion .card-servicio .precio-tag { color: var(--cat-oro) !important; font-size: 17px !important; }
+#catalogo-seccion .card-servicio .corte-tarifa { margin: auto 0 0 !important; }
+#catalogo-seccion .card-servicio .btn-ver-detalle { color: var(--cat-texto-2) !important; text-align: center; }
+@media (min-width: 640px) {
+    #catalogo-seccion .card-servicio .card-info { padding: 14px 16px 16px !important; }
+    #catalogo-seccion .card-servicio .card-info h3 { font-size: 16px !important; }
+    #catalogo-seccion .card-servicio .precio-tag { font-size: 18px !important; }
+    #catalogo-seccion .card-servicio .corte-acciones { flex-direction: row !important; }
+}
+@media (hover: hover) and (pointer: fine) {
+    #catalogo-seccion .card-servicio:hover { transform: translateY(-3px) !important; box-shadow: 0 14px 30px #00000066 !important; border-color: var(--cat-linea-fuerte) !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+    #catalogo-seccion .card-servicio:hover { transform: none !important; }
+}
+#catalogo-seccion .seccion-subtitulo { font-size: 16px !important; }
+#catalogo-seccion .card-servicio .btn-ver-detalle { min-height: 44px !important; }
+#catalogo-seccion .catalogo-herramientas { align-items: center !important; }
+/* La foto llena su marco 6:5 en cualquier contexto (otras capas convierten el marco en grid) */
+#catalogo-seccion .card-servicio .foto-corte { display: block !important; position: relative !important; }
+#catalogo-seccion .card-servicio .foto-corte img { position: absolute !important; inset: 0 !important; }

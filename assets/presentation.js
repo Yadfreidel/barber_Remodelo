@@ -13,7 +13,7 @@ function actualizarSeleccionVisual() {
     document.querySelectorAll('.btn-card-reserva').forEach(boton => {
         const seleccionado = boton.dataset.nombre === servicio;
         boton.setAttribute('aria-pressed', String(seleccionado));
-        boton.textContent = seleccionado ? '✓ Seleccionado' : 'Elegir y reservar';
+        boton.textContent = seleccionado ? '✓ Elegido' : 'Elegir';
     });
     document.querySelectorAll('.btn-seleccionar-barbero').forEach(boton => {
         boton.setAttribute('aria-pressed', String(boton.closest('.card-barbero').classList.contains('barbero-activo')));

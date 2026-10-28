@@ -151,10 +151,10 @@ function renderizarServicios() {
                 <h3>${escapar(servicio.nombre)}</h3>
                 <p class="corte-descripcion">${escapar(servicio.descripcion)}</p>
                 <div class="corte-tarifa"><span class="precio-tag">${escapar(formatoPrecioServicio(servicio.precio))}</span>
-                ${servicio.duracion_minutos ? `<span class="duracion-servicio">${servicio.duracion_minutos} min</span>` : ''}</div>
+                ${servicio.duracion_minutos ? `<span class="duracion-servicio"><i class="fa-regular fa-clock" aria-hidden="true"></i> ${servicio.duracion_minutos} min</span>` : ''}</div>
                 <div class="corte-acciones">
                     <button type="button" class="btn-ver-detalle" data-detalle="${escapar(servicio.id)}" aria-label="Ver detalles de ${escapar(servicio.nombre)}">Ver detalles <span aria-hidden="true">&#8599;</span></button>
-                    <button type="button" class="btn-card-reserva" data-nombre="${escapar(servicio.nombre)}" aria-pressed="${seleccionAnterior === servicio.nombre}">${seleccionAnterior === servicio.nombre ? '&#10003; Seleccionado' : 'Elegir y reservar'}</button>
+                    <button type="button" class="btn-card-reserva" data-nombre="${escapar(servicio.nombre)}" aria-label="Elegir ${escapar(servicio.nombre)}" aria-pressed="${seleccionAnterior === servicio.nombre}">${seleccionAnterior === servicio.nombre ? '&#10003; Elegido' : 'Elegir'}</button>
                 </div>
             </div>`;
         gridServicios.appendChild(card);
@@ -540,7 +540,10 @@ function aplicarFiltro(cat) {
         tarjeta.classList.toggle('ocultar-card', !mostrar);
         if (mostrar) visibles++;
     });
-    document.getElementById('catalogo-vacio').hidden = visibles > 0;
+    const vacio = document.getElementById('catalogo-vacio');
+    vacio.hidden = visibles > 0;
+    // Sin cortes publicados no es «sin resultados de búsqueda»
+    vacio.textContent = servicios.length ? 'No encontramos cortes con esa búsqueda. Prueba otro nombre o categoría.' : 'El catálogo no está disponible por ahora. Vuelve a intentarlo más tarde.';
     document.getElementById('catalogo-resultados').textContent = `${visibles} ${visibles === 1 ? 'corte disponible' : 'cortes disponibles'}`;
     botonesFiltro.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.categoria === cat)));
 }

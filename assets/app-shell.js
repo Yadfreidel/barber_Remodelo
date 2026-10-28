@@ -62,8 +62,35 @@ function categories() {
     const previous=$('category-select').value;
     $('category-select').innerHTML='<option value="todos">Todos los estilos</option>' + [...new Set(obtenerServicios().map(s=>s.categoria))].filter(Boolean).map(c=>`<option value="${escapar(c)}">${escapar(c)}</option>`).join('');
     if([...$('category-select').options].some(o=>o.value===previous))$('category-select').value=previous;
+    categoryChips();
     updateHours();wizard.render();
 }
+// Categorías como botones (las reales del catálogo). El selector sigue siendo la fuente del filtro:
+// pulsar un botón cambia su valor y dispara el mismo «change» que filtra las tarjetas.
+const chips = $('categorias-chips');
+function categoryChips() {
+    if(!chips)return;
+    const actual=$('category-select').value;
+    chips.innerHTML=[...$('category-select').options].map(o=>`<button type="button" class="chip-categoria" data-categoria-chip="${escapar(o.value)}" aria-pressed="${o.value===actual}">${o.value==='todos'?'Todos':escapar(o.textContent)}</button>`).join('');
+}
+function syncChips() {
+    const actual=$('category-select').value;
+    chips?.querySelectorAll('[data-categoria-chip]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.categoriaChip===actual)));
+}
+chips?.addEventListener('click',event=>{
+    const boton=event.target.closest('[data-categoria-chip]');
+    if(!boton||boton.getAttribute('aria-pressed')==='true')return;
+    $('category-select').value=boton.dataset.categoriaChip;
+    $('category-select').dispatchEvent(new Event('change',{bubbles:true}));
+    // La categoría elegida queda a la vista dentro de la fila, sin mover la página
+    const izq=boton.getBoundingClientRect().left-chips.getBoundingClientRect().left+chips.scrollLeft;
+    if(izq<chips.scrollLeft||izq+boton.offsetWidth>chips.scrollLeft+chips.clientWidth)chips.scrollTo({left:izq-16,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+});
+// Cambio suave de resultados al buscar o filtrar (solo presentación)
+const gridCortes=$('grid-dinamico-servicios');
+function refrescarCortes(){ gridCortes?.classList.remove('catalogo-refresco'); void gridCortes?.offsetWidth; gridCortes?.classList.add('catalogo-refresco'); }
+$('category-select').addEventListener('change',()=>{ syncChips(); refrescarCortes(); });
+$('buscar-corte')?.addEventListener('input',refrescarCortes);
 function updateHours() {
     const general=obtenerConfigModulos().general;
     let text='Horario no disponible. Consulta con la barbería.';

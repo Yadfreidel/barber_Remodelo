@@ -1,6 +1,7 @@
 import { ANCHOS_INTER } from './fonts/inter-widths.js';
 import { IDENTIDAD_BARBERIA } from './business-identity.js';
 
+const COLOR_TARJETA = '#168bff';
 const limpio = valor => typeof valor === 'string' || typeof valor === 'number'
     ? String(valor).replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim() : '';
 const xml = valor => String(valor).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' }[c]));
@@ -56,6 +57,8 @@ export function datosTarjeta(cita, opciones = {}) {
         negocio: limpio(opciones.identidad?.nombre) || IDENTIDAD_BARBERIA.nombre,
         logo: opciones.identidad?.logo || IDENTIDAD_BARBERIA.logo,
         ubicacion: limpio(opciones.identidad?.ubicacion ?? IDENTIDAD_BARBERIA.ubicacion),
+        // Color principal de la identidad (ya validado como legible al publicarse); sin él, el azul original
+        color: /^#[0-9a-f]{6}$/i.test(opciones.identidad?.color || '') ? opciones.identidad.color : COLOR_TARJETA,
         nombre, servicios, profesional, fecha, hora, titulo, etiqueta, mensaje, zona,
         referencia: limpio(cita.referencia ?? cita.id),
         enlace: enlaceGestionSeguro(opciones.urlPublica, opciones.token),
@@ -106,7 +109,7 @@ export function layoutTarjeta(datos, logo = '') {
     if (datos.ficticia) { texto('VISTA PREVIA · DATOS FICTICIOS', 25, '#70baff', 700); y += 24; }
     if (logo) { elementos.push({ tipo: 'logo', href: logo, x: 72, y: y - 30, width: 180, height: 100 }); y += 105; }
     texto(datos.negocio, 48, '#ffffff', 700); y += 36;
-    texto(datos.titulo, 52, '#168bff', 700); y += 16;
+    texto(datos.titulo, 52, datos.color || COLOR_TARJETA, 700); y += 16;
     texto(datos.etiqueta, 30, '#bddfff', 600); y += 34;
     elementos.push({ tipo: 'linea', y }); y += 52;
     const campos = [['CLIENTE', datos.nombre], ['SERVICIO', datos.servicios.join(' · ')], ['PROFESIONAL', datos.profesional], ['FECHA', datos.fecha], ['HORA', datos.hora], ['UBICACIÓN', datos.ubicacion], ['REFERENCIA', datos.referencia]];
@@ -118,11 +121,11 @@ export function layoutTarjeta(datos, logo = '') {
     elementos.push({ tipo: 'linea', y }); y += 52;
     texto('Gracias por elegirnos.', 34, '#ffffff', 600);
     texto('Será un placer recibirte', 34, '#bccbd6');
-    return { width: 1080, height: Math.ceil(y + 60), elementos };
+    return { width: 1080, height: Math.ceil(y + 60), elementos, color: datos.color || COLOR_TARJETA };
 }
 export function svgTarjeta(layout) {
     return `<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="${layout.height}" viewBox="0 0 1080 ${layout.height}">
-    <rect width="1080" height="${layout.height}" fill="#0a0e11"/><rect width="1080" height="12" fill="#168bff"/>
+    <rect width="1080" height="${layout.height}" fill="#0a0e11"/><rect width="1080" height="12" fill="${xml(layout.color || COLOR_TARJETA)}"/>
     ${layout.elementos.map(e => e.tipo === 'texto' ? `<text x="${e.x}" y="${e.y}" font-family="Inter" font-size="${e.size}" font-weight="${e.weight}" fill="${e.fill}">${xml(e.texto)}</text>` : e.tipo === 'linea' ? `<path d="M72 ${e.y}H1008" stroke="#364149" stroke-width="2"/>` : `<image href="${xml(e.href)}" x="${e.x}" y="${e.y}" width="${e.width}" height="${e.height}" preserveAspectRatio="xMinYMid meet"/>`).join('')}
     </svg>`;
 }

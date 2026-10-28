@@ -7,6 +7,7 @@ import {
     fechaHora, ESTADOS, etiquetaEstado, dialogo, confirmar, ejecutar, descargarCSV, telefonoWhatsApp, vacio
 } from './comun.js';
 import { abrirCobroDeCita, abrirVenta } from './ventas.js';
+import { ayuda } from '../../assets/ayuda.js';
 
 const estado = {
     vista: window.matchMedia('(max-width: 760px)').matches ? 'lista' : 'dia',
@@ -68,7 +69,13 @@ export async function renderAgenda(cont, ctx, opciones = {}) {
 
     cont.innerHTML = `
         <div class="panel-encabezado">
-            <div><h2>Agenda</h2><p class="panel-sub">${esAdmin ? 'Todas las citas del negocio' : `Agenda de ${esc(ctx.barbero_nombre || 'tu cuenta')}`}</p></div>
+            <div><div class="titulo-con-ayuda"><h2>Agenda</h2>${ayuda('Estados de las citas', `<ul class="ayuda-estados">
+                <li><strong>Pendiente:</strong> reservada y aún sin confirmar por la barbería.</li>
+                <li><strong>Confirmada:</strong> la barbería la confirmó.</li>
+                <li><strong>Completada:</strong> marcada como atendida; «Pagada» indica que se registró el cobro.</li>
+                <li><strong>No asistió:</strong> el cliente no acudió.</li>
+                <li><strong>Cancelada:</strong> anulada; su horario queda libre.</li></ul>
+                <p>Las citas pendientes y confirmadas ocupan el horario del barbero durante toda la duración del servicio; ninguna otra reserva puede solaparse.</p>`)}</div><p class="panel-sub">${esAdmin ? 'Todas las citas del negocio' : `Agenda de ${esc(ctx.barbero_nombre || 'tu cuenta')}`}</p></div>
             ${esAdmin ? '<button type="button" class="panel-btn panel-btn-principal" data-nueva><i class="fas fa-plus"></i> Nueva cita</button>' : ''}
         </div>
         <div class="agenda-barra">

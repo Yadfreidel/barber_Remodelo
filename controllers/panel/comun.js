@@ -31,6 +31,9 @@ const MENSAJES = {
     usuario_no_encontrado: 'No existe una cuenta con ese correo. Créala con «Habilitar acceso» y una contraseña temporal.',
     cliente_invalido: 'Revisa nombre, teléfono y correo del cliente.',
     telefono_invalido: 'Teléfono no válido.',
+    'negocio_invalido: color': 'Los colores deben ser legibles sobre el fondo de la web (contraste mínimo 4.5:1).',
+    'negocio_invalido: correo': 'Revisa el correo de contacto.',
+    'negocio_invalido: politicas': 'Cada política admite hasta 1200 caracteres.',
     negocio_invalido: 'Revisa los datos del negocio (teléfonos, enlaces https:// e imágenes).',
     plantilla_invalida: 'El texto es obligatorio y el nombre de plantilla de Meta solo admite minúsculas, números y guiones bajos.',
     regla_invalida: 'Algún valor de las reglas está fuera de rango.',
@@ -236,7 +239,18 @@ export function dialogo({ titulo, html, ancho = 'md', cabecera = null, clase = '
         document.removeEventListener('keydown', tecla);
         anterior?.focus?.();
     };
-    const tecla = e => { if (e.key === 'Escape') cerrar(); };
+    const tecla = e => {
+        if (e.key === 'Escape') { cerrar(); return; }
+        // Tab circula dentro del diálogo (el contenido de detrás no recibe foco)
+        if (e.key !== 'Tab' || !fondo.isConnected || fondo !== [...document.querySelectorAll('.panel-dialogo-fondo')].at(-1)) return;
+        const enfocables = [...fondo.querySelectorAll('a[href],button:not([disabled]),input:not([disabled]):not([type=hidden]),select:not([disabled]),textarea:not([disabled]),summary,[tabindex]:not([tabindex="-1"])')]
+            .filter(el => el.getClientRects().length);
+        if (!enfocables.length) return;
+        const [primero, ultimo] = [enfocables[0], enfocables.at(-1)];
+        if (!fondo.contains(document.activeElement)) { e.preventDefault(); primero.focus(); }
+        else if (e.shiftKey && document.activeElement === primero) { e.preventDefault(); ultimo.focus(); }
+        else if (!e.shiftKey && document.activeElement === ultimo) { e.preventDefault(); primero.focus(); }
+    };
     fondo.addEventListener('click', e => { if (e.target === fondo || e.target.closest('[data-cerrar]')) cerrar(); });
     document.addEventListener('keydown', tecla);
     document.body.appendChild(fondo);

@@ -39,6 +39,7 @@
 <link rel="stylesheet" href="assets/css/portafolio-reclamaciones.css">
 <link rel="stylesheet" href="assets/css/cuentas-avisos.css">
 <link rel="stylesheet" href="assets/css/panel-tema.css">
+<link rel="stylesheet" href="assets/css/accesibilidad-ayuda.css">
 </head>
 <body>
 
@@ -180,8 +181,15 @@
                     <label for="fecha" class="label-fijo">1. Selecciona el Día:</label>
                     <input type="date" id="fecha" required>
 
-                    <label class="label-fijo label-horas">2. Horas Disponibles:</label>
-                    <div id="contenedor-horas" class="grid-horas">
+                    <div class="label-con-ayuda"><p class="label-fijo label-horas" id="horas-titulo">2. Horas Disponibles:</p><button type="button" class="ayuda-boton" aria-expanded="false" aria-controls="ayuda-horas" aria-label="Ayuda: cómo se calculan las horas disponibles"><i class="fas fa-circle-question" aria-hidden="true"></i></button></div>
+                    <div class="ayuda-panel" id="ayuda-horas" hidden>
+                        <p class="ayuda-titulo">Cómo se calculan las horas</p>
+                        <p>Solo puedes elegir horas en las que tu servicio completo cabe en la jornada del barbero, sin cruzarse con otras citas pendientes o confirmadas, sus descansos ni los bloqueos de la barbería.</p>
+                        <p>Aparecen como «No disponible» las horas ocupadas y las que no cumplen la anticipación mínima o el plazo máximo de reserva; las ya pasadas dicen «Ya pasó». Todas las horas son de República Dominicana.</p>
+                        <p>La hora no queda apartada hasta que confirmas. Si otra persona la reserva antes, te mostraremos horas libres cercanas y tus datos se conservan.</p>
+                    </div>
+                    <p id="horas-anuncio" class="sr-only" role="status" aria-live="polite"></p>
+                    <div id="contenedor-horas" class="grid-horas" role="group" aria-labelledby="horas-titulo">
                         <p class="placeholder-horas">Por favor, selecciona una fecha primero...</p>
                     </div>
                 </div>
@@ -201,6 +209,7 @@
                 </div>
                 </div>
 
+                <section id="politicas-reserva" class="politicas-reserva" aria-labelledby="politicas-reserva-titulo" hidden></section>
                 <p id="wizard-error" role="alert"></p>
                 <div class="wizard-actions"><button type="button" id="step-back">Anterior</button><button type="button" id="step-next" class="btn-primary">Continuar <span aria-hidden="true">→</span></button></div>
                 <button type="submit" class="btn-submit">
@@ -253,8 +262,8 @@
     <!-- ==========================================
          BOTÓN ADMIN FLOTANTE
          ========================================== -->
-    <button id="btn-flotante-admin" class="btn-admin-flotante" title="Panel de Administración">
-        <i class="fas fa-user-shield"></i>
+    <button id="btn-flotante-admin" class="btn-admin-flotante" title="Panel de Administración" aria-label="Acceso administrativo">
+        <i class="fas fa-user-shield" aria-hidden="true"></i>
     </button>
 
     <!-- ==========================================

@@ -8,7 +8,7 @@ import { estaSupabaseListo } from './supabaseClient.js';
 import { inicializarUbicacionCliente } from '../controllers/ubicacionController.js';
 import { cargarBarberosServidor, aplicarNegocioPublico } from '../controllers/publicoController.js';
 import { inicializarModulosCliente, horariosDiaServidor, obtenerConfigModulos, mensajeError } from '../controllers/modulosController.js';
-import { hoyRD, formato12h, rango12h, franja, FRANJAS, cuadricula } from './horario-utils.js';
+import { hoyRD, formato12h, rango12h, franja, FRANJAS, cuadricula, fechaLarga } from './horario-utils.js';
 import { leerBorrador, guardarBorrador } from './mis-citas-store.js';
 import { abrirPerfilBarbero } from '../controllers/perfilBarberoController.js';
 
@@ -231,34 +231,55 @@ function renderizarStaff() {
 // ==========================================
 // El intervalo de inicio no es la duración: cada píldora muestra inicio y fin del servicio elegido.
 let turnoPildoras = 0;
+// Hora elegida entre las alternativas: se marca al pintar el día solo si sigue libre
+let horaPreferida = null;
 
-function mensajeHoras(texto, conReintento = false) {
+// Resultado breve para lectores de pantalla (región de estado educada: no interrumpe)
+function anunciarHoras(texto) {
+    const region = document.getElementById('horas-anuncio');
+    if (!region) return;
+    region.textContent = '';
+    setTimeout(() => { region.textContent = texto; }, 50);
+}
+
+function mensajeHoras(texto, conReintento = false, anunciar = false) {
     contenedorHoras.classList.remove('horas-agrupadas');
     contenedorHoras.innerHTML = `<p class="placeholder-horas">${texto}</p>${conReintento ? '<button type="button" class="btn-reintentar-horas">Reintentar</button>' : ''}`;
     contenedorHoras.querySelector('.btn-reintentar-horas')?.addEventListener('click', generarPildorasDeTiempo);
+    if (anunciar) anunciarHoras(contenedorHoras.querySelector('.placeholder-horas').textContent);
 }
 
+function seleccionarPildora(pildora) {
+    contenedorHoras.querySelectorAll('.pildora-hora:not(.deshabilitada)').forEach(p => { p.classList.remove('pildora-activa'); p.setAttribute('aria-pressed', 'false'); });
+    pildora.classList.add('pildora-activa');
+    pildora.setAttribute('aria-pressed', 'true');
+    inputHora.value = pildora.dataset.hora;
+    guardarSeleccion();
+}
+
+// Devuelve el día pintado (o null si no se pintó: sin datos, error o una consulta más reciente lo reemplazó)
 export async function generarPildorasDeTiempo() {
-    if (!contenedorHoras) return;
+    if (!contenedorHoras) return null;
     const turno = ++turnoPildoras;
     inputHora.value = '';
     contenedorHoras.setAttribute('aria-busy', 'false');
 
     if (!inputFecha || !inputFecha.value) {
         mensajeHoras('Por favor, selecciona una fecha primero...');
-        return;
+        return null;
     }
     const fechaSeleccionada = inputFecha.value;
     const barberoNombre = inputBarbero ? inputBarbero.value : '';
     const servicioNombre = selectServicios ? selectServicios.value : '';
     if (!servicioNombre || !barberoNombre) {
         mensajeHoras('Elige primero el servicio y el barbero para ver sus horas disponibles.');
-        return;
+        return null;
     }
 
     contenedorHoras.setAttribute('aria-busy', 'true');
     contenedorHoras.classList.remove('horas-agrupadas');
-    contenedorHoras.innerHTML = '<span class="motion-skeleton skeleton-hora" aria-hidden="true"></span>'.repeat(6);
+    contenedorHoras.innerHTML = '<p class="placeholder-horas horas-cargando">Consultando horas disponibles…</p>'
+        + '<span class="motion-skeleton skeleton-hora" aria-hidden="true"></span>'.repeat(6);
 
     let dia;
     try {
@@ -273,53 +294,60 @@ export async function generarPildorasDeTiempo() {
                     duracion: servicio?.duracion_minutos || 30, fecha: fechaSeleccionada }) };
         }
     } catch (error) {
-        if (turno !== turnoPildoras) return;
+        if (turno !== turnoPildoras) return null;
         contenedorHoras.setAttribute('aria-busy', 'false');
         // Nunca se muestran horas como libres si no se pudo comprobar la disponibilidad
-        mensajeHoras(`No pudimos cargar las horas disponibles (${escapar(mensajeError(error))}). Revisa tu conexión.`, true);
-        return;
+        mensajeHoras(`No pudimos cargar las horas disponibles (${escapar(mensajeError(error))}). Revisa tu conexión y pulsa «Reintentar».`, true, true);
+        return null;
     }
 
     // Solo pinta la última llamada (evita píldoras duplicadas por llamadas concurrentes)
-    if (turno !== turnoPildoras) return;
+    if (turno !== turnoPildoras) return null;
     contenedorHoras.setAttribute('aria-busy', 'false');
 
     if (!dia.abierto) {
         mensajeHoras(dia.motivo === 'no_realiza_servicio'
             ? 'Este barbero no realiza el servicio elegido. Prueba con otro barbero.'
-            : 'La barbería no atiende ese día. Elige otra fecha.');
+            : 'La barbería no atiende ese día. Elige otra fecha.', false, true);
         horaDelBorrador = null;
-        return;
+        horaPreferida = null;
+        return dia;
     }
     if (!dia.horas.some(h => h.estado === 'libre')) {
-        mensajeHoras('No quedan horas disponibles ese día. Prueba otra fecha u otro barbero.');
+        mensajeHoras('No quedan horas disponibles ese día. Prueba otra fecha u otro barbero.', false, true);
         horaDelBorrador = null;
-        return;
+        horaPreferida = null;
+        return dia;
     }
 
+    // Cada estado lleva texto visible además del color: disponible (hora de fin), elegida (✓) y no disponible
+    const libres = dia.horas.filter(h => h.estado === 'libre').length;
     contenedorHoras.classList.add('horas-agrupadas');
     contenedorHoras.innerHTML = `<p class="horas-ayuda">Duración del servicio: ${Number(dia.duracion_minutos)} min · horas de República Dominicana</p>`
+        + `<ul class="horas-leyenda" aria-label="Leyenda"><li><span class="muestra muestra-libre" aria-hidden="true"></span>Disponible</li>`
+        + `<li><span class="muestra muestra-elegida" aria-hidden="true">✓</span>Elegida</li><li><span class="muestra muestra-ocupada" aria-hidden="true"></span>No disponible</li></ul>`
         + FRANJAS.map(([clave, titulo]) => {
             const horas = dia.horas.filter(h => franja(h.inicio) === clave);
             if (!horas.length) return '';
-            return `<div class="franja-horas"><h4>${titulo}</h4><div class="grid-horas">${horas.map(h => {
-                const texto = rango12h(h.inicio, h.fin);
-                const motivo = h.estado === 'pasada' ? 'Hora pasada' : h.estado === 'libre' ? '' : 'No disponible';
-                return `<button type="button" class="pildora-hora${h.estado === 'libre' ? '' : ' deshabilitada'}" data-hora="${escapar(h.inicio)}"
-                    ${h.estado === 'libre' ? '' : `disabled title="${motivo}"`} aria-label="${escapar(texto)}${motivo ? `, ${motivo.toLowerCase()}` : ''}">
-                    <span>${escapar(formato12h(h.inicio))}</span><small>a ${escapar(formato12h(h.fin))}</small></button>`;
+            return `<div class="franja-horas" role="group" aria-label="${titulo}"><h4 aria-hidden="true">${titulo}</h4><div class="grid-horas">${horas.map(h => {
+                const libre = h.estado === 'libre';
+                const motivo = h.estado === 'pasada' ? 'Ya pasó' : 'No disponible';
+                return `<button type="button" class="pildora-hora${libre ? '' : ' deshabilitada'}" data-hora="${escapar(h.inicio)}"
+                    ${libre ? 'aria-pressed="false"' : 'disabled'}>
+                    <span>${escapar(formato12h(h.inicio))}</span><small>${libre ? `a ${escapar(formato12h(h.fin))}` : `<span class="sr-only">, </span>${motivo}`}</small></button>`;
             }).join('')}</div></div>`;
         }).join('');
+    anunciarHoras(`${libres} ${libres === 1 ? 'hora disponible' : 'horas disponibles'} el ${fechaLarga(fechaSeleccionada)} con ${barberoNombre}.`);
 
     contenedorHoras.querySelectorAll('.pildora-hora:not(.deshabilitada)').forEach(pildora => {
-        pildora.addEventListener('click', () => {
-            contenedorHoras.querySelectorAll('.pildora-hora').forEach(p => { p.classList.remove('pildora-activa'); p.removeAttribute('aria-pressed'); });
-            pildora.classList.add('pildora-activa');
-            pildora.setAttribute('aria-pressed', 'true');
-            inputHora.value = pildora.dataset.hora;
-            guardarSeleccion();
-        });
+        pildora.addEventListener('click', () => seleccionarPildora(pildora));
     });
+
+    if (horaPreferida) {
+        const pildora = contenedorHoras.querySelector(`.pildora-hora[data-hora="${horaPreferida}"]:not(.deshabilitada)`);
+        horaPreferida = null;
+        if (pildora) seleccionarPildora(pildora);
+    }
 
     // Hora guardada en el borrador: solo se recupera si sigue libre
     if (horaDelBorrador) {
@@ -330,10 +358,115 @@ export async function generarPildorasDeTiempo() {
         } else contenedorHoras.insertAdjacentHTML('afterbegin', `<p class="resumen-alerta" role="alert">La hora ${escapar(formato12h(horaDelBorrador))} de tu borrador ya no está disponible. Elige otra.</p>`);
         horaDelBorrador = null;
     }
+    return dia;
 }
 
 // Exponer globalmente para refrescar tras choques de reservas
 window.generarPildorasDeTiempo = generarPildorasDeTiempo;
+
+// ==========================================
+// HORARIO OCUPADO AL CONFIRMAR: ALTERNATIVAS
+// ==========================================
+// Hasta tres horas libres reales del mismo barbero y servicio, las más cercanas a la perdida
+// (ese día y, si no alcanzan, los siguientes). Nada se cambia ni se reserva sin que el cliente elija y confirme;
+// reservar_cita vuelve a validar la alternativa al guardar.
+const DIAS_BUSQUEDA = 7;
+let turnoAlternativas = 0;
+
+function sumarDiasFecha(fecha, dias) {
+    const [a, m, d] = fecha.split('-').map(Number);
+    return new Date(Date.UTC(a, m - 1, d + dias)).toISOString().slice(0, 10);
+}
+const aMinutos = h => Number(h.slice(0, 2)) * 60 + Number(h.slice(3, 5));
+const libresDe = dia => (dia?.abierto ? dia.horas.filter(h => h.estado === 'libre') : []);
+
+function cajaAlternativas() {
+    let caja = document.getElementById('alternativas-horario');
+    if (!caja) {
+        caja = document.createElement('section');
+        caja.id = 'alternativas-horario';
+        caja.className = 'alternativas-horario';
+        caja.setAttribute('aria-labelledby', 'alternativas-titulo');
+        formulario.insertBefore(caja, document.getElementById('wizard-error'));
+    }
+    return caja;
+}
+
+export function quitarAlternativas() {
+    turnoAlternativas++;
+    document.getElementById('alternativas-horario')?.remove();
+}
+
+export async function ofrecerAlternativasHorario(fecha, horaPerdida) {
+    const turno = ++turnoAlternativas;
+    const servicio = selectServicios.value;
+    const barbero = inputBarbero.value;
+    const caja = cajaAlternativas();
+    const perdida = `${fechaLarga(fecha)}, ${formato12h(horaPerdida)}`;
+    caja.innerHTML = `<h4 id="alternativas-titulo" tabindex="-1">Ese horario se ocupó mientras confirmabas</h4>
+        <p>La hora del ${escapar(perdida)} con ${escapar(barbero)} ya no está libre. No se reservó nada y tus datos siguen aquí.</p>
+        <p class="alternativas-estado">Buscando horas libres cercanas…</p>`;
+    caja.querySelector('h4').focus({ preventScroll: false });
+
+    // Refresca las horas del día elegido con el estado actual del servidor
+    let dia = inputFecha.value === fecha ? await generarPildorasDeTiempo() : null;
+    const opciones = [];
+    let fallo = false;
+    try {
+        if (!dia) dia = await horariosDiaServidor(servicio, barbero, fecha);
+        const objetivo = aMinutos(horaPerdida);
+        opciones.push(...libresDe(dia).sort((x, y) => Math.abs(aMinutos(x.inicio) - objetivo) - Math.abs(aMinutos(y.inicio) - objetivo))
+            .slice(0, 3).sort((x, y) => x.inicio.localeCompare(y.inicio)).map(h => ({ ...h, fecha })));
+        for (let i = 1; opciones.length < 3 && i <= DIAS_BUSQUEDA; i++) {
+            if (turno !== turnoAlternativas) return;
+            const otra = sumarDiasFecha(fecha, i);
+            opciones.push(...libresDe(await horariosDiaServidor(servicio, barbero, otra)).slice(0, 3 - opciones.length).map(h => ({ ...h, fecha: otra })));
+        }
+    } catch { fallo = true; }
+    if (turno !== turnoAlternativas || !caja.isConnected) return;
+
+    const estado = caja.querySelector('.alternativas-estado');
+    if (fallo && !opciones.length) {
+        estado.innerHTML = 'No pudimos buscar alternativas por un problema de conexión. Elige otra hora, día o barbero con los botones de abajo.';
+    } else if (!opciones.length) {
+        estado.textContent = `No encontramos horas libres con ${barbero} en los próximos ${DIAS_BUSQUEDA} días. Prueba otro día o barbero.`;
+    } else {
+        estado.textContent = `Horas libres cercanas con ${barbero}. Elige una y pulsa «Confirmar cita»; se volverá a comprobar al guardar.`;
+        estado.insertAdjacentHTML('afterend', `<div class="alternativas-lista" role="group" aria-label="Horas alternativas">${opciones.map(o =>
+            `<button type="button" class="alternativa" aria-pressed="false" data-fecha="${escapar(o.fecha)}" data-hora="${escapar(o.inicio)}" data-fin="${escapar(o.fin)}">
+                <span>${escapar(fechaLarga(o.fecha))}</span><strong>${escapar(rango12h(o.inicio, o.fin))}</strong></button>`).join('')}</div>`);
+    }
+    caja.insertAdjacentHTML('beforeend', `<div class="alternativas-otras">
+        <button type="button" class="btn-secundario-reserva" data-ir-paso="2">Ver otras horas o días</button>
+        <button type="button" class="btn-secundario-reserva" data-ir-paso="1">Elegir otro barbero</button></div>
+        <p class="alternativas-confirmada" role="status"></p>`);
+
+    caja.querySelectorAll('.alternativa').forEach(boton => boton.addEventListener('click', async () => {
+        caja.querySelectorAll('.alternativa').forEach(b => b.setAttribute('aria-pressed', 'false'));
+        const aviso = caja.querySelector('.alternativas-confirmada');
+        const { fecha: nuevaFecha, hora } = boton.dataset;
+        horaPreferida = hora;
+        if (inputFecha.value !== nuevaFecha) inputFecha.value = nuevaFecha;
+        await generarPildorasDeTiempo();
+        if (inputHora.value === hora && inputFecha.value === nuevaFecha) {
+            boton.setAttribute('aria-pressed', 'true');
+            inputHora.dispatchEvent(new Event('change', { bubbles: true })); // resumen y total de la reserva
+            document.querySelector('.alerta-cita')?.remove();
+            aviso.textContent = `Elegiste ${fechaLarga(nuevaFecha)}, ${rango12h(hora, boton.dataset.fin)}. Revisa el resumen y pulsa «Confirmar cita».`;
+        } else {
+            boton.disabled = true;
+            aviso.textContent = 'Esa hora también acaba de ocuparse. Elige otra opción.';
+        }
+    }));
+    caja.querySelectorAll('[data-ir-paso]').forEach(boton => boton.addEventListener('click', () => {
+        const paso = Number(boton.dataset.irPaso);
+        quitarAlternativas();
+        window.dispatchEvent(new CustomEvent('ir-paso-reserva', { detail: paso }));
+        (paso === 2 ? inputFecha : document.querySelector('.card-barbero.barbero-activo .btn-seleccionar-barbero, .btn-seleccionar-barbero'))?.focus();
+    }));
+}
+window.ofrecerAlternativasHorario = ofrecerAlternativasHorario;
+formulario?.addEventListener('reset', quitarAlternativas);
 
 // ==========================================
 // SELECCIÓN DE BARBERO

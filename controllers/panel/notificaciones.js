@@ -4,6 +4,7 @@
 // ==========================================
 
 import { api, esc, fechaHora, vacio } from './comun.js';
+import { ayuda } from '../../assets/ayuda.js';
 import { desbloquearSonido, reproducirSonido, sonidoBloqueado, fijarPreferencias, preferenciasActuales, estadoPush,
     activarPush, desactivarPushDispositivo, comprobarDispositivo, consultarAhora } from './avisos.js';
 
@@ -94,7 +95,9 @@ async function pintarPreferencias(caja, ctx) {
             : prueba.envios.some(e => e === 'fallido' || e === 'vencido') ? 'la última prueba falló al enviarse.'
             : 'la última prueba está en cola: el servidor aún no la ha enviado (envío push sin configurar o pendiente).')
         : '';
-    caja.innerHTML = `<h3>Avisos y sonido</h3>
+    caja.innerHTML = `<div class="titulo-con-ayuda"><h3>Avisos y sonido</h3>${ayuda('Permisos de notificaciones', `<p>«Activar avisos y sonido» pide al navegador permiso para mostrar notificaciones y registra este dispositivo para recibirlas con la app cerrada.</p>
+            <p>Si el permiso aparece como <strong>bloqueado</strong>, la app ya no puede volver a pedirlo: actívalo en los ajustes del sitio del navegador (en Chrome, el icono junto a la dirección › Notificaciones › Permitir; en iPhone, Ajustes › Notificaciones › la app de la barbería) y vuelve a pulsar el botón.</p>
+            <p>Cada dispositivo se activa por separado. Un aviso solo informa: no confirma, cobra ni cancela citas.</p>`)}</div>
         <div class="avisos-preferencias">
             <button type="button" class="panel-btn panel-btn-principal" data-activar><i class="fas fa-bell"></i> Activar avisos y sonido</button>
             <button type="button" class="panel-btn" data-probar-sonido><i class="fas fa-volume-high"></i> Probar sonido</button>

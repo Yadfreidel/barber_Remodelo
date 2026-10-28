@@ -135,16 +135,14 @@ function mostrarAlerta(mensaje) {
     const alerta = document.createElement('div');
     alerta.className = 'alerta-cita';
     alerta.setAttribute('role', 'alert');
-    alerta.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${mensaje}`;
+    alerta.innerHTML = `<i class="fas fa-exclamation-triangle" aria-hidden="true"></i> ${mensaje}`;
 
     const form = document.getElementById('form-reservas');
     form.insertBefore(alerta, form.querySelector('button[type="submit"]'));
 
+    // El error permanece hasta que el cliente corrige algo (no desaparece antes de poder leerlo)
     setTimeout(() => alerta.classList.add('alerta-visible'), 10);
-    setTimeout(() => {
-        alerta.classList.remove('alerta-visible');
-        setTimeout(() => alerta.remove(), 300);
-    }, 6000);
+    form.addEventListener('input', () => alerta.remove(), { once: true });
 }
 
 function guardarMetricasAnaliticas(nuevaCita) {

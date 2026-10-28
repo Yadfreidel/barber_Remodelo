@@ -11,6 +11,7 @@ import { supabase, estaSupabaseListo } from '../assets/supabaseClient.js';
 import { guardarToken, guardarClavePendiente } from '../assets/mis-citas-store.js';
 import { formato12h, hoyRD } from '../assets/horario-utils.js';
 import { abrirFormularioReclamacion, renderReclamacion } from './reclamacionesClienteController.js';
+import { identidadComprobante } from './publicoController.js';
 
 // Módulos que hacen pasar la reserva por la validación del servidor
 const MODULOS_RESERVA_SERVIDOR = ['productos', 'promociones', 'referidos', 'recuperacion'];
@@ -251,6 +252,10 @@ export async function actualizarResumen() {
 export async function reservarEnServidor(datos, mostrarAlerta) {
     if (!ultimaCotizacion || ultimaCotizacion.clave !== claveSeleccion() || !ultimaCotizacion.datos.disponible) {
         await actualizarResumen();
+        if (ultimaCotizacion && !ultimaCotizacion.datos.disponible && window.ofrecerAlternativasHorario) {
+            window.ofrecerAlternativasHorario(datos.fecha, datos.hora);
+            return null;
+        }
         mostrarAlerta(ultimaCotizacion && !ultimaCotizacion.datos.disponible
             ? MENSAJES_ERROR.horario_no_disponible
             : 'Revisa el total de tu reserva y vuelve a confirmar.');
@@ -282,6 +287,11 @@ export async function reservarEnServidor(datos, mostrarAlerta) {
         return null;
     }
     if (error) {
+        // Otro cliente tomó la hora: se explica y se ofrecen alternativas sin tocar el resto del formulario
+        if (/horario_no_disponible|duplicate|23505/.test(error.message + error.code) && window.ofrecerAlternativasHorario) {
+            window.ofrecerAlternativasHorario(datos.fecha, datos.hora);
+            return null;
+        }
         mostrarAlerta(mensajeError(error));
         if (/horario_no_disponible|duplicate|23505/.test(error.message + error.code) && window.generarPildorasDeTiempo) {
             window.generarPildorasDeTiempo();
@@ -449,7 +459,7 @@ async function renderCita(panel, token) {
         </div>`;
 
     // La tarjeta usa exclusivamente los datos guardados devueltos por consultar_cita.
-    montarTarjeta(panel.querySelector('.panel-gestion'), c, { urlPublica: window.location.href, token });
+    montarTarjeta(panel.querySelector('.panel-gestion'), c, { urlPublica: window.location.href, token, identidad: await identidadComprobante() });
 
     const zona = panel.querySelector('#zona-gestion');
     const recargar = () => renderCita(panel, token);
@@ -489,26 +499,37 @@ function mostrarReprogramacion(zona, token, recargar) {
     const hoy = hoyRD();
     zona.innerHTML = `
         <div class="resumen-precio">
-            <label class="label-fijo">Nueva fecha:</label>
+            <label class="label-fijo" for="reprog-fecha">Nueva fecha:</label>
             <input type="date" id="reprog-fecha" min="${hoy}">
-            <div id="reprog-horas" class="grid-horas"></div>
-            <div id="reprog-confirmar"></div>
+            <p class="sr-only" id="reprog-anuncio" role="status"></p>
+            <div id="reprog-horas" class="grid-horas" role="group" aria-label="Horas libres para el cambio"></div>
+            <div id="reprog-confirmar" aria-live="polite"></div>
         </div>`;
     const inputFecha = zona.querySelector('#reprog-fecha');
     const horas = zona.querySelector('#reprog-horas');
     const confirmar = zona.querySelector('#reprog-confirmar');
+    const anuncio = zona.querySelector('#reprog-anuncio');
+    let turno = 0;
 
-    inputFecha.addEventListener('change', async () => {
-        confirmar.innerHTML = '';
-        const { data, error } = await supabase.rpc('horarios_reprogramacion', { p_token: token, p_fecha: inputFecha.value });
+    const cargarHoras = async (aviso = '') => {
+        const consulta = ++turno;
+        confirmar.innerHTML = aviso ? `<p class="resumen-alerta" role="alert">${esc(aviso)}</p>` : '';
+        horas.setAttribute('aria-busy', 'true');
+        horas.innerHTML = '<p class="placeholder-horas">Consultando horas libres…</p>';
+        const { data, error } = await Promise.resolve(supabase.rpc('horarios_reprogramacion', { p_token: token, p_fecha: inputFecha.value })).catch(e => ({ error: e }));
+        if (consulta !== turno) return; // la fecha cambió mientras se consultaba
+        horas.setAttribute('aria-busy', 'false');
         if (error || !data.length) {
-            horas.innerHTML = `<p class="placeholder-horas">${error ? esc(mensajeError(error)) : 'No hay horarios libres ese día.'}</p>`;
+            horas.innerHTML = `<p class="placeholder-horas">${error ? `No pudimos consultar las horas: ${esc(mensajeError(error))}` : 'No hay horarios libres ese día.'}</p>`;
+            anuncio.textContent = horas.textContent.trim();
             return;
         }
-        horas.innerHTML = data.map(h => `<div class="pildora-hora" data-hora="${esc(h)}">${esc(formato12h(h))}</div>`).join('');
+        horas.innerHTML = data.map(h => `<button type="button" class="pildora-hora" aria-pressed="false" data-hora="${esc(h)}">${esc(formato12h(h))}</button>`).join('');
+        anuncio.textContent = `${data.length} ${data.length === 1 ? 'hora libre' : 'horas libres'} ese día.`;
         horas.querySelectorAll('.pildora-hora').forEach(p => p.addEventListener('click', async () => {
-            horas.querySelectorAll('.pildora-hora').forEach(x => x.classList.remove('pildora-activa'));
+            horas.querySelectorAll('.pildora-hora').forEach(x => { x.classList.remove('pildora-activa'); x.setAttribute('aria-pressed', 'false'); });
             p.classList.add('pildora-activa');
+            p.setAttribute('aria-pressed', 'true');
             const { data: q, error: err } = await supabase.rpc('cotizar_reprogramacion', { p_token: token, p_fecha: inputFecha.value, p_hora: p.dataset.hora });
             if (err || !q.disponible) {
                 confirmar.innerHTML = `<p class="resumen-alerta">${esc(err ? mensajeError(err) : MENSAJES_ERROR.horario_no_disponible)}</p>`;
@@ -521,11 +542,13 @@ function mostrarReprogramacion(zona, token, recargar) {
                 const { error: e2 } = await supabase.rpc('reprogramar_cita', {
                     p_token: token, p_fecha: inputFecha.value, p_hora: p.dataset.hora, p_precio_esperado: q.precio_final
                 });
-                if (e2) confirmar.innerHTML = `<p class="resumen-alerta">${esc(mensajeError(e2))}</p>`;
+                if (e2 && /horario_no_disponible/.test(e2.message)) cargarHoras('Esa hora se ocupó mientras confirmabas. Tu cita no cambió: elige otra de la lista actualizada.');
+                else if (e2) confirmar.innerHTML = `<p class="resumen-alerta">${esc(mensajeError(e2))}</p>`;
                 else recargar();
             });
         }));
-    });
+    };
+    inputFecha.addEventListener('change', () => cargarHoras());
 }
 
 async function renderOferta(panel, token) {

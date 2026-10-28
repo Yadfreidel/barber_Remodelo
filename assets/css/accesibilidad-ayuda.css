@@ -1,0 +1,143 @@
+/* Disponibilidad transparente, ayuda contextual, identidad del negocio y ajustes de accesibilidad.
+   Reutiliza la paleta del sitio (--dorado, --dorado-brillante) y del panel (panel-tema.css). */
+
+/* ---------- Ayuda contextual ---------- */
+.label-con-ayuda, .titulo-con-ayuda, .negocio-intro { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
+.label-con-ayuda > .label-fijo, .titulo-con-ayuda > :is(h2, h3), .negocio-intro > p { margin-bottom: 0; }
+/* La separación superior pasa al contenedor para que «?» quede alineado con el texto */
+.formulario-citas .label-con-ayuda { margin-top: 24px; margin-bottom: 8px; }
+.formulario-citas .label-con-ayuda > .label-horas { margin-top: 0; width: auto; }
+.formulario-citas .ayuda-boton { width: 44px; height: 44px; background: transparent; box-shadow: none; }
+.negocio-intro > p { flex: 1 1 260px; }
+.titulo-con-ayuda > .ayuda-panel, .negocio-intro > .ayuda-panel { flex-basis: 100%; }
+.ayuda-boton {
+    display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto;
+    min-width: 44px; min-height: 44px; padding: 0; margin: -6px 0;
+    border: 0; border-radius: 50%; background: transparent; color: var(--dorado-brillante, #f0dfbc);
+    font-size: 1.1rem; cursor: pointer;
+}
+.ayuda-boton[aria-expanded="true"] { color: var(--dorado, #d9c39a); }
+.ayuda-boton:focus-visible { outline: 2px solid var(--dorado-brillante, #f0dfbc); outline-offset: -4px; }
+.ayuda-panel {
+    box-sizing: border-box; width: 100%; max-width: 100%; margin: 6px 0 12px; padding: 12px 14px;
+    border: 1px solid var(--gris-borde, #ffffff2a); border-left: 3px solid var(--dorado, #d9c39a); border-radius: 10px;
+    background: #1d1d20; color: #ece7dd; font-size: 0.95rem; font-weight: 400; line-height: 1.55; text-align: left;
+    overflow-wrap: anywhere; letter-spacing: normal; text-transform: none;
+}
+.ayuda-panel p, .ayuda-panel ul { margin: 0 0 8px; }
+.ayuda-panel > :last-child { margin-bottom: 0; }
+.ayuda-panel .ayuda-titulo { font-weight: 650; color: #fff; }
+.ayuda-estados { padding-left: 18px; }
+.ayuda-estados li { margin: 0 0 4px; }
+
+/* ---------- Horas disponibles ---------- */
+.horas-leyenda { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0 0 12px; padding: 0; list-style: none; font-size: 0.85rem; color: #d6d1c7; }
+.horas-leyenda li { display: inline-flex; align-items: center; gap: 6px; }
+.horas-leyenda .muestra { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 5px; font-size: 11px; font-weight: 700; }
+.muestra-libre { border: 1px solid #ffffff59; background: #242427; }
+.muestra-elegida { background: var(--dorado, #d9c39a); color: #17140c; }
+.muestra-ocupada { border: 1px dashed #8f8a80; background: transparent; }
+/* No disponible: legible (texto con contraste suficiente) y distinguible sin color: borde discontinuo, hora tachada y texto */
+.formulario-citas .pildora-hora.deshabilitada, .franja-horas .pildora-hora.deshabilitada {
+    opacity: 1; color: #b9b4aa; background: transparent; border: 1px dashed #77736b; text-decoration: none;
+}
+.pildora-hora.deshabilitada > span:first-child { text-decoration: line-through; }
+.franja-horas .pildora-hora.deshabilitada small { opacity: 1; font-weight: 600; }
+.franja-horas .pildora-hora small { opacity: 1; color: inherit; }
+.formulario-citas .pildora-hora { min-height: 48px; }
+.horas-cargando { margin-bottom: 8px; }
+
+/* ---------- Horario ocupado: alternativas ---------- */
+.alternativas-horario {
+    display: block; flex: 0 0 100%; width: 100%; box-sizing: border-box; margin: 4px 0 12px; padding: 16px; min-height: 0; text-align: left;
+    border: 1px solid #f0b86066; border-radius: 12px; background: #2a2116; color: #f3eee5;
+}
+.alternativas-horario h4 { margin: 0 0 6px; font-size: 1rem; color: #ffd79a; }
+.alternativas-horario h4:focus { outline: none; }
+.alternativas-horario h4:focus-visible { outline: 2px solid var(--dorado-brillante); outline-offset: 3px; }
+.alternativas-horario p { margin: 0 0 10px; line-height: 1.5; font-size: 0.95rem; }
+.alternativas-lista { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); gap: 8px; margin: 0 0 12px; }
+.alternativa, .btn-secundario-reserva, .enlace-boton { font: inherit; cursor: pointer; }
+.alternativa {
+    display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-height: 48px; padding: 10px 12px;
+    border: 1px solid #ffffff40; border-radius: 10px; background: #1b1b1e; color: #f3eee5; text-align: left;
+}
+.alternativas-horario .alternativa { width: 100%; max-width: none; margin: 0; }
+.alternativa span { font-size: 0.85rem; color: #d6d1c7; }
+.alternativa span::first-letter { text-transform: uppercase; }
+.alternativa[aria-pressed="true"] { border: 2px solid var(--dorado); background: #2c2718; }
+.alternativa[aria-pressed="true"]::before { content: '✓ Elegida'; font-size: 0.8rem; font-weight: 700; color: var(--dorado-brillante); }
+.alternativa:disabled { opacity: 1; border-style: dashed; color: #b9b4aa; cursor: not-allowed; }
+.alternativas-otras { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn-secundario-reserva { min-height: 44px; padding: 8px 14px; border: 1px solid #ffffff40; border-radius: 10px; background: transparent; color: #f3eee5; }
+.alternativas-confirmada:empty { display: none; }
+.alternativas-confirmada { margin: 10px 0 0 !important; font-weight: 600; color: #bfe9cf; }
+
+/* ---------- Errores asociados a cada campo ---------- */
+.campo-error { margin: 4px 0 8px; font-size: 0.9rem; line-height: 1.4; color: #ff9d8f; }
+.campo-error:empty { display: none; }
+.campo-error::before { content: '⚠ '; }
+.formulario-citas [aria-invalid="true"] { border-color: #ff9d8f !important; }
+.formulario-citas .alerta-cita { color: #ffb3a8; }
+
+/* ---------- Políticas informativas ---------- */
+.politicas-reserva { display: block; flex: 0 0 100%; width: 100%; margin: 0 0 12px; padding: 0; min-height: 0; text-align: left; }
+.politicas-reserva[data-paso="false"] { display: none; }
+.politicas-reserva details { border: 1px solid #ffffff1f; border-radius: 10px; padding: 0 14px; background: #19191b; }
+.politicas-reserva summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font-weight: 600; color: #ece7dd; }
+.politicas-reserva h3, .politicas-card h3 { margin: 10px 0 4px; font-size: 0.95rem; color: var(--dorado-brillante); }
+.politica-texto { white-space: pre-line; overflow-wrap: anywhere; line-height: 1.55; margin: 0 0 8px; color: #e2ddd3; }
+.politicas-nota { font-size: 0.85rem; color: #c7c2b8; margin: 8px 0 12px; }
+#mas .politicas-card .politica-texto { font-size: 14px; }
+
+/* ---------- Ayuda y soporte (vista Más): mismo aspecto que las preguntas frecuentes ---------- */
+#mas .ayuda-card details { border-top: 1px solid #ffffff12; font-size: 14px; }
+#mas .ayuda-card summary { min-height: 52px; padding: 15px 24px 15px 0; cursor: pointer; color: #ddd7cd; list-style: none; position: relative; line-height: 1.5; }
+#mas .ayuda-card summary::-webkit-details-marker { display: none; }
+#mas .ayuda-card summary::after { content: '+'; position: absolute; right: 0; color: var(--gold); font-size: 20px; top: 12px; }
+#mas .ayuda-card details[open] > summary::after { content: '−'; }
+#mas .ayuda-card details :is(p, ul) { font-size: 14px; line-height: 1.7; margin: 0 0 14px; color: #d9d4ca; }
+.ayuda-soporte { margin: 12px 0 0; font-size: 14px; color: #d9d4ca; }
+.enlace-boton { min-height: 44px; padding: 0; border: 0; background: none; color: var(--dorado-brillante); text-decoration: underline; text-underline-offset: 3px; }
+#mas .contact-card:focus { outline: none; }
+#mas .contact-card:focus-visible { outline: 2px solid var(--dorado-brillante); outline-offset: 3px; }
+
+/* ---------- Panel: identidad del negocio ---------- */
+.negocio-seccion > legend { font-weight: 650; }
+.negocio-imagen-acciones { display: flex; flex-wrap: wrap; gap: 6px; }
+.negocio-subir { position: relative; }
+.negocio-subir:focus-within { outline: 2px solid var(--dorado-brillante); outline-offset: 2px; }
+.negocio-paletas { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin: 10px 0 12px; }
+.negocio-paleta {
+    display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 6px 10px;
+    border: 1px solid var(--gris-borde); border-radius: 10px; cursor: pointer;
+}
+.negocio-paleta:has(input:checked) { border: 2px solid var(--dorado); }
+.negocio-paleta:has(input:focus-visible) { outline: 2px solid var(--dorado-brillante); outline-offset: 2px; }
+.negocio-paleta input { margin: 0; width: 18px; height: 18px; accent-color: var(--dorado); }
+.negocio-muestras { display: inline-flex; }
+.negocio-muestras i { width: 18px; height: 18px; border-radius: 50%; border: 1px solid #0006; }
+.negocio-muestras i + i { margin-left: -5px; }
+.negocio-color input[type="color"] { width: 100%; min-height: 44px; padding: 2px; cursor: pointer; }
+.negocio-contraste { margin: 6px 0 0; font-size: 0.88rem; color: var(--p-exito, #74d6a0); }
+.negocio-contraste-bajo { color: var(--p-aviso, #f0b860); }
+.negocio-pendiente { margin: 12px 0 0; color: var(--p-aviso, #f0b860); font-size: 0.9rem; }
+.negocio-pendiente:empty { display: none; }
+.preview-acciones { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.preview-eyebrow { font-size: 0.72rem; letter-spacing: 0.14em; color: var(--dorado-brillante); }
+.preview-boton { padding: 8px 14px; border-radius: 999px; background: var(--dorado); color: #0b0b0c; font-weight: 700; font-size: 0.85rem; }
+.preview-sitio .politica-texto { color: inherit; font-size: 0.85rem; }
+
+/* ---------- Accesibilidad general del portal ---------- */
+/* Campos a 16 px como mínimo: iPhone no amplía la página al enfocarlos */
+:is(#contacto, #mis-citas, #mas, .reclamacion-dialogo) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]), select, textarea) { font-size: max(16px, 1rem); }
+.btn-admin-flotante { min-width: 44px; min-height: 44px; }
+.pasos-reserva li { overflow-wrap: anywhere; }
+
+@media (prefers-reduced-motion: reduce) {
+    .ayuda-panel, .alternativas-horario, .alternativa { animation: none !important; transition: none !important; }
+}
+
+/* Casillas: toda la etiqueta es el objetivo táctil (44 px de alto como mínimo) */
+.formulario-citas :is(.avisos-whatsapp, .check-consentimiento) { min-height: 44px; align-items: center; padding: 4px 0; box-sizing: border-box; }
+.negocio-intro .ayuda-boton, .titulo-con-ayuda .ayuda-boton { margin: 0; }

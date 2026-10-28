@@ -6,6 +6,7 @@ import { tokensGuardados, clavesPendientes, sincronizar, citasEnCache, guardarTo
 import { rango12h, formato12h, fechaLarga } from '../assets/horario-utils.js';
 import { esc, formatoPrecio, mensajeError } from './modulosController.js';
 import { abrirFormularioReclamacion, cargarMisReclamaciones, htmlMisReclamaciones, olvidarReclamaciones } from './reclamacionesClienteController.js';
+import { ayuda } from '../assets/ayuda.js';
 
 const ERRORES_CUENTA = {
     'Invalid login credentials': 'Correo o contraseña incorrectos.',
@@ -26,7 +27,12 @@ export function crearVistaMisCitas() {
             <p>Tus próximas visitas y tu historial, con el estado que indica la barbería.</p></div>
         <div id="mc-borrador"></div>
         <div id="mc-estado" role="status" aria-live="polite"></div>
-        <section class="mc-grupo" aria-labelledby="mc-proximas-titulo"><h2 id="mc-proximas-titulo">Próximas</h2><div id="mc-proximas" class="mc-lista"></div></section>
+        <section class="mc-grupo" aria-labelledby="mc-proximas-titulo"><div class="titulo-con-ayuda"><h2 id="mc-proximas-titulo">Próximas</h2>${ayuda('Estados y enlace privado', `<ul class="ayuda-estados">
+                <li><strong>Pendiente de confirmación:</strong> tu cita está guardada y la hora apartada; falta que la barbería la confirme.</li>
+                <li><strong>Confirmada:</strong> la barbería confirmó tu cita.</li>
+                <li><strong>Completada</strong>, <strong>Cancelada</strong> o <strong>No asistió</strong>: la cita pasa al historial.</li></ul>
+                <p>«Confirmaste tu asistencia» indica que avisaste que irás; no cambia el estado.</p>
+                <p><strong>Enlace privado:</strong> quien lo tenga puede ver la cita y, dentro del plazo, confirmar, cambiar o cancelar. Compártelo solo con quien confíes.</p>`)}</div><div id="mc-proximas" class="mc-lista"></div></section>
         <section class="mc-grupo" aria-labelledby="mc-historial-titulo"><h2 id="mc-historial-titulo">Historial</h2><div id="mc-historial" class="mc-lista"></div></section>
         <section class="mc-grupo mc-reclamaciones" aria-labelledby="mc-reclamaciones-titulo" hidden><h2 id="mc-reclamaciones-titulo">Mis reclamaciones</h2><div id="mc-reclamaciones" class="mc-lista"></div></section>
         <section class="mc-cuenta" id="mc-cuenta" aria-label="Cuenta"></section>

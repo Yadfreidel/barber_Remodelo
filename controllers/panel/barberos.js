@@ -4,6 +4,7 @@
 
 import { obtenerBarberosLocales } from '../../models/barberModel.js';
 import { api, esc, dialogo, confirmar, ejecutar, imagenADataURL, vacio } from './comun.js';
+import { ayuda } from '../../assets/ayuda.js';
 import { servicioEfectivo } from './servicios.js';
 import { invalidarCatalogosAgenda } from './agenda.js';
 import { habilitarAcceso, enviarRestablecimiento, mensajeAlta, PERMISOS, CORREO, problemaClave, camposClave, conectarCamposClave, limpiarCamposClave } from './cuentas.js';
@@ -25,7 +26,9 @@ export async function renderBarberos(cont, ctx) {
 
     cont.innerHTML = `
         <div class="panel-encabezado">
-            <div><h2>Barberos</h2><p class="panel-sub">Desactivar oculta al barbero de la web y le quita el acceso, sin borrar su historial.</p></div>
+            <div><div class="titulo-con-ayuda"><h2>Barberos</h2>${ayuda('Crear, activar y desactivar barberos', `<p><strong>Agregar:</strong> indica nombre, especialidad, foto y los servicios que realiza; en la web solo se le podrán reservar esos servicios. El acceso al panel es opcional: entra con su correo y contraseña y ve lo que permitan sus permisos.</p>
+                <p><strong>Desactivar:</strong> deja de aparecer en la web y no recibe reservas nuevas, y pierde el acceso al panel. Su historial y sus citas futuras se conservan: reprograma esas citas desde la Agenda.</p>
+                <p><strong>Activar:</strong> vuelve a aparecer en la web. Revisa en su tarjeta el estado del acceso al panel.</p>`)}</div><p class="panel-sub">Desactivar oculta al barbero de la web y le quita el acceso, sin borrar su historial.</p></div>
             <button type="button" class="panel-btn panel-btn-principal" data-nuevo><i class="fas fa-user-plus"></i> Agregar barbero</button>
         </div>
         ${locales.length ? `<div class="panel-aviso">Este navegador tiene fotos o especialidades de ${locales.length} barbero(s) que aún no están en el servidor.

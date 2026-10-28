@@ -1,6 +1,7 @@
 import { inicializarInicioInmersivo } from './home-view.js';
 import { crearVistaMas } from './more-view.js';
 import { inicializarPasosReserva } from './booking-wizard.js';
+import './ayuda.js';
 import { obtenerServicios } from '../models/serviceModel.js';
 import { escapar } from './catalogue-ui.js';
 import { obtenerConfigModulos } from '../controllers/modulosController.js';

@@ -1,4 +1,4 @@
-﻿import { datosTarjeta, layoutTarjeta, textoTarjeta } from './appointment-card.js';
+import { datosTarjeta, layoutTarjeta, textoTarjeta } from './appointment-card.js';
 import { cargarLogoTarjeta } from './card-logo.js';
 
 let fuente;
@@ -11,14 +11,16 @@ async function cargarFuente() {
 }
 export async function pngTarjetaNavegador(datos) {
     await cargarFuente();
-    const logoData = await cargarLogoTarjeta(datos.logo, window.location.origin);
+    // Logo publicado desde el panel: data URL de imagen ya recodificada (PNG/JPEG/WebP, nunca SVG)
+    const logoData = /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(datos.logo || '') ? datos.logo
+        : await cargarLogoTarjeta(datos.logo, window.location.origin);
     const layout = layoutTarjeta(datos, logoData);
     const canvas = document.createElement('canvas');
     canvas.width = layout.width;
     canvas.height = layout.height;
     const ctx = canvas.getContext('2d');
     ctx.fillStyle = '#0a0e11'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = '#168bff'; ctx.fillRect(0, 0, canvas.width, 12);
+    ctx.fillStyle = layout.color; ctx.fillRect(0, 0, canvas.width, 12);
     for (const e of layout.elementos) {
         if (e.tipo === 'texto') {
             ctx.fillStyle = e.fill;

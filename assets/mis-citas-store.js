@@ -123,3 +123,22 @@ export function guardarBorrador(seleccion) {
 export function borrarBorrador() {
     try { almacen()?.removeItem(CLAVE_BORRADOR); } catch { /* sin almacenamiento */ }
 }
+
+// ==========================================
+// REFERENCIA DE ESTILO (publicación elegida como inspiración para la próxima reserva)
+// Solo el identificador público de la publicación: sin datos personales ni tokens, y fuera de la URL.
+// Se valida de nuevo en el servidor al mostrarla y al guardarla con la cita.
+// ==========================================
+const CLAVE_REFERENCIA = 'barberia-referencia-estilo';
+export function leerReferencia() {
+    const r = leer(CLAVE_REFERENCIA, null);
+    // Una inspiración de hace más de 30 días ya no se recupera
+    return r && UUID.test(r.trabajo_id) && Date.now() - Date.parse(r.guardada) < 30 * 864e5 ? r.trabajo_id : null;
+}
+export function guardarReferencia(trabajoId) {
+    if (!UUID.test(trabajoId)) return false;
+    return escribir(CLAVE_REFERENCIA, { trabajo_id: trabajoId, guardada: new Date().toISOString() });
+}
+export function borrarReferencia() {
+    try { almacen()?.removeItem(CLAVE_REFERENCIA); } catch { /* sin almacenamiento */ }
+}

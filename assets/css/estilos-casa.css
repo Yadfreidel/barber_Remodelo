@@ -273,3 +273,39 @@ body.detalle-abierto:has(.estilos-dialogo[open]) { overflow: hidden; }
 /* Los textos solo para lectores de pantalla (position: absolute) quedan dentro de su carrusel:
    sin un contenedor posicionado escapan del recorte y ensanchan la página en móvil */
 .estilos-barberos, .estilos-pista, .estilo-tarjeta, .estilo-barbero, .carrusel-pista { position: relative; }
+
+/* ---------- Del resultado a la reserva: «Tu inspiración» (reserva, cita del cliente y panel) ---------- */
+.inspiracion-reserva {
+    --ir-oro: var(--home-champagne, var(--dorado, #d9c39a));
+    display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 4px 14px; align-items: start; box-sizing: border-box;
+    width: 100%; flex: 0 0 100%; margin: 0 0 16px; padding: 12px; min-height: 0;
+    border: 1px solid color-mix(in srgb, var(--ir-oro) 40%, transparent); border-radius: 14px; background: #151517; color: #f1ede4; text-align: left;
+    animation: inspiracion-entrada 220ms cubic-bezier(.22, .61, .36, 1);
+}
+.inspiracion-reserva[hidden] { display: none; }
+@keyframes inspiracion-entrada { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.inspiracion-media { grid-row: span 2; width: 76px; height: 95px; overflow: hidden; border-radius: 10px; background: #1f1f22; }
+.inspiracion-media img { display: block; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 220ms ease; }
+.inspiracion-media.cargada img { opacity: 1; }
+.inspiracion-texto { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.inspiracion-eyebrow { margin: 0; font: 700 11px/1.3 Inter, sans-serif; letter-spacing: 1.2px; text-transform: uppercase; color: var(--ir-oro); }
+.inspiracion-nombre { font: 600 16px/1.3 Inter, sans-serif; color: #f1ede4; overflow-wrap: anywhere; }
+.inspiracion-autor { font-size: 14px; color: #c9c4ba; overflow-wrap: anywhere; }
+.inspiracion-acciones { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 4px; }
+.inspiracion-accion {
+    min-height: 44px; padding: 0; border: 0; background: none; color: var(--ir-oro); font: 600 14px/1.2 Inter, sans-serif;
+    text-decoration: underline; text-underline-offset: 3px; cursor: pointer;
+}
+.inspiracion-accion.secundaria { color: #c9c4ba; }
+.inspiracion-accion:focus-visible { outline: 2px solid var(--ir-oro); outline-offset: 2px; }
+.inspiracion-aviso, .inspiracion-nota { grid-column: 1 / -1; margin: 6px 0 0; font-size: 13px; line-height: 1.45; }
+.inspiracion-aviso { padding: 8px 10px; border-radius: 10px; background: #2a2116; color: #ffd79a; }
+.inspiracion-nota { color: #b9b4aa; }
+.inspiracion-cita { margin: 14px 0; }
+.inspiracion-reserva:not(:has(.inspiracion-media)) { grid-template-columns: minmax(0, 1fr); }
+.estilo-quiero { white-space: normal; text-align: center; line-height: 1.3; }
+.estilo-solo-reservar { align-self: stretch; }
+@media (prefers-reduced-motion: reduce) { .inspiracion-reserva { animation: none; } .inspiracion-media img { transition: none; opacity: 1; } }
+/* Dentro del formulario de reserva los botones heredan ancho completo: aquí son enlaces de acción en línea */
+.formulario-citas .inspiracion-acciones { flex-wrap: wrap; gap: 0 18px; }
+.formulario-citas .inspiracion-accion, .inspiracion-accion { width: auto !important; flex: 0 0 auto; margin: 0 !important; background: none !important; box-shadow: none !important; border-radius: 0; }

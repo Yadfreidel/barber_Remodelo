@@ -2,7 +2,7 @@
 // borradores/pendientes/originales privados, revisiones de lo publicado, moderación, publicación directa y destacados.
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { iniciarBase, rpc, errorDe } from './helpers.js';
+import { iniciarBase, rpc, errorDe, fechaLocal } from './helpers.js';
 
 const ADMIN = '11111111-1111-1111-1111-111111111111';
 const BARBERO = '55555555-5555-5555-5555-555555555555';
@@ -12,7 +12,7 @@ const ORIGINAL = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAP/////
 let db, A, anon, admin, barbero, otro, ids;
 
 const j = o => JSON.stringify(o);
-const foto = (extra = {}) => j({ original: ORIGINAL, imagen: IMG, tarjeta: IMG, miniatura: IMG, ancho: 1200, alto: 1500, foco_x: 40, foco_y: 30,
+const foto_ = (extra = {}) => j({ original: ORIGINAL, imagen: IMG, tarjeta: IMG, miniatura: IMG, ancho: 1200, alto: 1500, foco_x: 40, foco_y: 30,
     ajustes: { brillo: 10, giro: 90 }, ...extra });
 const estilo = (cli, datos = {}, id = null) => rpc(cli, 'panel_estilo_guardar', id, j({ titulo: 'Taper con textura', texto_alternativo: 'Corte taper visto de lado',
     muestra_persona: false, ...datos }));
@@ -42,13 +42,13 @@ test('borrador con varias fotos: autor desde la sesión, permisos, validación y
     const t = await estilo(barbero, { barbero_id: ids.caro, servicio_id: ids.s30 });
     assert.equal(t.barbero_id, ids.beto);
     assert.equal(t.estado, 'borrador');
-    const f1 = await rpc(barbero, 'panel_estilo_foto_guardar', t.id, null, foto());
-    const f2 = await rpc(barbero, 'panel_estilo_foto_guardar', t.id, null, foto({ foco_x: 70 }));
-    assert.equal(await errorDe(rpc(otro, 'panel_estilo_foto_guardar', t.id, null, foto())), 'no_autorizado', 'otro barbero no añade fotos');
+    const f1 = await rpc(barbero, 'panel_estilo_foto_guardar', t.id, null, foto_());
+    const f2 = await rpc(barbero, 'panel_estilo_foto_guardar', t.id, null, foto_({ foco_x: 70 }));
+    assert.equal(await errorDe(rpc(otro, 'panel_estilo_foto_guardar', t.id, null, foto_())), 'no_autorizado', 'otro barbero no añade fotos');
     assert.equal(await errorDe(rpc(otro, 'panel_estilo_foto_original', f1.id)), 'no_autorizado', 'ni ve el original');
-    assert.equal(await errorDe(rpc(barbero, 'panel_estilo_foto_guardar', t.id, null, foto({ imagen: 'data:image/svg+xml;base64,PHN2Zz4=' }))), 'imagen_invalida');
-    assert.equal(await errorDe(rpc(barbero, 'panel_estilo_foto_guardar', t.id, null, foto({ original: null }))), 'imagen_invalida', 'sin original no se crea');
-    assert.equal(await errorDe(rpc(barbero, 'panel_estilo_foto_guardar', t.id, null, foto({ ancho: 99999 }))), 'imagen_invalida');
+    assert.equal(await errorDe(rpc(barbero, 'panel_estilo_foto_guardar', t.id, null, foto_({ imagen: 'data:image/svg+xml;base64,PHN2Zz4=' }))), 'imagen_invalida');
+    assert.equal(await errorDe(rpc(barbero, 'panel_estilo_foto_guardar', t.id, null, foto_({ original: null }))), 'imagen_invalida', 'sin original no se crea');
+    assert.equal(await errorDe(rpc(barbero, 'panel_estilo_foto_guardar', t.id, null, foto_({ ancho: 99999 }))), 'imagen_invalida');
     // Orden y portada
     const ordenado = await rpc(barbero, 'panel_estilo_fotos_ordenar', t.id, [f2.id, f1.id], f2.id);
     assert.deepEqual(ordenado.fotos.map(f => [f.id, f.portada]), [[f2.id, true], [f1.id, false]]);
@@ -87,7 +87,7 @@ test('sin fotos o sin confirmar la autorización no se envía; la confirmación 
     const vacio = await estilo(barbero, { titulo: 'Sin fotos' });
     assert.equal(await errorDe(rpc(barbero, 'panel_portafolio_estado', vacio.id, 'enviar_revision', null)), 'sin_fotos');
     const persona = await estilo(barbero, { titulo: 'Con cliente', muestra_persona: true });
-    await rpc(barbero, 'panel_estilo_foto_guardar', persona.id, null, foto());
+    await rpc(barbero, 'panel_estilo_foto_guardar', persona.id, null, foto_());
     assert.equal(await errorDe(rpc(barbero, 'panel_portafolio_estado', persona.id, 'enviar_revision', null)), 'confirmacion_requerida');
     const confirmado = await estilo(barbero, { titulo: 'Con cliente', muestra_persona: true, autorizacion_confirmada: true }, persona.id);
     assert.equal(confirmado.autorizacion_confirmada_por, 'beto@x.com');
@@ -104,15 +104,15 @@ test('sin fotos o sin confirmar la autorización no se envía; la confirmación 
 
 test('editar lo publicado crea una versión: la publicada sigue visible hasta aprobarla; sin duplicar fotos al aplicar', async () => {
     const t = await estilo(admin, { barbero_id: ids.beto, titulo: 'Mullet moderno' });
-    const f = await rpc(admin, 'panel_estilo_foto_guardar', t.id, null, foto());
+    const f = await rpc(admin, 'panel_estilo_foto_guardar', t.id, null, foto_());
     await rpc(admin, 'panel_portafolio_estado', t.id, 'publicar', null);
     // El barbero no modifica directamente lo publicado
-    assert.equal(await errorDe(rpc(barbero, 'panel_estilo_foto_guardar', t.id, null, foto())), 'usar_revision');
+    assert.equal(await errorDe(rpc(barbero, 'panel_estilo_foto_guardar', t.id, null, foto_())), 'usar_revision');
     const version = await estilo(barbero, { titulo: 'Mullet moderno (nueva versión)' }, t.id);
     assert.notEqual(version.id, t.id);
     assert.equal(version.revision_de, t.id);
     assert.equal(version.fotos.length, 1, 'la versión parte de las fotos publicadas');
-    const nueva = await rpc(barbero, 'panel_estilo_foto_guardar', version.id, null, foto({ foco_y: 80 }));
+    const nueva = await rpc(barbero, 'panel_estilo_foto_guardar', version.id, null, foto_({ foco_y: 80 }));
     // Volver a editar reutiliza la misma versión
     assert.equal((await estilo(barbero, { titulo: 'Mullet moderno v2' }, t.id)).id, version.id);
     assert.equal((await rpc(anon, 'estilo_publico', t.id)).titulo, 'Mullet moderno', 'lo visible no cambia');
@@ -144,18 +144,18 @@ test('publicación directa, destacados en orden y configuración solo del admini
     assert.equal((await rpc(admin, 'panel_galeria')).publicacion_directa, false, 'valor inicial: con aprobación');
     await rpc(admin, 'panel_galeria_config', j({ publicacion_directa: true }));
     const d = await estilo(barbero, { titulo: 'Directo' });
-    await rpc(barbero, 'panel_estilo_foto_guardar', d.id, null, foto());
+    await rpc(barbero, 'panel_estilo_foto_guardar', d.id, null, foto_());
     assert.equal((await rpc(barbero, 'panel_portafolio_estado', d.id, 'enviar_revision', null)).estado, 'publicado');
     // Con persona identificable y sin autorización registrada sigue yendo a revisión
     const p = await estilo(barbero, { titulo: 'Directo con cliente', muestra_persona: true, autorizacion_confirmada: true });
-    await rpc(barbero, 'panel_estilo_foto_guardar', p.id, null, foto());
+    await rpc(barbero, 'panel_estilo_foto_guardar', p.id, null, foto_());
     assert.equal((await rpc(barbero, 'panel_portafolio_estado', p.id, 'enviar_revision', null)).estado, 'pendiente');
     // En modo directo el barbero edita lo publicado sin versión
     assert.equal((await estilo(barbero, { titulo: 'Directo editado' }, d.id)).id, d.id);
     await rpc(admin, 'panel_galeria_config', j({ publicacion_directa: false }));
 
     const otroT = await estilo(admin, { barbero_id: ids.caro, titulo: 'Diseño lineal' });
-    await rpc(admin, 'panel_estilo_foto_guardar', otroT.id, null, foto());
+    await rpc(admin, 'panel_estilo_foto_guardar', otroT.id, null, foto_());
     await rpc(admin, 'panel_portafolio_estado', otroT.id, 'publicar', null);
     assert.equal(await errorDe(rpc(admin, 'panel_galeria_destacados', [p.id])), 'trabajo_invalido', 'solo lo publicado se destaca');
     await rpc(admin, 'panel_galeria_destacados', [otroT.id, d.id]);
@@ -178,8 +178,50 @@ test('trabajos anteriores de una imagen siguen visibles y pasan a fotos al edita
     assert.equal(visto.portada.id, legado.id);
     assert.equal(await rpc(anon, 'estilo_foto', legado.id, 'tarjeta'), IMG);
     assert.equal((await rpc(anon, 'portafolio_publico', ids.beto, 24, 0)).trabajos.find(x => x.id === legado.id).miniatura, IMG, 'perfil intacto');
-    await rpc(admin, 'panel_estilo_foto_guardar', legado.id, null, foto());
+    await rpc(admin, 'panel_estilo_foto_guardar', legado.id, null, foto_());
     const despues = await rpc(admin, 'panel_estilo', legado.id);
     assert.equal(despues.fotos.length, 2, 'la imagen anterior se conserva como primera foto');
     assert.equal(despues.legado, false);
+});
+
+test('referencia de estilo en la cita: validada en el servidor, visible para el cliente y el personal autorizado, sin exponer lo retirado', async () => {
+    const t = await estilo(admin, { barbero_id: ids.beto, titulo: 'Referencia taper', servicio_id: ids.s30 });
+    const foto = await rpc(admin, 'panel_estilo_foto_guardar', t.id, null, foto_());
+    await rpc(admin, 'panel_portafolio_estado', t.id, 'publicar', null);
+    const borrador = await estilo(barbero, { titulo: 'Borrador privado' });
+    const f = await fechaLocal(A, 5);
+    // Reserva normal: sin referencia, igual que siempre
+    const normal = await rpc(anon, 'reservar_cita', 'Cliente Normal', null, '8095550401', 'Corte 30', 'Beto', f, '10:00');
+    assert.equal(await rpc(anon, 'cita_referencia', normal.token), null);
+    // Reserva con la publicación como referencia (la cita sigue su validación habitual)
+    const r = await rpc(anon, 'reservar_cita', 'Cliente Inspirado', null, '8095550402', 'Corte 30', 'Beto', f, '11:00');
+    assert.equal(await errorDe(rpc(anon, 'cita_referencia_estilo', r.token, borrador.id)), 'referencia_no_disponible', 'un borrador no se acepta');
+    assert.equal(await errorDe(rpc(anon, 'cita_referencia_estilo', r.token, '00000000-0000-0000-0000-000000000000')), 'referencia_no_disponible', 'id manipulado');
+    assert.equal(await errorDe(rpc(anon, 'cita_referencia_estilo', '11111111-2222-3333-4444-555555555555', t.id)), 'cita_no_encontrada', 'token ajeno o inventado');
+    const guardada = await rpc(anon, 'cita_referencia_estilo', r.token, t.id);
+    assert.equal(guardada.referencia.titulo, 'Referencia taper');
+    assert.equal(guardada.referencia.portada_id, foto.id);
+    assert.equal(guardada.referencia.barbero, 'Beto');
+    const cita = (await A.query('select cita_id from cita_tokens where token = $1', [r.token])).rows[0].cita_id;
+    // Personal autorizado: el barbero asignado y el administrador; otro barbero no
+    assert.equal((await rpc(admin, 'panel_cita_referencia', cita)).titulo, 'Referencia taper');
+    assert.equal((await rpc(barbero, 'panel_cita_referencia', cita)).disponible, true);
+    assert.equal(await errorDe(rpc(otro, 'panel_cita_referencia', cita)), 'cita_no_encontrada');
+    assert.match(await errorDe(rpc(anon, 'panel_cita_referencia', cita)), /permission denied/);
+    // La referencia no cambia precio, estado ni barbero de la cita
+    const tras = (await A.query('select estado, barbero_id::text b, precio_final from citas where id::text = $1', [cita])).rows[0];
+    assert.equal(tras.estado, 'pendiente'); assert.equal(tras.b, ids.beto);
+    // Retirada después de la cita: la cita sigue, la referencia se muestra como no disponible y sus imágenes no se sirven
+    await rpc(admin, 'panel_portafolio_estado', t.id, 'archivar', 'Retirada');
+    assert.deepEqual(await rpc(anon, 'cita_referencia', r.token), { disponible: false });
+    assert.deepEqual(await rpc(admin, 'panel_cita_referencia', cita), { disponible: false });
+    assert.equal(await rpc(anon, 'estilo_foto', foto.id, 'miniatura'), null);
+    assert.equal((await rpc(anon, 'consultar_cita', r.token)).nombre, 'Cliente Inspirado', 'la cita sigue accesible');
+    // Retirada antes de confirmar: ya no se puede asociar
+    const r2 = await rpc(anon, 'reservar_cita', 'Cliente Tarde', null, '8095550403', 'Corte 30', 'Beto', f, '12:00');
+    assert.equal(await errorDe(rpc(anon, 'cita_referencia_estilo', r2.token, t.id)), 'referencia_no_disponible');
+    // Quitar la referencia (null) no toca la cita
+    await rpc(anon, 'cita_referencia_estilo', r.token, null);
+    assert.equal(await rpc(anon, 'cita_referencia', r.token), null);
+    assert.equal((await anon.query('select referencia_trabajo_id from citas')).rowCount, 0, 'la web pública no lee citas (RLS)');
 });

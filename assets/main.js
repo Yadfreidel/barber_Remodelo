@@ -12,6 +12,7 @@ import { hoyRD, formato12h, rango12h, franja, FRANJAS, cuadricula, fechaLarga } 
 import { leerBorrador, guardarBorrador } from './mis-citas-store.js';
 import { abrirPerfilBarbero } from '../controllers/perfilBarberoController.js';
 import { iniciarEstilos } from '../controllers/estilosController.js';
+import { iniciarReferencia } from '../controllers/referenciaEstiloController.js';
 
 // ==========================================
 // ELEMENTOS DEL DOM
@@ -58,6 +59,7 @@ async function inicializarPagina() {
     conectarDetalles(obtenerServicios);
     inicializarUbicacionCliente();
     restaurarBorrador();
+    iniciarReferencia();
 }
 
 // ==========================================

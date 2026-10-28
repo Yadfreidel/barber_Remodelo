@@ -8,6 +8,7 @@ import {
 } from './comun.js';
 import { abrirCobroDeCita, abrirVenta } from './ventas.js';
 import { ayuda } from '../../assets/ayuda.js';
+import { pintarReferenciaCita } from '../referenciaEstiloController.js';
 
 const estado = {
     vista: window.matchMedia('(max-width: 760px)').matches ? 'lista' : 'dia',
@@ -430,6 +431,7 @@ export async function abrirDetalle(id, ctx, recargar) {
                     <p class="cita-origen"><span class="cita-etiqueta">Origen</span> ${esc({ web: 'Web', admin: 'Administración', lista_espera: 'Lista de espera' }[c.origen] || c.origen)} · ${esc(fechaHora(c.creado_en))}</p>
                 </section>
             </div>
+            <section class="cita-referencia" data-referencia-cita aria-label="Estilo solicitado como referencia" hidden></section>
             ${c.motivo_cancelacion ? `<p class="cita-motivo"><i class="fas fa-ban" aria-hidden="true"></i> <span><span class="cita-etiqueta">Motivo de cancelación</span>${esc(c.motivo_cancelacion)}</span></p>` : ''}
 
             <section class="detalle-bloque cita-whatsapp">
@@ -490,6 +492,10 @@ export async function abrirDetalle(id, ctx, recargar) {
                     </li>`).join('')}</ol>
             </details>
         </div>` });
+
+    // Publicación que el cliente eligió como inspiración (el servidor aplica los mismos permisos que a la cita)
+    pintarReferenciaCita(cuerpo.querySelector('[data-referencia-cita]'), () => api('panel_cita_referencia', { p_cita: String(c.id ?? id) }),
+        { titulo: 'Estilo solicitado como referencia', nota: false });
 
     // Se abre mostrando el inicio de la cita (el foco automático iría al selector de WhatsApp, a media altura)
     cuerpo.closest('.panel-dialogo').querySelector('[data-cerrar]').focus({ preventScroll: true });

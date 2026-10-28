@@ -21,7 +21,8 @@ async function pedirEstilos(barbero, limite, desde) {
     return data;
 }
 
-function pedirFoto(id, tam) {
+// También la usan la inspiración de la reserva y el detalle de la cita (solo devuelve versiones publicadas)
+export function pedirFoto(id, tam) {
     const clave = `${id}|${tam}`;
     if (!fotos.has(clave)) {
         fotos.set(clave, Promise.resolve(supabase.rpc('estilo_foto', { p_id: id, p_tam: tam }))
@@ -410,7 +411,8 @@ function pintarDetalle(cuerpo, t, opciones) {
                 <p><span>Realizado por</span><strong>${esc(t.barbero)}</strong></p>
                 ${barbero ? `<button type="button" class="estilos-boton secundario" data-perfil>Ver perfil</button>` : ''}</div>
             ${opciones.vista ? '<p class="estilo-nota-vista">Vista previa: así se verá en la web cuando se publique.</p>'
-                : `<button type="button" class="btn-primary estilo-reservar" data-reservar>Reservar con ${esc(primerNombre(t.barbero))} <span aria-hidden="true">→</span></button>
+                : opciones.soloConsulta ? '' : `<button type="button" class="btn-primary estilo-reservar estilo-quiero" data-quiero aria-label="Quiero este estilo con ${esc(t.barbero)}">Quiero este estilo con ${esc(primerNombre(t.barbero))} <span aria-hidden="true">→</span></button>
+                   <button type="button" class="estilos-boton secundario estilo-solo-reservar" data-reservar>Solo reservar con ${esc(primerNombre(t.barbero))}</button>
                    <p class="estilo-nota">Elegirás servicio, fecha y hora en el formulario de reserva. No se reserva nada hasta que confirmes.</p>`}
         </div>`;
     const pista = cuerpo.querySelector('[data-pista]');
@@ -449,5 +451,10 @@ function pintarDetalle(cuerpo, t, opciones) {
     cuerpo.querySelector('[data-reservar]')?.addEventListener('click', () => {
         if (detalle.open) detalle.close();
         window.dispatchEvent(new CustomEvent('reservar-con-barbero', { detail: { nombre: t.barbero } }));
+    });
+    // «Quiero este estilo con…»: lo mismo, llevando esta publicación como referencia (autor desde la publicación real)
+    cuerpo.querySelector('[data-quiero]')?.addEventListener('click', () => {
+        document.querySelectorAll('dialog[open]').forEach(d => d.close());
+        window.dispatchEvent(new CustomEvent('estilo-como-referencia', { detail: t }));
     });
 }

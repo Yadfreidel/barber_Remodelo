@@ -6,6 +6,7 @@ import { cargarConfigModulos, usarReservaServidor, reservarEnServidor, formatoPr
 import { registrarCitaReservada } from './misCitasController.js';
 import { guardarBorrador } from '../assets/mis-citas-store.js';
 import { rango12h, sumarMinutos } from '../assets/horario-utils.js';
+import { referenciaActual, terminarReferencia } from './referenciaEstiloController.js';
 
 export async function procesarCita(evento) {
     evento.preventDefault();
@@ -57,7 +58,8 @@ async function procesarCitaInterna(evento) {
         if (!reservaServidor) return;
         registrarCitaReservada(reservaServidor);
         // La cita ya está guardada: consentimiento de avisos y notas van aparte y su fallo no la afecta
-        guardarComplementos(reservaServidor.token, { aceptaAvisos, notas });
+        guardarComplementos(reservaServidor.token, { aceptaAvisos, notas, referencia: referenciaActual() });
+        terminarReferencia(); // la inspiración queda con esta cita y no pasa a la siguiente reserva
     }
 
     const fechaFormateada = fecha.split('-').reverse().join('/');
@@ -113,10 +115,13 @@ async function procesarCitaInterna(evento) {
 
 // Consentimiento para los avisos de la cita por WhatsApp (los envía el servidor) y notas para el barbero.
 // Reintento breve si falla la red; nunca muestra un error de reserva: la cita ya quedó guardada.
-async function guardarComplementos(token, { aceptaAvisos, notas }) {
+async function guardarComplementos(token, { aceptaAvisos, notas, referencia }) {
     if (!token || !estaSupabaseListo()) return;
     const tareas = [() => supabase.rpc('cita_avisos_whatsapp', { p_token: token, p_acepta: aceptaAvisos })];
     if (notas) tareas.push(() => supabase.rpc('cita_notas_cliente', { p_token: token, p_notas: notas }));
+    // Publicación elegida como inspiración: el servidor solo la acepta si sigue publicada (si no, la cita sigue igual)
+    if (referencia) tareas.push(() => Promise.resolve(supabase.rpc('cita_referencia_estilo', { p_token: token, p_trabajo: referencia }))
+        .then(r => (r.error && /referencia_no_disponible/.test(r.error.message) ? { error: null } : r)));
     for (const tarea of tareas) {
         for (let intento = 0; intento < 3; intento++) {
             try {

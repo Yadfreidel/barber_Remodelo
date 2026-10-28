@@ -12,7 +12,7 @@ const DIR = path.join(RAIZ, 'supabase', 'migrations');
 const SALIDA = path.join(RAIZ, 'supabase', 'base_completa.sql');
 // Actualización para un proyecto que ya ejecutó base_completa.sql hasta INSTALADO_HASTA (incluida)
 const SALIDA_ACTUALIZACION = path.join(RAIZ, 'supabase', 'barberia_actualizacion.sql');
-const INSTALADO_HASTA = '20261103000000_estilos_de_la_casa.sql';
+const INSTALADO_HASTA = '20261104000000_referencia_estilo_cita.sql';
 const ESQUEMA = 'barberia';
 const PRIVADO = 'barberia_private';
 const URL_PUBLICA = 'https://yadfreidel.github.io/barberia-master/';
@@ -24,7 +24,7 @@ const FUNCIONES_PUBLICAS = ['config_publica', 'listar_productos', 'cotizar_cita'
     'unirse_lista_espera', 'consultar_lista_espera', 'cancelar_lista_espera', 'consultar_oferta', 'aceptar_oferta', 'rechazar_oferta',
     'mi_codigo_referido', 'darse_de_baja', 'catalogo_publico', 'barberos_publicos', 'negocio_publico', 'ubicacion_publica',
     'horarios_dia_publico', 'mis_citas_por_tokens', 'portafolio_publico', 'portafolio_imagen', 'estilos_publicos', 'estilo_publico', 'estilo_foto', 'reclamacion_categorias_publicas',
-    'reclamacion_crear', 'reclamacion_consultar', 'reclamacion_adjunto', 'reclamacion_responder', 'mis_reclamaciones_por_tokens', 'cita_avisos_whatsapp', 'cita_notas_cliente'];
+    'reclamacion_crear', 'reclamacion_consultar', 'reclamacion_adjunto', 'reclamacion_responder', 'mis_reclamaciones_por_tokens', 'cita_avisos_whatsapp', 'cita_notas_cliente', 'cita_referencia_estilo', 'cita_referencia'];
 const FUNCIONES_SESION = ['_clave_panel_lista', 'es_admin', 'rol_panel', 'barbero_actual', 'mis_citas', 'vincular_citas', 'mis_reclamaciones',
     'solicitud_profesional_estado', 'solicitud_profesional_crear', 'push_suscribir', 'push_desuscribir']; // + todas las panel_* y admin_*
 const FUNCIONES_SERVIDOR = ['push_reclamar', 'push_resultado', 'programar_recordatorios', 'programar_recuperacion', 'procesar_tareas_programadas',

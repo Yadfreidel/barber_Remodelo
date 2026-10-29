@@ -346,3 +346,40 @@ body[data-view="inicio"] .hero-content .hero-title span { filter: none; text-sha
     body[data-view="inicio"] .hero-portrait img { top: -13%; }
 }
 @media(min-width:701px) { body[data-view="inicio"] .hero-content .hero-title { font-size: clamp(40px,4.3vw,62px) !important; } }
+
+/* Interacción de portada: capas visuales sin interceptar controles. */
+body[data-view="inicio"] .hero-layout { touch-action: pan-y; }
+body[data-view="inicio"] .home-interaction-effects {
+    position: absolute; inset: 0; z-index: 0; overflow: hidden;
+    pointer-events: none; contain: layout paint;
+}
+body[data-view="inicio"] .home-pointer-glow {
+    position: absolute; width: 240px; height: 240px; margin: -120px;
+    border-radius: 50%; opacity: 0; pointer-events: none;
+    background: radial-gradient(circle,#dfc38f26,transparent 68%);
+    transition: opacity 220ms ease;
+}
+body[data-view="inicio"] .home-touch-wave,
+body[data-view="inicio"] .home-touch-particle {
+    position: absolute; pointer-events: none; border-radius: 50%;
+}
+body[data-view="inicio"] .home-touch-wave {
+    width: 32px; height: 32px; margin: -16px;
+    border: 1px solid #dfc38fa0;
+}
+body[data-view="inicio"] .home-touch-particle {
+    width: 4px; height: 4px; margin: -2px; background: #dfc38f;
+}
+@media(hover:hover) {
+    body[data-view="inicio"] .hero-acciones .btn-hero-cta:hover {
+        box-shadow: 0 0 18px #dfc38f30 !important;
+    }
+    body[data-view="inicio"] .hero-acciones .hero-secundaria:hover { text-shadow: 0 0 12px #dfc38f70; }
+}
+body[data-view="inicio"] .hero-acciones>a:focus-visible {
+    outline: 2px solid var(--home-champagne); outline-offset: 4px;
+}
+@media(prefers-reduced-motion:reduce) {
+    body[data-view="inicio"] .home-touch-wave,
+    body[data-view="inicio"] .home-touch-particle { display: none; }
+}

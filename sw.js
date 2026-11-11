@@ -12,7 +12,10 @@ self.addEventListener('push', evento => {
         // Con la app abierta y a la vista, el aviso (y su sonido) lo muestra la propia app: sin duplicarlo.
         // La notificación de prueba se muestra siempre.
         const ventanas = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-        const visible = ventanas.some(v => v.visibilityState === 'visible' && v.focused && v.url.startsWith(self.registration.scope));
+        // Fila virtual: solo se omite si la propia página de la fila está a la vista (ella ya lo muestra)
+        const deFila = new URL(url).pathname.endsWith('/fila.html');
+        const visible = ventanas.some(v => v.visibilityState === 'visible' && v.focused && v.url.startsWith(self.registration.scope)
+            && (!deFila || new URL(v.url).pathname.endsWith('/fila.html')));
         if (visible && datos.titulo !== 'Prueba de avisos') return;
         await self.registration.showNotification(datos.titulo || 'Barbería', {
             body: datos.cuerpo || 'Toca para ver los detalles.',
@@ -29,6 +32,11 @@ self.addEventListener('notificationclick', evento => {
     const url = evento.notification.data?.url || self.registration.scope;
     evento.waitUntil((async () => {
         const ventanas = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+        if (new URL(url).pathname.endsWith('/fila.html')) {
+            const fila = ventanas.find(v => new URL(v.url).pathname.endsWith('/fila.html'));
+            if (fila) { await fila.navigate?.(url).catch(() => {}); return fila.focus(); }
+            return self.clients.openWindow(url);
+        }
         const abierta = ventanas.find(v => v.url.startsWith(self.registration.scope));
         if (abierta) {
             abierta.postMessage({ tipo: 'abrir-aviso', url });

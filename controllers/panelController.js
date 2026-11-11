@@ -1,4 +1,5 @@
 import { renderConversaciones, contarConversaciones } from './panel/conversaciones.js';
+import { renderFila } from './panel/fila.js';
 // ==========================================
 // PANEL DE ADMINISTRACIÓN: estructura y navegación
 // PC: menú lateral. Móvil: menú desplegable. Las secciones visibles dependen del
@@ -40,6 +41,7 @@ const SECCIONES = [
     { id: 'resumen', titulo: 'Resumen', titulos: { barbero: 'Inicio' }, icono: 'gauge-high', roles: ['admin', 'barbero'], render: renderResumen, grupo: 'Día a día' },
     { id: 'agenda', titulo: 'Agenda', titulos: { barbero: 'Mi agenda' }, icono: 'calendar-days', roles: ['admin', 'barbero'], render: renderAgenda, grupo: 'Día a día' },
     { id: 'atencion', titulo: 'Atención', icono: 'play', roles: ['admin', 'barbero'], render: renderAtencion, grupo: 'Día a día' },
+    { id: 'fila', titulo: 'Fila virtual', icono: 'people-line', roles: ['admin', 'barbero'], render: renderFila, grupo: 'Día a día' },
     { id: 'conversaciones', titulo: 'Conversaciones', titulos: { barbero: 'Mis conversaciones' }, icono: 'comments', roles: ['admin', 'barbero'], render: renderConversaciones, grupo: 'Día a día' },
     { id: 'solicitudes', titulo: 'Solicitudes', icono: 'inbox', roles: ['admin'], render: renderSolicitudes, grupo: 'Día a día' },
     { id: 'reclamaciones', titulo: 'Reclamaciones', titulos: { barbero: 'Casos asignados' }, icono: 'flag', roles: ['admin', 'barbero'], render: renderReclamaciones, grupo: 'Día a día' },
@@ -69,7 +71,7 @@ const SECCIONES = [
 ];
 
 // Orden del menú del barbero
-const ORDEN_BARBERO = ['resumen', 'agenda', 'atencion', 'conversaciones', 'portafolio', 'ingresos', 'disponibilidad', 'ocupacion', 'reclamaciones', 'notificaciones', 'perfil', 'ventas', 'caja'];
+const ORDEN_BARBERO = ['resumen', 'agenda', 'atencion', 'fila', 'conversaciones', 'portafolio', 'ingresos', 'disponibilidad', 'ocupacion', 'reclamaciones', 'notificaciones', 'perfil', 'ventas', 'caja'];
 
 function seccionesDe(sesion) {
     // El barbero ve su menú en su propio orden, sin los grupos del administrador (solo «Finanzas» aparte)

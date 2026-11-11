@@ -409,7 +409,7 @@ const TIPOS = {
     '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.svg': 'image/svg+xml',
     '.ico': 'image/x-icon', '.json': 'application/json', '.webmanifest': 'application/manifest+json'
 };
-const PUBLICOS = ['index.html', 'sw.js', 'manifest.webmanifest', 'assets', 'controllers', 'models', 'imagenes'];
+const PUBLICOS = ['index.html', 'fila.html', 'sw.js', 'manifest.webmanifest', 'assets', 'controllers', 'models', 'imagenes'];
 
 function iniciarWeb() {
     const servidor = http.createServer((req, res) => {

@@ -1,3 +1,4 @@
+import { renderConversaciones, contarConversaciones } from './panel/conversaciones.js';
 // ==========================================
 // PANEL DE ADMINISTRACIÓN: estructura y navegación
 // PC: menú lateral. Móvil: menú desplegable. Las secciones visibles dependen del
@@ -39,6 +40,7 @@ const SECCIONES = [
     { id: 'resumen', titulo: 'Resumen', titulos: { barbero: 'Inicio' }, icono: 'gauge-high', roles: ['admin', 'barbero'], render: renderResumen, grupo: 'Día a día' },
     { id: 'agenda', titulo: 'Agenda', titulos: { barbero: 'Mi agenda' }, icono: 'calendar-days', roles: ['admin', 'barbero'], render: renderAgenda, grupo: 'Día a día' },
     { id: 'atencion', titulo: 'Atención', icono: 'play', roles: ['admin', 'barbero'], render: renderAtencion, grupo: 'Día a día' },
+    { id: 'conversaciones', titulo: 'Conversaciones', titulos: { barbero: 'Mis conversaciones' }, icono: 'comments', roles: ['admin', 'barbero'], render: renderConversaciones, grupo: 'Día a día' },
     { id: 'solicitudes', titulo: 'Solicitudes', icono: 'inbox', roles: ['admin'], render: renderSolicitudes, grupo: 'Día a día' },
     { id: 'reclamaciones', titulo: 'Reclamaciones', titulos: { barbero: 'Casos asignados' }, icono: 'flag', roles: ['admin', 'barbero'], render: renderReclamaciones, grupo: 'Día a día' },
     { id: 'notificaciones', titulo: 'Notificaciones', icono: 'bell', roles: ['admin', 'barbero'], render: renderNotificaciones, grupo: 'Día a día' },
@@ -67,7 +69,7 @@ const SECCIONES = [
 ];
 
 // Orden del menú del barbero
-const ORDEN_BARBERO = ['resumen', 'agenda', 'atencion', 'portafolio', 'ingresos', 'disponibilidad', 'ocupacion', 'reclamaciones', 'notificaciones', 'perfil', 'ventas', 'caja'];
+const ORDEN_BARBERO = ['resumen', 'agenda', 'atencion', 'conversaciones', 'portafolio', 'ingresos', 'disponibilidad', 'ocupacion', 'reclamaciones', 'notificaciones', 'perfil', 'ventas', 'caja'];
 
 function seccionesDe(sesion) {
     // El barbero ve su menú en su propio orden, sin los grupos del administrador (solo «Finanzas» aparte)
@@ -125,6 +127,7 @@ export function renderPanel(contenedor, { sesion, notificar, cerrar, salir, inic
 
     // Aviso interno: reclamaciones que esperan al equipo (sin envíos externos)
     async function actualizarAvisos() {
+        contarConversaciones(contenedor);
         let n = 0;
         try { n = await api('panel_reclamaciones_pendientes'); } catch { return; }
         const boton = contenedor.querySelector('[data-seccion="reclamaciones"]');
@@ -209,6 +212,7 @@ export function renderPanel(contenedor, { sesion, notificar, cerrar, salir, inic
         alAviso: nuevas => {
             const n = nuevas.at(-1);
             mostrarAvisoFlotante(n, nuevas.length);
+            if (nuevas.some(x => String(x.tipo).startsWith('chat_'))) contarConversaciones(contenedor);
             // La agenda, la atención, el resumen y la lista de avisos se actualizan sin recargar
             if (seccionActual === 'notificaciones' || (['agenda', 'atencion', 'resumen'].includes(seccionActual) && nuevas.some(x => String(x.tipo).startsWith('cita_')))) {
                 mostrar(seccionActual);

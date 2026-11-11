@@ -22,7 +22,9 @@ export function abrirPanelDesdeEnlace(params) {
     const fecha = /^\d{4}-\d{2}-\d{2}$/.test(params.get('fecha') || '') ? params.get('fecha') : null;
     // Cita concreta (aviso de nueva reserva): la agenda abre su detalle; el servidor comprueba que sea de esta cuenta
     const cita = /^[\w-]{1,40}$/.test(params.get('cita') || '') ? params.get('cita') : null;
-    inicioPendiente = { seccion, opciones: fecha ? { fecha, vista: 'dia', ...(cita ? { abrirCita: cita } : {}) } : {} };
+    // Conversación concreta del chat (el servidor comprueba que quien entra pueda verla)
+    const conversacion = /^[0-9a-f-]{36}$/i.test(params.get('conversacion') || '') ? params.get('conversacion') : null;
+    inicioPendiente = { seccion, opciones: fecha ? { fecha, vista: 'dia', ...(cita ? { abrirCita: cita } : {}) } : conversacion ? { conversacion } : {} };
     history.replaceState(null, '', location.pathname + location.hash);
     verificarAccesoAdmin();
     return true;

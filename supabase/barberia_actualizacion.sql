@@ -2,7 +2,7 @@
 -- ACTUALIZACIÓN DE BARBERÍA (esquema `barberia`)
 -- (generado con: npm run base:completa — no editar a mano)
 --
--- Para un proyecto que YA ejecutó supabase/base_completa.sql (hasta 20261104000000_referencia_estilo_cita.sql).
+-- Para un proyecto que YA ejecutó supabase/base_completa.sql (hasta 20261105000000_chat_privado.sql).
 -- Aplica solo estas migraciones nuevas, trasladadas a barberia:
 --   (ninguna)
 -- y vuelve a aplicar los permisos mínimos. No toca `public`, `private` ni Auth.
@@ -69,7 +69,7 @@ begin
         execute format('revoke all on function %s from public, anon, authenticated, service_role', v_fn);
         if v_nombre = any (array['config_publica', 'listar_productos', 'cotizar_cita', 'horarios_disponibles', 'reservar_cita', 'consultar_cita', 'confirmar_cita', 'cancelar_cita', 'horarios_reprogramacion', 'cotizar_reprogramacion', 'reprogramar_cita', 'unirse_lista_espera', 'consultar_lista_espera', 'cancelar_lista_espera', 'consultar_oferta', 'aceptar_oferta', 'rechazar_oferta', 'mi_codigo_referido', 'darse_de_baja', 'catalogo_publico', 'barberos_publicos', 'negocio_publico', 'ubicacion_publica', 'horarios_dia_publico', 'mis_citas_por_tokens', 'portafolio_publico', 'portafolio_imagen', 'estilos_publicos', 'estilo_publico', 'estilo_foto', 'reclamacion_categorias_publicas', 'reclamacion_crear', 'reclamacion_consultar', 'reclamacion_adjunto', 'reclamacion_responder', 'mis_reclamaciones_por_tokens', 'cita_avisos_whatsapp', 'cita_notas_cliente', 'cita_referencia_estilo', 'cita_referencia']) then
             execute format('grant execute on function %s to anon, authenticated', v_fn);
-        elsif v_nombre = any (array['_clave_panel_lista', 'es_admin', 'rol_panel', 'barbero_actual', 'mis_citas', 'vincular_citas', 'mis_reclamaciones', 'solicitud_profesional_estado', 'solicitud_profesional_crear', 'push_suscribir', 'push_desuscribir']) or v_nombre like 'panel\_%' or v_nombre like 'admin\_%' then
+        elsif v_nombre = any (array['_clave_panel_lista', 'es_admin', 'rol_panel', 'barbero_actual', 'mis_citas', 'vincular_citas', 'mis_reclamaciones', 'solicitud_profesional_estado', 'solicitud_profesional_crear', 'push_suscribir', 'push_desuscribir', 'chat_mi_conversacion', 'chat_mensajes', 'chat_novedades', 'chat_enviar', 'chat_leer', 'chat_adjunto', 'chat_referencia']) or v_nombre like 'panel\_%' or v_nombre like 'admin\_%' then
             execute format('grant execute on function %s to authenticated', v_fn);
         elsif v_nombre = any (array['push_reclamar', 'push_resultado', 'programar_recordatorios', 'programar_recuperacion', 'procesar_tareas_programadas', 'whatsapp_reclamar', 'whatsapp_resultado', 'whatsapp_procesar_evento']) then
             execute format('grant execute on function %s to service_role', v_fn);

@@ -9,12 +9,15 @@ import { desbloquearSonido, reproducirSonido, sonidoBloqueado, fijarPreferencias
     activarPush, desactivarPushDispositivo, comprobarDispositivo, consultarAhora } from './avisos.js';
 
 const ICONOS = { cita_nueva: 'calendar-plus', cita_cancelada: 'calendar-xmark', cita_reprogramada: 'calendar-days', cita_asignada: 'user-check',
-    cita_reasignada: 'arrow-right-arrow-left', disponibilidad: 'clock', solicitud_acceso: 'user-plus', sistema: 'bell' };
+    cita_reasignada: 'arrow-right-arrow-left', disponibilidad: 'clock', solicitud_acceso: 'user-plus', sistema: 'bell',
+    chat_mensaje: 'comment-dots', chat_asignada: 'comments', chat_referencia: 'bookmark' };
 
 // Destino de un aviso dentro del panel (la sección vuelve a comprobar permisos en el servidor)
 export function abrirAviso(ctx, n) {
     const d = n.datos || {};
     // Una reserva abre su detalle en la agenda (el servidor comprueba que la cita sea de esta cuenta)
+    // Un mensaje del chat abre su conversación (el servidor comprueba que siga asignada a esta cuenta)
+    if (d.seccion === 'conversaciones') return ctx.irA('conversaciones', d.conversacion ? { conversacion: String(d.conversacion) } : {});
     if (d.seccion) ctx.irA(d.seccion, d.fecha ? { fecha: d.fecha, vista: 'dia', ...(d.cita ? { abrirCita: String(d.cita) } : {}) } : {});
 }
 

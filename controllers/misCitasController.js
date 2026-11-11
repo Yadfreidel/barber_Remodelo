@@ -7,6 +7,7 @@ import { rango12h, formato12h, fechaLarga } from '../assets/horario-utils.js';
 import { esc, formatoPrecio, mensajeError } from './modulosController.js';
 import { abrirFormularioReclamacion, cargarMisReclamaciones, htmlMisReclamaciones, olvidarReclamaciones } from './reclamacionesClienteController.js';
 import { ayuda } from '../assets/ayuda.js';
+import { montarAccesoChat, actualizarAccesoChat } from './chatClienteController.js';
 
 const ERRORES_CUENTA = {
     'Invalid login credentials': 'Correo o contraseña incorrectos.',
@@ -42,6 +43,7 @@ export function crearVistaMisCitas() {
             «Gestionar mi cita». Por seguridad, no se pueden buscar citas con un teléfono o un correo.</span></p>
             <button type="button" class="mc-enlace" id="mc-olvidar">Quitar mis citas de este navegador</button>
         </footer>`;
+    montarAccesoChat(vista);   // «Hablar con la barbería» (cuenta con sesión)
     vista.addEventListener('click', manejarClic);
     vista.querySelector('#mc-cuenta').addEventListener('submit', manejarCuenta);
     supabase?.auth.onAuthStateChange(evento => {
@@ -186,6 +188,7 @@ export async function actualizarMisCitas({ silencioso = false } = {}) {
     const miTurno = ++turno;
     pintarBorrador();
     pintarCuenta(miTurno);
+    actualizarAccesoChat();
     if (!estaSupabaseListo()) {
         grupos(false);
         pintarEstado('<p>Las reservas en línea no están disponibles en este momento: las solicitudes se envían por WhatsApp y la barbería te confirma el horario.</p>', 'aviso');

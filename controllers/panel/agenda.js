@@ -9,6 +9,7 @@ import {
 import { abrirCobroDeCita, abrirVenta } from './ventas.js';
 import { ayuda } from '../../assets/ayuda.js';
 import { pintarReferenciaCita } from '../referenciaEstiloController.js';
+import { pintarReferenciasChat } from './conversaciones.js';
 
 const estado = {
     vista: window.matchMedia('(max-width: 760px)').matches ? 'lista' : 'dia',
@@ -432,6 +433,7 @@ export async function abrirDetalle(id, ctx, recargar) {
                 </section>
             </div>
             <section class="cita-referencia" data-referencia-cita aria-label="Estilo solicitado como referencia" hidden></section>
+            <section class="cita-referencia inspiracion-reserva inspiracion-cita" data-chat-referencias aria-label="Fotos de referencia enviadas por el cliente" hidden></section>
             ${c.motivo_cancelacion ? `<p class="cita-motivo"><i class="fas fa-ban" aria-hidden="true"></i> <span><span class="cita-etiqueta">Motivo de cancelación</span>${esc(c.motivo_cancelacion)}</span></p>` : ''}
 
             <section class="detalle-bloque cita-whatsapp">
@@ -496,6 +498,8 @@ export async function abrirDetalle(id, ctx, recargar) {
     // Publicación que el cliente eligió como inspiración (el servidor aplica los mismos permisos que a la cita)
     pintarReferenciaCita(cuerpo.querySelector('[data-referencia-cita]'), () => api('panel_cita_referencia', { p_cita: String(c.id ?? id) }),
         { titulo: 'Estilo solicitado como referencia', nota: false });
+    // Fotos que el cliente marcó en el chat como «Referencia para mi corte» de esta cita
+    pintarReferenciasChat(cuerpo.querySelector('[data-chat-referencias]'), c.id ?? id);
 
     // Se abre mostrando el inicio de la cita (el foco automático iría al selector de WhatsApp, a media altura)
     cuerpo.closest('.panel-dialogo').querySelector('[data-cerrar]').focus({ preventScroll: true });

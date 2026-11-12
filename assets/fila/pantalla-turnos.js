@@ -1,7 +1,10 @@
 // ==========================================
 // PANTALLA DE TURNOS PARA LA TV DEL LOCAL (solo lectura, sin sesión)
-// Consulta fila_pantalla(): SOLO código de turno, silla y estado de los llamados vigentes (el mismo estado
-// «llamado» que ve el celular del cliente). No recibe nombres, teléfonos, fotos, notas ni datos de citas.
+// Consulta fila_pantalla(): SOLO datos públicos. Llamados vigentes (código, silla y estado: el mismo «llamado»
+// que ve el celular del cliente), fila sin cita (código, estado, turnos delante y minutos estimados con los
+// cálculos de la Fila virtual) y citas confirmadas de hoy (código del comprobante, hora reservada, estado y
+// silla si está en atención). No recibe nombres, teléfonos, fotos, notas, identificadores internos ni tokens.
+//   - Las listas se reparten en páginas que caben en pantalla y rotan solas («1 de 3»): nunca hay desplazamiento.
 //   - Cada pocos segundos (y al volver a la pestaña). Si falla: «Reconectando…» y al volver, el estado actual.
 //   - Sonido: los navegadores exigen un toque; «Activar sonido» lo habilita. Suena una vez por llamado nuevo:
 //     las claves de los llamados ya anunciados se guardan en este navegador, así que reconectar o recargar
@@ -69,9 +72,8 @@ function campana() {
 }
 
 // ---------- Pintado ----------
-function texto(l) {
-    return l.silla ? `Pasa a la silla ${l.silla}` : 'Pasa a recepción';
-}
+const destino = l => (l.silla ? `Silla ${l.silla}` : 'Recepción');
+const textoLlamado = l => (l.silla ? `${l.codigo}, pasa a la silla ${l.silla}` : `${l.codigo}, pasa a recepción`);
 
 function pintar(d) {
     const firma = JSON.stringify([d.llamados, d.en_espera, d.recepcion_abierta]);
@@ -79,13 +81,14 @@ function pintar(d) {
     if (firma !== ultimaFirma) {
         ultimaFirma = firma;
         const caja = $('[data-llamados]');
+        // El primero (el más reciente) es el bloque grande; los demás llamados vigentes, debajo y más pequeños
         caja.innerHTML = d.llamados.length ? d.llamados.map((l, i) => `
-            <article class="tv-llamado ${i === 0 ? 'principal' : ''} ${nuevos.some(n => n.clave === l.clave) ? 'nuevo' : ''}">
-                <span class="tv-codigo">${esc(l.codigo)}</span>
-                <span class="tv-separador" aria-hidden="true">·</span>
-                <span class="tv-destino">${esc(texto(l))}</span>
+            <article class="tv-llamado ${i === 0 ? 'principal' : ''} ${nuevos.some(n => n.clave === l.clave) ? 'nuevo' : ''}" aria-label="${esc(textoLlamado(l))}">
+                <span class="tv-codigo" aria-hidden="true">${esc(l.codigo)}</span>
+                <span class="tv-flecha" aria-hidden="true">→</span>
+                <span class="tv-destino" aria-hidden="true">${esc(destino(l))}</span>
             </article>`).join('')
-            : '<p class="tv-vacio"><i class="fa-regular fa-clock" aria-hidden="true"></i> Esperando el próximo turno</p>';
+            : '<p class="tv-vacio"><i class="fa-regular fa-clock" aria-hidden="true"></i> Nadie en llamado ahora. Atento a tu código.</p>';
         $('[data-espera]').textContent = d.recepcion_abierta
             ? (d.en_espera ? `${d.en_espera} ${d.en_espera === 1 ? 'turno' : 'turnos'} en espera` : 'Nadie en espera')
             : 'La fila no recibe turnos nuevos en este momento';
@@ -99,7 +102,92 @@ function pintar(d) {
     }
     const url = d.url_publica || urlFila();
     if (url !== urlQR) pintarQR(url);
+    // Las listas llegan desde la migración 20261108 (pantalla_tv_listas); sin ellas, la TV sigue como antes
+    const conListas = Array.isArray(d.espera) && Array.isArray(d.citas);
+    $('.tv-listas').hidden = !conListas;
+    if (!conListas) return;
+    if (d.fecha && d.fecha !== fechaDatos) {      // cambio de día en la zona del negocio: se empieza de cero
+        fechaDatos = d.fecha;
+        Object.values(bloques).forEach(b => { b.pagina = 0; });
+    }
+    bloques.espera.filas = d.espera.map(filaEspera);
+    bloques.citas.filas = d.citas.map(filaCita);
+    bloques.espera.vacio = d.recepcion_abierta ? 'Nadie espera. Escanea el QR para tomar turno.' : 'Nadie espera.';
+    bloques.citas.vacio = 'No quedan citas por hoy.';
+    Object.values(bloques).forEach(pintarBloque);
 }
+
+// ---------- Fila sin cita y citas de hoy (paginadas, sin desplazamiento) ----------
+const ESTADO_CITA = { reservada: 'Reservada', llego: 'Llegó', en_atencion: 'En atención' };
+const plural = (n, uno, varios) => `${n} ${n === 1 ? uno : varios}`;
+function filaEspera(e) {
+    const datos = [];
+    if (Number.isInteger(e.delante)) datos.push(e.delante === 0 ? 'Es el siguiente' : `${plural(e.delante, 'turno', 'turnos')} delante`);
+    if (Number.isInteger(e.minutos)) datos.push(e.minutos <= 1 ? 'En breve' : `~${e.minutos} min`);
+    // Sin posición ni estimación: «En espera» y lo que haya
+    return `<li class="tv-fila en_espera"><span class="tv-fila-codigo">${esc(e.codigo)}</span>
+        <span class="tv-fila-texto"><span class="tv-fila-dato">${esc(datos.join(' · ') || 'En espera')}</span>
+        ${datos.length ? '<span class="tv-fila-estado">En espera</span>' : ''}</span></li>`;
+}
+function filaCita(c) {
+    const estado = ESTADO_CITA[c.estado] || 'Reservada';
+    return `<li class="tv-fila ${esc(c.estado)}"><span class="tv-fila-codigo">${esc(c.codigo)}</span>
+        <span class="tv-fila-texto"><span class="tv-fila-dato">${esc(hora12(c.hora))}</span>
+        <span class="tv-fila-estado">${esc(estado)}${c.silla ? ` · silla&nbsp;${Number(c.silla)}` : ''}</span></span></li>`;
+}
+// «16:00» (hora reservada, fija) -> «4:00 p. m.»
+function hora12(hhmm) {
+    const [h, m] = String(hhmm || '').split(':').map(Number);
+    if (!Number.isFinite(h)) return '';
+    return `${h % 12 || 12}:${String(m || 0).padStart(2, '0')} ${h < 12 ? 'a. m.' : 'p. m.'}`;
+}
+
+const ROTACION = 8000;
+let fechaDatos = '';
+const bloques = Object.fromEntries(['espera', 'citas'].map(nombre => {
+    const raiz = document.querySelector(`[data-bloque="${nombre}"]`);
+    return [nombre, { nombre, raiz, lista: raiz.querySelector('[data-filas]'), indicador: raiz.querySelector('[data-pagina]'), filas: [], pagina: 0, vacio: '', html: '' }];
+}));
+
+// Cuántas filas caben en el alto disponible del bloque (en móvil la página crece: se usan 6)
+function capacidad(b) {
+    if (window.matchMedia('(max-width: 760px)').matches) return 6;
+    const muestra = b.lista.querySelector('.tv-fila');
+    const alto = b.lista.clientHeight;
+    if (!muestra || !alto) return 6;
+    const gap = parseFloat(getComputedStyle(b.lista).rowGap) || 0;
+    return Math.max(1, Math.floor((alto + gap) / (muestra.offsetHeight + gap)));
+}
+
+function pintarBloque(b) {
+    if (!b.filas.length) {
+        poner(b, `<li class="tv-fila-vacia">${esc(b.vacio)}</li>`);
+        b.indicador.hidden = true;
+        return;
+    }
+    // Se mide con una fila real antes de repartir en páginas
+    if (!b.lista.querySelector('.tv-fila')) poner(b, b.filas[0]);
+    const porPagina = capacidad(b);
+    const paginas = Math.ceil(b.filas.length / porPagina);
+    b.pagina = Math.min(b.pagina, paginas - 1);
+    poner(b, b.filas.slice(b.pagina * porPagina, (b.pagina + 1) * porPagina).join(''));
+    b.indicador.hidden = paginas < 2;
+    b.indicador.textContent = `${b.pagina + 1} de ${paginas}`;
+}
+function poner(b, html) {
+    if (b.html === html) return;
+    b.html = html;
+    b.lista.innerHTML = html;
+}
+setInterval(() => Object.values(bloques).forEach(b => {
+    if (b.filas.length < 2) return;
+    const paginas = Math.ceil(b.filas.length / capacidad(b));
+    if (paginas < 2) return;
+    b.pagina = (b.pagina + 1) % paginas;
+    pintarBloque(b);
+}), ROTACION);
+let redimension = null;
+window.addEventListener('resize', () => { clearTimeout(redimension); redimension = setTimeout(() => Object.values(bloques).forEach(b => { b.html = ''; pintarBloque(b); }), 200); });
 
 function pintarQR(url) {
     const caja = $('[data-qr]');
@@ -109,9 +197,20 @@ function pintarQR(url) {
     new window.QRCode(caja, { text: url, width: 220, height: 220, colorDark: '#111111', colorLight: '#ffffff', correctLevel: window.QRCode.CorrectLevel.M });
 }
 
+// «Jueves 12 de noviembre · 3:36 p. m.» en la hora del negocio (America/Santo_Domingo)
+const ZONA = 'America/Santo_Domingo';
 function reloj() {
-    $('[data-reloj]').textContent = new Date().toLocaleTimeString('es-DO', { hour: 'numeric', minute: '2-digit', timeZone: 'America/Santo_Domingo' });
+    const ahora = new Date();
+    const p = Object.fromEntries(new Intl.DateTimeFormat('es-DO', { weekday: 'long', day: 'numeric', month: 'long', timeZone: ZONA })
+        .formatToParts(ahora).map(x => [x.type, x.value]));
+    const dia = `${p.weekday.charAt(0).toLocaleUpperCase('es') + p.weekday.slice(1)} ${p.day} de ${p.month}`;
+    const hora = ahora.toLocaleTimeString('es-DO', { hour: 'numeric', minute: '2-digit', timeZone: ZONA });
+    $('[data-reloj]').innerHTML = `<span class="tv-fecha">${esc(dia)}</span><span class="tv-reloj-sep" aria-hidden="true"> · </span><span>${esc(hora)}</span>`;
+    // Al cambiar el día en la zona del negocio se pide el estado nuevo enseguida
+    if (diaReloj && diaReloj !== dia) actualizar();
+    diaReloj = dia;
 }
+let diaReloj = '';
 
 // ---------- Ciclo ----------
 async function actualizar() {

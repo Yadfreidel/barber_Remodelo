@@ -87,3 +87,9 @@
     .atencion-llamar label { width: 100%; }
     .atencion-llamar select { flex: 1; }
 }
+
+/* ---------- Código público de la cita (el mismo que muestra la pantalla de turnos del local) ---------- */
+.resumen-ticket .codigo-cita-tv { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
+.codigo-cita-tv i { color: var(--gold, #d2b16d); }
+.codigo-cita-tv strong { color: var(--gold, #d2b16d); font-size: 1.15em; letter-spacing: 0.04em; font-variant-numeric: tabular-nums; }
+.codigo-cita-tv small { opacity: 0.7; }

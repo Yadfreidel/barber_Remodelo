@@ -17,16 +17,25 @@ const MOTIVOS = {
     sin_hueco: 'Hay turnos esperando, pero ninguno cabe completo antes de tu próxima cita, bloqueo o cierre.'
 };
 const ERRORES = {
-    ya_tiene_turno: 'Ya tienes un turno llamado o en servicio: termínalo antes de llamar al siguiente.',
-    atencion_en_curso: 'Tienes una cita en atención: márcala como completada antes de llamar a la fila.',
+    ya_tiene_turno: 'Ese barbero ya tiene un turno llamado o en servicio: termínalo antes de llamar al siguiente.',
+    atencion_en_curso: 'Ese barbero tiene una cita en atención: márcala como terminada antes de llamar a la fila.',
     hueco_no_disponible: 'Ese hueco ya no está libre (una cita o un bloqueo lo ocupa). Marca «No se presentó» o vuelve a llamar.',
     transicion_invalida: 'El turno ya cambió de estado. Se actualizó la lista.',
     turno_no_encontrado: 'Ese turno ya no está a tu cargo.',
     barbero_no_elegible: 'Ese barbero no realiza el servicio o no trabaja hoy.',
     barbero_requerido: 'Elige el barbero que atenderá.',
-    configuracion_invalida: 'Revisa los valores: cortesía de 1 a 30 min, aviso de 1 a 10 turnos, límite de 1 a 200, sillas del 1 al 99 y una URL que empiece por https://.'
+    configuracion_invalida: 'Revisa los valores: cortesía de 1 a 30 min, aviso de 1 a 10 turnos, límite de 1 a 200, sillas del 1 al 99 y una URL que empiece por https://.',
+    servicio_no_disponible: 'Ese servicio ya no está disponible.',
+    sin_barberos: 'Ningún barbero que trabaje hoy realiza ese servicio.',
+    fila_cerrada: 'La recepción está en pausa: ábrela para dar turnos.',
+    fila_llena: 'La fila llegó al máximo de turnos en espera (ajústalo en «Ajustes»).',
+    demasiados_turnos: 'Demasiados turnos seguidos desde este dispositivo. Espera un momento.'
 };
-const traducir = e => ERRORES[Object.keys(ERRORES).find(k => (e?.message || '').includes(k))] || e?.message || 'No se pudo completar.';
+// api() conserva el código del servidor en e.codigo; e.message ya trae el texto general traducido
+const traducir = e => {
+    const codigo = `${e?.codigo || ''} ${e?.message || ''}`;
+    return ERRORES[Object.keys(ERRORES).find(k => codigo.includes(k))] || e?.message || 'No se pudo completar.';
+};
 const hora = ts => (ts ? formato12h(String(ts).slice(11, 16)) : '');
 const minutosDesde = (iso, ahora) => Math.max(0, Math.round((Date.parse(ahora) - Date.parse(iso)) / 60000));
 function nuevaClave() {

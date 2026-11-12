@@ -153,7 +153,13 @@ export async function api(funcion, argumentos = {}) {
     if (!cliente) throw new Error('No hay conexión con el servidor.');
     const { data, error } = await cliente.rpc(funcion, argumentos);
     // sin_stock indica en el detalle qué artículo se agotó
-    if (error) throw new Error(mensajeError(error) + (/sin_stock/.test(error.message) && error.details ? ` (${error.details})` : ''));
+    if (error) {
+        const fallo = new Error(mensajeError(error) + (/sin_stock/.test(error.message) && error.details ? ` (${error.details})` : ''));
+        // Se conserva el código del servidor: cada módulo puede traducir sus propios errores (fila, atención…)
+        fallo.codigo = error.message || '';
+        if (fallo.message.startsWith('No se pudo completar')) console.warn(`[panel] ${funcion}:`, error.message, error.details || '');
+        throw fallo;
+    }
     return data;
 }
 

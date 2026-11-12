@@ -26,12 +26,24 @@
     </header>
     <p class="tv-estado" data-conexion role="status" hidden><i class="fas fa-rotate fa-spin" aria-hidden="true"></i> Reconectando…</p>
     <main class="tv-cuerpo">
-        <section class="tv-llamados" aria-labelledby="tv-titulo">
-            <h1 id="tv-titulo" class="tv-titulo">Turnos llamados</h1>
-            <div class="tv-lista" data-llamados aria-live="assertive">
-                <p class="tv-vacio">Cargando…</p>
+        <div class="tv-principal">
+            <section class="tv-llamados" aria-labelledby="tv-titulo">
+                <h1 id="tv-titulo" class="tv-titulo">Pasa ahora</h1>
+                <div class="tv-lista" data-llamados aria-live="assertive">
+                    <p class="tv-vacio">Cargando…</p>
+                </div>
+            </section>
+            <div class="tv-listas">
+                <section class="tv-bloque" data-bloque="espera" aria-labelledby="tv-titulo-espera">
+                    <h2 id="tv-titulo-espera" class="tv-bloque-titulo"><span>Fila sin cita</span> <span class="tv-pagina" data-pagina hidden></span></h2>
+                    <ol class="tv-filas" data-filas></ol>
+                </section>
+                <section class="tv-bloque" data-bloque="citas" aria-labelledby="tv-titulo-citas">
+                    <h2 id="tv-titulo-citas" class="tv-bloque-titulo"><span>Citas de hoy</span> <span class="tv-pagina" data-pagina hidden></span></h2>
+                    <ol class="tv-filas" data-filas></ol>
+                </section>
             </div>
-        </section>
+        </div>
         <aside class="tv-lateral" aria-label="Fila virtual">
             <div class="tv-qr" data-qr aria-hidden="true"></div>
             <p class="tv-qr-texto" data-qr-texto>¿Llegaste sin cita? Escanea y toma tu turno</p>

@@ -436,6 +436,7 @@ async function renderCita(panel, token) {
                 ${c.cliente_confirmo && c.estado !== 'cancelada' ? '<p class="resumen-ok"><i class="fas fa-check"></i> Confirmaste tu asistencia</p>' : ''}
             </div>
             <div class="resumen-ticket">
+                ${c.referencia ? `<div class="codigo-cita-tv"><i class="fas fa-tv" aria-hidden="true"></i> Código de tu cita: <strong>${esc(c.referencia)}</strong> <small>(lo verás en la pantalla del local)</small></div>` : ''}
                 <div><i class="fas fa-cut"></i> ${esc(c.servicio)}</div>
                 <div><i class="fas fa-user-tie"></i> Staff: ${esc(c.barbero)}</div>
                 <div><i class="fas fa-clock"></i> ${esc(fecha)} a las ${esc(formato12h(c.hora))}</div>

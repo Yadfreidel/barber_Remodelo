@@ -27,7 +27,7 @@ const ERRORES_CITA = {
     cita_marcada_no_asistio: 'La cita está marcada como «no asistió».',
     cita_no_encontrada: 'Esa cita ya no está a tu cargo.'
 };
-const traducirCita = e => ERRORES_CITA[Object.keys(ERRORES_CITA).find(k => (e?.message || '').includes(k))] || traducirFila(e);
+const traducirCita = e => ERRORES_CITA[Object.keys(ERRORES_CITA).find(k => `${e?.codigo || ''} ${e?.message || ''}`.includes(k))] || traducirFila(e);
 
 function faseCita(c) {
     if (c.no_asistio_en) return ['No asistió', 'estado-cancelada'];

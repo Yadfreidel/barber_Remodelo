@@ -9,6 +9,7 @@ import {
 import { abrirCobroDeCita, abrirVenta } from './ventas.js';
 import { ayuda } from '../../assets/ayuda.js';
 import { pintarReferenciaCita } from '../referenciaEstiloController.js';
+import { pintarConsultaEstilo } from '../estiloConsultaController.js';
 import { pintarReferenciasChat } from './conversaciones.js';
 
 const estado = {
@@ -432,6 +433,7 @@ export async function abrirDetalle(id, ctx, recargar) {
                     <p class="cita-origen"><span class="cita-etiqueta">Origen</span> ${esc({ web: 'Web', admin: 'Administración', lista_espera: 'Lista de espera' }[c.origen] || c.origen)} · ${esc(fechaHora(c.creado_en))}</p>
                 </section>
             </div>
+            <section class="cita-referencia" data-estilo-cita aria-label="Cómo quiere su corte" hidden></section>
             <section class="cita-referencia" data-referencia-cita aria-label="Estilo solicitado como referencia" hidden></section>
             <section class="cita-referencia inspiracion-reserva inspiracion-cita" data-chat-referencias aria-label="Fotos de referencia enviadas por el cliente" hidden></section>
             ${c.motivo_cancelacion ? `<p class="cita-motivo"><i class="fas fa-ban" aria-hidden="true"></i> <span><span class="cita-etiqueta">Motivo de cancelación</span>${esc(c.motivo_cancelacion)}</span></p>` : ''}
@@ -498,6 +500,9 @@ export async function abrirDetalle(id, ctx, recargar) {
     // Publicación que el cliente eligió como inspiración (el servidor aplica los mismos permisos que a la cita)
     pintarReferenciaCita(cuerpo.querySelector('[data-referencia-cita]'), () => api('panel_cita_referencia', { p_cita: String(c.id ?? id) }),
         { titulo: 'Estilo solicitado como referencia', nota: false });
+    // Foto y nota de «¿Cómo quieres tu corte?» (el servidor aplica los mismos permisos que a la cita)
+    pintarConsultaEstilo(cuerpo.querySelector('[data-estilo-cita]'), completa => api('panel_cita_estilo', { p_cita: String(c.id ?? id), p_completa: completa }),
+        { titulo: 'Cómo quiere su corte' });
     // Fotos que el cliente marcó en el chat como «Referencia para mi corte» de esta cita
     pintarReferenciasChat(cuerpo.querySelector('[data-chat-referencias]'), c.id ?? id);
 

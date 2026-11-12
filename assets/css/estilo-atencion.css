@@ -1,0 +1,89 @@
+/* ==========================================
+   CONSULTA RÁPIDA DE ESTILO (reserva y detalle de la cita) Y ATENCIÓN UNIFICADA (panel)
+   Usa los colores existentes (--gold / --dorado y los tokens del panel).
+   ========================================== */
+
+/* ---------- «¿Cómo quieres tu corte?» en la reserva ---------- */
+.consulta-estilo { margin: 14px 0; border: 1px solid rgb(255 255 255 / 12%); border-radius: 14px; background: rgb(255 255 255 / 3%); }
+.consulta-estilo > summary { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 48px; padding: 12px 16px;
+    cursor: pointer; list-style: none; font-weight: 650; }
+.consulta-estilo > summary::-webkit-details-marker { display: none; }
+.consulta-estilo > summary::after { content: "\f078"; font: 900 12px/1 "Font Awesome 6 Free"; transition: transform 0.2s; }
+.consulta-estilo[open] > summary::after { transform: rotate(180deg); }
+.consulta-estilo > summary i { color: var(--gold, #d2b16d); margin-right: 6px; }
+.consulta-estilo > summary small { margin-left: auto; opacity: 0.65; font-weight: 500; }
+.consulta-estilo-cuerpo { display: grid; gap: 10px; padding: 0 16px 16px; }
+.consulta-estilo-ayuda { margin: 0; font-size: 0.9rem; opacity: 0.8; }
+.consulta-estilo-anadir { display: grid; justify-items: center; gap: 4px; width: 100%; min-height: 88px; padding: 14px; border: 1.5px dashed rgb(255 255 255 / 25%);
+    border-radius: 12px; background: transparent; color: inherit; font: inherit; font-weight: 600; cursor: pointer; }
+.consulta-estilo-anadir i { font-size: 1.3rem; color: var(--gold, #d2b16d); }
+.consulta-estilo-anadir small { font-weight: 400; opacity: 0.65; }
+.consulta-estilo-anadir:hover, .consulta-estilo-anadir:focus-visible { border-color: var(--gold, #d2b16d); }
+.consulta-estilo-vista { display: flex; align-items: center; gap: 14px; margin: 0; }
+.consulta-estilo-vista img { width: 96px; height: 96px; object-fit: cover; border-radius: 10px; }
+.consulta-estilo-vista figcaption { display: grid; gap: 6px; justify-items: start; }
+.consulta-estilo-enlace { min-height: 36px; padding: 6px 10px; border: 1px solid rgb(255 255 255 / 18%); border-radius: 999px; background: transparent;
+    color: inherit; font: inherit; font-size: 0.88rem; cursor: pointer; }
+.consulta-estilo-enlace:hover, .consulta-estilo-enlace:focus-visible { border-color: var(--gold, #d2b16d); }
+.consulta-estilo-cargando { margin: 0; padding: 14px; text-align: center; opacity: 0.8; }
+.consulta-estilo-error { margin: 0; padding: 8px 12px; border-radius: 10px; background: rgb(231 76 60 / 14%); color: #f6b1a6; font-size: 0.9rem; }
+.consulta-estilo-error[hidden] { display: none; }
+.consulta-estilo-error .consulta-estilo-enlace { margin: 4px 4px 0 0; }
+.consulta-estilo textarea { width: 100%; resize: vertical; }
+.consulta-estilo-contador { justify-self: end; opacity: 0.6; font-size: 0.8rem; }
+
+/* Aviso tras reservar si la foto no se pudo adjuntar */
+.consulta-estilo-envio { display: grid; gap: 8px; margin: 0 0 12px; padding: 12px 14px; border-radius: 12px; background: rgb(240 184 96 / 14%); color: #f6d6a2; }
+.consulta-estilo-envio.ok { background: rgb(46 204 113 / 12%); color: #bfeccf; }
+.consulta-estilo-envio p { margin: 0; }
+.consulta-estilo-envio div { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* ---------- Consulta guardada (detalle de la cita: cliente y panel) ---------- */
+.consulta-estilo-guardada { display: flex; gap: 14px; align-items: flex-start; margin: 14px 0; padding: 12px; border-radius: 12px;
+    border: 1px solid rgb(255 255 255 / 12%); background: rgb(255 255 255 / 3%); }
+.consulta-estilo-guardada[hidden] { display: none; }
+.consulta-estilo-miniatura { flex: 0 0 auto; padding: 0; border: 0; border-radius: 10px; overflow: hidden; background: none; cursor: zoom-in; line-height: 0; }
+.consulta-estilo-miniatura img { width: 96px; height: 96px; object-fit: cover; }
+.consulta-estilo-texto { display: grid; gap: 4px; min-width: 0; }
+.consulta-estilo-texto .inspiracion-eyebrow { margin: 0; }
+.consulta-estilo-nota-guardada { margin: 0; overflow-wrap: anywhere; }
+.consulta-estilo-nota-guardada.tenue { opacity: 0.65; }
+.consulta-estilo-visor { max-width: min(96vw, 900px); max-height: 92vh; padding: 0; border: 0; border-radius: 14px; background: #000; }
+.consulta-estilo-visor::backdrop { background: rgb(0 0 0 / 80%); }
+.consulta-estilo-visor img { display: block; max-width: 100%; max-height: 92vh; object-fit: contain; }
+.consulta-estilo-visor form { position: absolute; top: 8px; right: 8px; }
+.consulta-estilo-cerrar { width: 44px; height: 44px; border: 0; border-radius: 50%; background: rgb(0 0 0 / 60%); color: #fff; font-size: 1.1rem; cursor: pointer; }
+
+/* ---------- Atención unificada (panel) ---------- */
+.atencion-unificada .agenda-filtros { flex-wrap: wrap; }
+.atencion-tipos { display: inline-flex; gap: 4px; padding: 3px; border-radius: 999px; border: 1px solid var(--p-linea, rgb(255 255 255 / 12%)); }
+.atencion-tipo { min-height: 36px; padding: 6px 14px; border: 0; border-radius: 999px; background: transparent; color: inherit; font: inherit; font-size: 0.88rem; cursor: pointer; }
+.atencion-tipo[aria-pressed="true"] { background: var(--dorado, #d2b16d); color: #18140b; font-weight: 650; }
+.atencion-llamar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: 0 0 14px; padding: 12px 14px; border-radius: 12px;
+    border: 1px solid var(--p-linea, rgb(255 255 255 / 12%)); }
+.atencion-llamar label { display: inline-flex; align-items: center; gap: 8px; }
+.atencion-llamar .panel-btn { margin-left: auto; }
+.atencion-etiqueta { display: inline-block; justify-self: start; margin-bottom: 4px; padding: 2px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 700;
+    letter-spacing: 0.04em; text-transform: uppercase; }
+.atencion-etiqueta.cita { background: rgb(52 152 219 / 16%); color: #9fd0f2; }
+.atencion-etiqueta.turno { background: color-mix(in srgb, var(--dorado, #d2b16d) 20%, transparent); color: var(--dorado-brillante, #e6cd97); }
+.atencion-hora { display: grid; align-content: start; }
+.panel-shell .atencion-unificada .atencion-hora strong { white-space: nowrap; font-size: 1.1rem; }
+.panel-shell .atencion-unificada .atencion-cita { grid-template-columns: 104px minmax(0, 1fr) auto; }
+.atencion-turno .fila-codigo-panel { font-size: 1.1rem; white-space: nowrap; }
+.atencion-turno.llamado { border-color: color-mix(in srgb, var(--dorado, #d2b16d) 60%, transparent); }
+.atencion-turno:is(.finalizado, .salio, .no_se_presento) { opacity: 0.7; }
+:is(.panel-shell, .panel-dialogo) .estado-llego { background: rgb(52 152 219 / 14%); color: #9fd0f2; border-color: rgb(52 152 219 / 32%); }
+.atencion-estilo { justify-self: start; margin-top: 4px; min-height: 32px; padding: 4px 10px; border: 1px solid var(--p-linea, rgb(255 255 255 / 14%)); border-radius: 999px;
+    background: transparent; color: var(--dorado-brillante, #e6cd97); font: inherit; font-size: 0.82rem; cursor: pointer; }
+.fila-sillas { display: grid; gap: 8px; margin: 6px 0; padding: 12px; border: 1px solid var(--p-linea, rgb(255 255 255 / 12%)); border-radius: 12px; }
+.fila-sillas legend { padding: 0 6px; font-weight: 650; }
+.fila-sillas-rejilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.fila-sillas-rejilla label { display: grid; gap: 4px; }
+@media (max-width: 640px) {
+    .panel-shell .atencion-unificada .atencion-cita { grid-template-columns: 96px minmax(0, 1fr); }
+    .panel-shell .atencion-unificada .atencion-hora strong { font-size: 1rem; }
+    .atencion-llamar .panel-btn { margin-left: 0; width: 100%; }
+    .atencion-llamar label { width: 100%; }
+    .atencion-llamar select { flex: 1; }
+}

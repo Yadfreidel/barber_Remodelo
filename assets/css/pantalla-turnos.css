@@ -1,0 +1,56 @@
+/* ==========================================
+   PANTALLA DE TURNOS (TV del local)
+   Reutiliza los colores de la fila virtual (fila.css). Letras grandes y alto contraste: se lee a distancia.
+   Escala con el ancho de la pantalla (clamp + vw); en móvil se apila.
+   ========================================== */
+body.pantalla-turnos { min-height: 100dvh; overflow: hidden; font-size: clamp(16px, 1.4vw, 28px); }
+.tv-cabecera { display: flex; align-items: center; gap: 0.8em; padding: 1em 1.6em 0.4em; }
+.tv-logo { display: grid; place-items: center; width: 2.4em; height: 2.4em; border-radius: 50%; overflow: hidden;
+    border: 2px solid color-mix(in srgb, var(--oro) 60%, transparent); color: var(--oro); font-size: 1.2em; }
+.tv-logo img { width: 100%; height: 100%; object-fit: cover; }
+.tv-negocio { font: 800 1.2em/1.1 Inter, sans-serif; letter-spacing: 0.12em; text-transform: uppercase; }
+.tv-reloj { margin-left: auto; font: 600 1.5em/1 Inter, sans-serif; color: var(--texto-2); font-variant-numeric: tabular-nums; }
+.tv-estado { position: fixed; top: 1em; left: 50%; transform: translateX(-50%); z-index: 3; margin: 0; padding: 0.5em 1.2em; border-radius: 999px;
+    background: var(--aviso); color: #1b1305; font-weight: 800; box-shadow: 0 8px 30px rgb(0 0 0 / 50%); }
+.tv-estado[hidden] { display: none; }
+body.sin-conexion .tv-lista { opacity: 0.55; }
+
+.tv-cuerpo { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(14em, 22%); gap: 2em; padding: 1em 1.6em 1.6em; min-height: 0; }
+.tv-titulo { margin: 0 0 0.6em; color: var(--texto-2); font: 600 1em/1.2 Inter, sans-serif; letter-spacing: 0.18em; text-transform: uppercase; }
+.tv-lista { display: grid; gap: 0.8em; align-content: start; }
+.tv-llamado { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.25em 0.5em; padding: 0.5em 0.8em; border-radius: 0.6em;
+    border: 1px solid var(--linea-fuerte); background: var(--tarjeta); font: 800 2.4em/1.15 Inter, sans-serif; }
+.tv-llamado.principal { padding: 0.6em 0.8em; border-color: var(--oro); background: color-mix(in srgb, var(--oro) 14%, var(--tarjeta)); font-size: clamp(2.6em, 6.5vw, 7em); }
+.tv-llamado.principal { flex-direction: column; gap: 0.1em; }
+.tv-llamado.principal .tv-separador { display: none; }
+.tv-codigo { color: var(--oro-claro); font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
+.tv-separador { color: var(--texto-2); }
+.tv-destino { color: var(--texto); }
+.tv-llamado.nuevo { animation: tv-destello 1.2s ease-in-out 3; }
+@keyframes tv-destello { 50% { background: color-mix(in srgb, var(--oro) 40%, var(--tarjeta)); } }
+.tv-vacio { margin: 1em 0; color: var(--texto-2); font: 600 2em/1.3 Inter, sans-serif; }
+
+.tv-lateral { display: grid; align-content: center; justify-items: center; gap: 0.8em; padding: 1.2em; border-radius: 1em; border: 1px solid var(--linea); background: var(--tarjeta); text-align: center; }
+.tv-qr { padding: 0.6em; border-radius: 0.6em; background: #fff; line-height: 0; }
+.tv-qr img, .tv-qr canvas { width: min(100%, 11em) !important; height: auto !important; }
+.tv-qr.pausa { opacity: 0.25; }
+.tv-qr-texto { margin: 0; font-weight: 700; }
+.tv-qr-texto[hidden] { display: none; }
+.tv-espera { margin: 0; color: var(--texto-2); }
+
+.tv-controles { position: fixed; right: 1em; bottom: 1em; display: flex; gap: 0.6em; transition: opacity 0.4s; font-size: 16px; }
+.tv-boton { display: inline-flex; align-items: center; gap: 0.5em; min-height: 44px; padding: 0.6em 1.1em; border-radius: 999px; border: 1px solid var(--linea-fuerte);
+    background: var(--elevado); color: var(--texto); font: 600 1em/1 Inter, sans-serif; cursor: pointer; }
+.tv-boton[data-sonido]:not(.activo) { background: var(--oro); color: var(--sobre-oro); border-color: var(--oro); }
+.tv-boton[hidden] { display: none; }
+body.controles-ocultos { cursor: none; }
+body.controles-ocultos .tv-controles { opacity: 0; pointer-events: none; }
+
+@media (max-width: 760px) {
+    body.pantalla-turnos { overflow: auto; font-size: 15px; }
+    .tv-cuerpo { grid-template-columns: 1fr; gap: 1em; padding: 0.6em 16px 6em; }
+    .tv-llamado { font-size: 1.8em; }
+    .tv-llamado.principal { font-size: 2.4em; }
+    .tv-controles { left: 16px; right: 16px; flex-wrap: wrap; justify-content: center; }
+}
+@media (prefers-reduced-motion: reduce) { .tv-llamado.nuevo { animation: none; outline: 3px solid var(--oro); } }

@@ -13,6 +13,7 @@ import { formato12h, hoyRD } from '../assets/horario-utils.js';
 import { abrirFormularioReclamacion, renderReclamacion } from './reclamacionesClienteController.js';
 import { identidadComprobante } from './publicoController.js';
 import { pintarReferenciaCita } from './referenciaEstiloController.js';
+import { pintarConsultaEstilo } from './estiloConsultaController.js';
 
 // Módulos que hacen pasar la reserva por la validación del servidor
 const MODULOS_RESERVA_SERVIDOR = ['productos', 'promociones', 'referidos', 'recuperacion'];
@@ -440,6 +441,7 @@ async function renderCita(panel, token) {
                 <div><i class="fas fa-clock"></i> ${esc(fecha)} a las ${esc(formato12h(c.hora))}</div>
             </div>
             <section data-referencia-cita aria-label="Estilo de referencia" hidden></section>
+            <section data-estilo-cita aria-label="Cómo quieres tu corte" hidden></section>
             ${c.precio_final !== null ? `
                 <div class="resumen-precio">
                     <div class="resumen-linea"><span>Servicio</span><span>${formatoPrecio(c.precio_base)}</span></div>
@@ -463,6 +465,12 @@ async function renderCita(panel, token) {
     // La tarjeta usa exclusivamente los datos guardados devueltos por consultar_cita.
     montarTarjeta(panel.querySelector('.panel-gestion'), c, { urlPublica: window.location.href, token, identidad: await identidadComprobante() });
     // Publicación elegida como inspiración al reservar (solo con el token de esta cita)
+    // Foto y nota de «¿Cómo quieres tu corte?» (solo con el token de esta cita)
+    pintarConsultaEstilo(panel.querySelector('[data-estilo-cita]'), async completa => {
+        const { data, error } = await supabase.rpc('cita_estilo', { p_token: token, p_completa: completa });
+        if (error) throw error;
+        return data;
+    }, { titulo: 'Cómo quieres tu corte' });
     pintarReferenciaCita(panel.querySelector('[data-referencia-cita]'), async () => {
         const { data, error } = await supabase.rpc('cita_referencia', { p_token: token });
         if (error) throw error;

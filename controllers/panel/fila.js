@@ -24,7 +24,7 @@ const ERRORES = {
     turno_no_encontrado: 'Ese turno ya no está a tu cargo.',
     barbero_no_elegible: 'Ese barbero no realiza el servicio o no trabaja hoy.',
     barbero_requerido: 'Elige el barbero que atenderá.',
-    configuracion_invalida: 'Revisa los valores: cortesía de 1 a 30 min, aviso de 1 a 10 turnos, límite de 1 a 200 y una URL que empiece por https://.'
+    configuracion_invalida: 'Revisa los valores: cortesía de 1 a 30 min, aviso de 1 a 10 turnos, límite de 1 a 200, sillas del 1 al 99 y una URL que empiece por https://.'
 };
 const traducir = e => ERRORES[Object.keys(ERRORES).find(k => (e?.message || '').includes(k))] || e?.message || 'No se pudo completar.';
 const hora = ts => (ts ? formato12h(String(ts).slice(11, 16)) : '');
@@ -39,6 +39,17 @@ function nuevaClave() {
 
 export function urlFilaPorDefecto() {
     return `${location.origin}${location.pathname.replace(/[^/]*$/, '')}fila.html`;
+}
+
+// Compartido con «Atención»: mismos textos y mismas acciones del servidor
+export { ESTADOS as ESTADOS_FILA, MOTIVOS as MOTIVOS_FILA, traducir as traducirFila };
+
+// Pantalla de turnos para la TV del local (misma carpeta publicada: funciona bajo /barber_Remodelo/)
+export function urlPantallaTurnos() {
+    return `${location.origin}${location.pathname.replace(/[^/]*$/, '')}pantalla-turnos.html`;
+}
+export function abrirPantallaTurnos() {
+    window.open(urlPantallaTurnos(), 'pantalla-turnos', 'noopener');
 }
 
 export async function renderFila(cont, ctx) {
@@ -83,6 +94,7 @@ export async function renderFila(cont, ctx) {
                 <span>${c.recepcion_abierta ? 'Recepción abierta' : 'Recepción en pausa'}</span></button>
             <button type="button" class="panel-btn panel-btn-mini" data-registrar><i class="fas fa-user-plus" aria-hidden="true"></i> Registrar llegada</button>
             <button type="button" class="panel-btn panel-btn-mini" data-qr><i class="fas fa-qrcode" aria-hidden="true"></i> QR del local</button>
+            <button type="button" class="panel-btn panel-btn-mini" data-pantalla><i class="fas fa-tv" aria-hidden="true"></i> Abrir pantalla de turnos</button>
             <button type="button" class="panel-btn panel-btn-mini" data-ajustes><i class="fas fa-sliders" aria-hidden="true"></i> Ajustes</button>`;
     }
 
@@ -209,6 +221,7 @@ export async function renderFila(cont, ctx) {
         if (b.matches('[data-registrar]')) return registrar();
         if (b.matches('[data-qr]')) return mostrarQR(st.datos.config.url_publica || urlFilaPorDefecto(), !st.datos.config.url_publica);
         if (b.matches('[data-ajustes]')) return ajustes();
+        if (b.matches('[data-pantalla]')) return abrirPantallaTurnos();
     });
     raiz.addEventListener('change', async e => {
         if (e.target.matches('[data-barbero-admin]')) { st.barberoAdmin = e.target.value; return; }
@@ -258,14 +271,29 @@ export async function renderFila(cont, ctx) {
                 <label>Máximo de turnos en espera<input type="number" name="limite" min="1" max="200" value="${Number(c.limite_espera)}" required></label>
                 <label>URL pública de la fila (la que abre el QR)<input type="url" name="url" value="${esc(c.url_publica || '')}" placeholder="${esc(urlFilaPorDefecto())}"></label>
                 <p class="panel-sub">Déjala vacía para usar la dirección de esta web. Debe abrir <code>fila.html</code> del sitio publicado.</p>
+                <fieldset class="fila-sillas" data-sillas><legend>Silla de cada barbero (pantalla de turnos)</legend>
+                    <p class="panel-sub">Al llamar un turno, la TV muestra «Pasa a la silla N». Sin silla, muestra «Pasa a recepción».</p>
+                    <p class="panel-cargando">Cargando sillas…</p></fieldset>
                 <p class="panel-error" role="alert" hidden></p>
                 <div class="panel-dialogo-acciones"><button type="button" class="panel-btn" data-cerrar>Cancelar</button>
                     <button type="submit" class="panel-btn panel-btn-principal">Guardar</button></div></form>` });
         const form = caja.querySelector('form');
+        const zonaSillas = form.querySelector('[data-sillas]');
+        let sillasCargadas = false;
+        api('panel_fila_sillas').then(lista => {
+            zonaSillas.querySelector('.panel-cargando').remove();
+            zonaSillas.insertAdjacentHTML('beforeend', `<div class="fila-sillas-rejilla">${lista.map(b => `<label>${esc(b.nombre)}
+                <input type="number" min="1" max="99" inputmode="numeric" data-silla="${esc(b.id)}" value="${b.silla ?? ''}" placeholder="Sin silla"></label>`).join('')}</div>`);
+            sillasCargadas = true;
+        }).catch(e => { zonaSillas.querySelector('.panel-cargando').textContent = `No se pudieron cargar las sillas: ${traducir(e)}`; });
         form.addEventListener('submit', async ev => {
             ev.preventDefault();
             const err = form.querySelector('.panel-error');
             try {
+                if (sillasCargadas) {
+                    await api('panel_fila_sillas_guardar', { p_sillas: Object.fromEntries([...form.querySelectorAll('[data-silla]')]
+                        .map(i => [i.dataset.silla, i.value.trim() === '' ? null : Number(i.value)])) });
+                }
                 await api('panel_fila_config', { p_datos: { cortesia_minutos: Number(form.cortesia.value), aviso_cerca: Number(form.cerca.value),
                     limite_espera: Number(form.limite.value), url_publica: form.url.value.trim() } });
                 cerrar();

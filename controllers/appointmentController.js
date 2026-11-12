@@ -7,6 +7,7 @@ import { registrarCitaReservada } from './misCitasController.js';
 import { guardarBorrador } from '../assets/mis-citas-store.js';
 import { rango12h, sumarMinutos } from '../assets/horario-utils.js';
 import { referenciaActual, terminarReferencia } from './referenciaEstiloController.js';
+import { consultaEstiloActual, consultaEstiloOcupada, guardarConsultaEstilo, limpiarConsultaEstilo } from './estiloConsultaController.js';
 
 export async function procesarCita(evento) {
     evento.preventDefault();
@@ -40,6 +41,9 @@ async function procesarCitaInterna(evento) {
     if (!barbero) { mostrarAlerta("Por favor, selecciona tu barbero en la sección de arriba."); return; }
     if (!fecha) { mostrarAlerta("Por favor, selecciona una fecha para tu cita."); return; }
     if (!hora) { mostrarAlerta("Por favor, toca una de las horas disponibles."); return; }
+    if (consultaEstiloOcupada()) { mostrarAlerta('Espera un momento: estamos preparando tu foto de referencia.'); return; }
+    // «¿Cómo quieres tu corte?» (opcional): se guarda con la cita después de reservarla
+    const consultaEstilo = consultaEstiloActual();
 
     // Sin base de datos (web publicada sin servidor): la cita se envía como solicitud por WhatsApp
     const modoSolicitud = !estaSupabaseListo();
@@ -60,6 +64,12 @@ async function procesarCitaInterna(evento) {
         // La cita ya está guardada: consentimiento de avisos y notas van aparte y su fallo no la afecta
         guardarComplementos(reservaServidor.token, { aceptaAvisos, notas, referencia: referenciaActual() });
         terminarReferencia(); // la inspiración queda con esta cita y no pasa a la siguiente reserva
+        if (consultaEstilo) {
+            // Si falla, la cita sigue guardada: junto al comprobante se ofrece reintentar o continuar sin la foto
+            const token = reservaServidor.token;
+            setTimeout(() => guardarConsultaEstilo(token, consultaEstilo), 0);
+        }
+        limpiarConsultaEstilo();
     }
 
     const fechaFormateada = fecha.split('-').reverse().join('/');

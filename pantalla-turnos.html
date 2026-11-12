@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Pantalla de turnos de la barbería: muestra los turnos llamados de la fila virtual.">
+    <meta name="robots" content="noindex">
+    <title>Pantalla de turnos | Barbería</title>
+    <meta name="theme-color" content="#0b0b0c">
+    <link rel="icon" href="assets/imagenes/icono-192.png">
+    <link rel="apple-touch-icon" href="assets/imagenes/icono-192.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <link rel="stylesheet" href="assets/css/fila.css">
+    <link rel="stylesheet" href="assets/css/pantalla-turnos.css">
+</head>
+<body class="fila-pagina pantalla-turnos">
+    <header class="tv-cabecera">
+        <span class="tv-logo" data-logo aria-hidden="true"><i class="fas fa-scissors"></i></span>
+        <span class="tv-negocio" data-negocio>Barbería</span>
+        <span class="tv-reloj" data-reloj></span>
+    </header>
+    <p class="tv-estado" data-conexion role="status" hidden><i class="fas fa-rotate fa-spin" aria-hidden="true"></i> Reconectando…</p>
+    <main class="tv-cuerpo">
+        <section class="tv-llamados" aria-labelledby="tv-titulo">
+            <h1 id="tv-titulo" class="tv-titulo">Turnos llamados</h1>
+            <div class="tv-lista" data-llamados aria-live="assertive">
+                <p class="tv-vacio">Cargando…</p>
+            </div>
+        </section>
+        <aside class="tv-lateral" aria-label="Fila virtual">
+            <div class="tv-qr" data-qr aria-hidden="true"></div>
+            <p class="tv-qr-texto" data-qr-texto>¿Llegaste sin cita? Escanea y toma tu turno</p>
+            <p class="tv-espera" data-espera></p>
+        </aside>
+    </main>
+    <footer class="tv-controles" data-controles>
+        <button type="button" class="tv-boton" data-sonido><i class="fas fa-volume-high" aria-hidden="true"></i> Activar sonido</button>
+        <button type="button" class="tv-boton" data-completa><i class="fas fa-expand" aria-hidden="true"></i> Pantalla completa</button>
+    </footer>
+    <script type="module" src="assets/fila/pantalla-turnos.js"></script>
+</body>
+</html>

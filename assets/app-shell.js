@@ -1,6 +1,7 @@
 import { inicializarInicioInmersivo } from './home-view.js';
 import { crearVistaMas } from './more-view.js';
 import { inicializarPasosReserva } from './booking-wizard.js';
+import { iniciarConsultaEstilo } from '../controllers/estiloConsultaController.js';
 import './ayuda.js';
 import { crearSeccionEstilos } from '../controllers/estilosController.js';
 import { obtenerServicios } from '../models/serviceModel.js';
@@ -28,6 +29,7 @@ document.body.append(nav);
 inicializarInicioInmersivo(hero, header);
 const views = [hero, $('catalogo-seccion'), $('contacto'), misCitas, more];
 const wizard = inicializarPasosReserva(form);
+iniciarConsultaEstilo(); // «¿Cómo quieres tu corte?» en el paso «Tus datos»
 function activeRoute() {
     const hash = location.hash.slice(1);
     return hash === 'staff-seccion' ? 'contacto' : views.some(v=>v.id===hash) ? hash : 'inicio';

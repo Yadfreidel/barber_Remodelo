@@ -157,10 +157,10 @@ function pintarTurno() {
                 <div class="fila-espera"><dt>Espera estimada</dt><dd>${textoEspera(t)}</dd></div>
             </dl>`;
     } else if (t.estado === 'llamado') {
-        centro = `<p class="fila-llamado-texto">Pasa con <strong>${esc(t.barbero || 'tu barbero')}</strong></p>
+        centro = `<p class="fila-llamado-texto">Pasa con <strong>${esc(t.barbero || 'tu barbero')}</strong>${t.silla ? ` · <strong>silla&nbsp;${Number(t.silla)}</strong>` : ''}</p>
             <p class="fila-cortesia" data-cortesia data-hasta="${esc(t.llamado_hasta)}" data-ahora="${esc(t.ahora)}"></p>`;
     } else if (t.estado === 'en_servicio') {
-        centro = `<p class="fila-llamado-texto">Te atiende <strong>${esc(t.barbero || '')}</strong></p>`;
+        centro = `<p class="fila-llamado-texto">Te atiende <strong>${esc(t.barbero || '')}</strong>${t.silla ? ` en la silla&nbsp;${Number(t.silla)}` : ''}</p>`;
     } else {
         const textos = { finalizado: '¡Gracias por visitarnos!', salio: 'Saliste de la fila. Tu turno quedó libre para otra persona.',
             no_se_presento: 'Te llamamos y no llegaste a tiempo, así que el turno se cerró.' };
